@@ -126,9 +126,9 @@ function LoginPage() {
                 <label className="remember-me">
                   <input type="checkbox" id="remember" /> <span>Remember me</span>
                 </label>{" "}
-                <a href="#" className="forgot-link">
+                <Link to="/forgot-password" className="forgot-link">
                   Forgot Password?
-                </a>
+                </Link>
               </div>
               <button type="submit" className="login-button">
                 Login to Dashboard
