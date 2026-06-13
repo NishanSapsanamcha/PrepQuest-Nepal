@@ -1,1 +1,5 @@
-// Async error handling helper will be added here.
+const asyncHandler = (requestHandler) => (req, res, next) => {
+	return Promise.resolve(requestHandler(req, res, next)).catch(next);
+};
+
+export default asyncHandler;

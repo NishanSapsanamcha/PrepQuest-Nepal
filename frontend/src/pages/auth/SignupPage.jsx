@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FaBookOpen,
   FaChartLine,
@@ -9,9 +10,49 @@ import {
   FaUserPlus,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { registerUser } from "../../services/authService";
 import "./SignupPage.css";
 
 function SignupPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    securityQuestion: "",
+    securityAnswer: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({
+      ...current,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await registerUser(formData);
+      login(response, true);
+      navigate("/dashboard", { replace: true });
+    } catch (submitError) {
+      setError(submitError?.response?.data?.message || "Unable to create your account right now.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="signup-page">
       <div className="app-shell">
@@ -119,17 +160,21 @@ function SignupPage() {
               </p>
             </header>
 
-            <form className="signup-form" onSubmit={(e) => e.preventDefault()}>
+            <form className="signup-form" onSubmit={handleSubmit}>
+              {error ? <div className="form-error">{error}</div> : null}
               <div className="signup-form-scroll">
                 <div className="form-group">
                   <label htmlFor="fullname">Full Name</label>
                   <input
                     type="text"
                     id="fullname"
-                    name="fullname"
+                    name="fullName"
                     className="auth-input"
                     placeholder="Enter your full name"
                     autoComplete="name"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -142,6 +187,9 @@ function SignupPage() {
                     className="auth-input"
                     placeholder="you@example.com"
                     autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -154,6 +202,9 @@ function SignupPage() {
                     className="auth-input"
                     placeholder="Create a password"
                     autoComplete="new-password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -162,10 +213,13 @@ function SignupPage() {
                   <input
                     type="password"
                     id="confirm-password"
-                    name="confirm-password"
+                    name="confirmPassword"
                     className="auth-input"
                     placeholder="Confirm your password"
                     autoComplete="new-password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -173,9 +227,11 @@ function SignupPage() {
                   <label htmlFor="security-question">Security Question</label>
                   <select
                     id="security-question"
-                    name="security-question"
+                    name="securityQuestion"
                     className="auth-select"
-                    defaultValue=""
+                    value={formData.securityQuestion}
+                    onChange={handleChange}
+                    required
                   >
                     <option value="" disabled>
                       Select a security question
@@ -196,17 +252,20 @@ function SignupPage() {
                   <input
                     type="text"
                     id="security-answer"
-                    name="security-answer"
+                    name="securityAnswer"
                     className="auth-input"
                     placeholder="Enter your answer"
                     autoComplete="off"
+                    value={formData.securityAnswer}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
 
               <footer className="signup-footer">
-                <button type="submit" className="signup-button">
-                  Create Account
+                <button type="submit" className="signup-button" disabled={loading}>
+                  {loading ? "Creating..." : "Create Account"}
                 </button>
                 <p className="login-text">
                   Already have an account?{" "}

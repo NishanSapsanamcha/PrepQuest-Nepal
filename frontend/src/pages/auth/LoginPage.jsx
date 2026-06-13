@@ -1,15 +1,46 @@
-import {
-  FaBookOpen,
-  FaCoins,
-  FaFire,
-  FaLock,
-  FaShieldAlt,
-  FaTrophy,
-} from "react-icons/fa";
+import { useState } from "react";
+import { FaBookOpen, FaCoins, FaFire, FaLock, FaShieldAlt, FaTrophy } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { loginUser } from "../../services/authService";
 import { Link } from "react-router-dom";
 import "./LoginPage.css";
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({ email: "", password: "", remember: true });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await loginUser({
+        email: formData.email,
+        password: formData.password
+      });
+
+      login(response, formData.remember);
+      navigate("/dashboard", { replace: true });
+    } catch (submitError) {
+      setError(submitError?.response?.data?.message || "Unable to login right now.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="login-page">
       <div className="app-shell">
@@ -101,15 +132,20 @@ function LoginPage() {
             <p className="auth-subtitle">
               Continue your PrepQuest journey and keep your progress moving.
             </p>
-            <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+            <form className="auth-form" onSubmit={handleSubmit}>
+              {error ? <div className="form-error">{error}</div> : null}
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>{" "}
                 <input
                   type="email"
                   id="email"
+                  name="email"
                   className="auth-input"
                   placeholder="you@example.com"
                   autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
                 />
               </div>
               <div className="form-group">
@@ -117,21 +153,32 @@ function LoginPage() {
                 <input
                   type="password"
                   id="password"
+                  name="password"
                   className="auth-input"
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
                 />
               </div>
               <div className="form-options">
                 <label className="remember-me">
-                  <input type="checkbox" id="remember" /> <span>Remember me</span>
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    name="remember"
+                    checked={formData.remember}
+                    onChange={handleChange}
+                  />{" "}
+                  <span>Remember me</span>
                 </label>{" "}
                 <Link to="/forgot-password" className="forgot-link">
                   Forgot Password?
                 </Link>
               </div>
-              <button type="submit" className="login-button">
-                Login to Dashboard
+              <button type="submit" className="login-button" disabled={loading}>
+                {loading ? "Logging in..." : "Login to Dashboard"}
               </button>
               <div className="security-note">
                 <span className="security-icon">

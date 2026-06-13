@@ -11,24 +11,89 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import {
+  requestPasswordReset,
+  resetPassword,
+  verifySecurityAnswer
+} from "../../services/authService";
 import "./ForgotPasswordPage.css";
 
 function ForgotPasswordPage() {
   const [step, setStep] = useState("email");
+  const [formData, setFormData] = useState({
+    email: "",
+    securityAnswer: "",
+    newPassword: "",
+    confirmNewPassword: ""
+  });
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleEmailSubmit = (e) => {
-    e.preventDefault();
-    setStep("question");
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({
+      ...current,
+      [name]: value
+    }));
   };
 
-  const handleQuestionSubmit = (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    setStep("reset");
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await requestPasswordReset(formData.email);
+      setSecurityQuestion(response.securityQuestion);
+      setStep("question");
+    } catch (submitError) {
+      setError(submitError?.response?.data?.message || "Unable to start recovery right now.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResetSubmit = (e) => {
+  const handleQuestionSubmit = async (e) => {
     e.preventDefault();
-    setStep("success");
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await verifySecurityAnswer({
+        email: formData.email,
+        securityAnswer: formData.securityAnswer
+      });
+      setResetToken(response.resetToken);
+      setStep("reset");
+    } catch (submitError) {
+      setError(submitError?.response?.data?.message || "Security answer verification failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      await resetPassword({
+        resetToken,
+        password: formData.newPassword,
+        confirmPassword: formData.confirmNewPassword
+      });
+      setStep("success");
+      setSuccessMessage("Password reset successfully. You can now login.");
+    } catch (submitError) {
+      setError(submitError?.response?.data?.message || "Unable to reset password right now.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -119,6 +184,7 @@ function ForgotPasswordPage() {
 
         <section className="auth-panel" aria-label="Forgot password">
           <div className="forgot-card">
+            {error ? <div className="form-error">{error}</div> : null}
             {step === "email" && (
               <>
                 <span className="auth-badge">
@@ -134,13 +200,17 @@ function ForgotPasswordPage() {
                     <input
                       type="email"
                       id="recovery-email"
+                      name="email"
                       className="auth-input"
                       placeholder="Enter your registered email"
                       autoComplete="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
                     />
                   </div>
-                  <button type="submit" className="forgot-button">
-                    Continue
+                  <button type="submit" className="forgot-button" disabled={loading}>
+                    {loading ? "Checking..." : "Continue"}
                   </button>
                 </form>
                 <Link to="/login" className="back-link">
@@ -161,20 +231,24 @@ function ForgotPasswordPage() {
                     <span className="question-icon">
                       <FaQuestionCircle aria-hidden="true" />
                     </span>
-                    What is your favorite teacher's name?
+                    {securityQuestion || "Security question loaded from your account."}
                   </div>
                   <div className="form-group">
                     <label htmlFor="security-answer">Security Answer</label>
                     <input
                       type="text"
                       id="security-answer"
+                      name="securityAnswer"
                       className="auth-input"
                       placeholder="Enter your answer"
                       autoComplete="off"
+                      value={formData.securityAnswer}
+                      onChange={handleChange}
+                      required
                     />
                   </div>
-                  <button type="submit" className="forgot-button">
-                    Verify Answer
+                  <button type="submit" className="forgot-button" disabled={loading}>
+                    {loading ? "Verifying..." : "Verify Answer"}
                   </button>
                 </form>
                 <button type="button" className="text-button" onClick={() => setStep("email")}>
@@ -198,9 +272,13 @@ function ForgotPasswordPage() {
                     <input
                       type="password"
                       id="new-password"
+                      name="newPassword"
                       className="auth-input"
                       placeholder="Enter new password"
                       autoComplete="new-password"
+                      value={formData.newPassword}
+                      onChange={handleChange}
+                      required
                     />
                   </div>
                   <div className="form-group">
@@ -208,13 +286,17 @@ function ForgotPasswordPage() {
                     <input
                       type="password"
                       id="confirm-new-password"
+                      name="confirmNewPassword"
                       className="auth-input"
                       placeholder="Confirm new password"
                       autoComplete="new-password"
+                      value={formData.confirmNewPassword}
+                      onChange={handleChange}
+                      required
                     />
                   </div>
-                  <button type="submit" className="forgot-button">
-                    Reset Password
+                  <button type="submit" className="forgot-button" disabled={loading}>
+                    {loading ? "Resetting..." : "Reset Password"}
                   </button>
                 </form>
                 <Link to="/login" className="back-link">
@@ -230,7 +312,7 @@ function ForgotPasswordPage() {
                 </div>
                 <h2 className="auth-title">Password Reset Complete</h2>
                 <p className="auth-subtitle">
-                  Password reset successfully. You can now login with your new password.
+                  {successMessage || "Password reset successfully. You can now login with your new password."}
                 </p>
                 <Link to="/login" className="forgot-button success-link">
                   Go to Login
