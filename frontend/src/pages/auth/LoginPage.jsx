@@ -23,6 +23,10 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -35,7 +39,12 @@ function LoginPage() {
       login(response, formData.remember);
       navigate("/dashboard", { replace: true });
     } catch (submitError) {
-      setError(submitError?.response?.data?.message || "Unable to login right now.");
+      const status = submitError?.response?.status;
+      setError(
+        status === 401
+          ? "Invalid email or password. Create an account first if you have not signed up yet."
+          : submitError?.response?.data?.message || "Unable to login right now."
+      );
     } finally {
       setLoading(false);
     }
@@ -177,7 +186,7 @@ function LoginPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <button type="submit" className="login-button" disabled={loading}>
+              <button type="submit" className="login-button" disabled={loading} aria-busy={loading}>
                 {loading ? "Logging in..." : "Login to Dashboard"}
               </button>
               <div className="security-note">

@@ -569,6 +569,13 @@
   transform: translateY(0);
 }
 
+.signup-page .signup-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
 .signup-page .login-text {
   font-size: 15px;
   color: var(--gray-600);

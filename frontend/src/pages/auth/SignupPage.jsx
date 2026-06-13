@@ -39,6 +39,10 @@ function SignupPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
     setError("");
 
