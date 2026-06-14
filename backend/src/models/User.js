@@ -126,15 +126,16 @@ User.init(
 		timestamps: true,
 		underscored: true,
 		hooks: {
-			beforeSave: async (user) => {
-				if (user.changed("password")) {
-					user.password = await bcrypt.hash(user.password, SALT_ROUNDS);
-				}
-
+			beforeValidate: async (user) => {
 				const securityAnswer = user.getDataValue("securityAnswer");
 				if (typeof securityAnswer === "string" && securityAnswer.trim()) {
 					user.securityAnswerHash = await bcrypt.hash(normalizeText(securityAnswer), SALT_ROUNDS);
 					user.setDataValue("securityAnswer", undefined);
+				}
+			},
+			beforeSave: async (user) => {
+				if (user.changed("password")) {
+					user.password = await bcrypt.hash(user.password, SALT_ROUNDS);
 				}
 			}
 		}
