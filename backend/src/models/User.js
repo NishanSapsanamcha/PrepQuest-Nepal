@@ -56,7 +56,13 @@ User.init(
 			type: DataTypes.STRING(120),
 			allowNull: false,
 			validate: {
-				notEmpty: true
+				notEmpty: {
+					msg: "Full name is required"
+				},
+				len: {
+					args: [2, 120],
+					msg: "Full name must be between 2 and 120 characters"
+				}
 			}
 		},
 		email: {
@@ -64,7 +70,9 @@ User.init(
 			allowNull: false,
 			unique: true,
 			validate: {
-				isEmail: true
+				isEmail: {
+					msg: "Enter a valid email address"
+				}
 			},
 			set(value) {
 				this.setDataValue("email", value?.trim().toLowerCase());

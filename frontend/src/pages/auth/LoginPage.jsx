@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { FaBookOpen, FaCoins, FaFire, FaLock, FaShieldAlt, FaTrophy } from "react-icons/fa";
+import {
+  FaBookOpen,
+  FaCoins,
+  FaExclamationCircle,
+  FaFire,
+  FaLock,
+  FaShieldAlt,
+  FaTrophy
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { loginUser } from "../../services/authService";
@@ -142,7 +150,18 @@ function LoginPage() {
               Continue your PrepQuest journey and keep your progress moving.
             </p>
             <form className="auth-form" onSubmit={handleSubmit}>
-              {error ? <div className="form-error">{error}</div> : null}
+              {error ? (
+                <div className="form-error" role="alert" aria-live="polite">
+                  <span className="form-error-icon">
+                    <FaExclamationCircle aria-hidden="true" />
+                  </span>
+                  <div className="form-error-content">
+                    <strong>Login failed</strong>
+                    <span>{error}</span>
+                    <Link to="/signup">Create an account</Link>
+                  </div>
+                </div>
+              ) : null}
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>{" "}
                 <input

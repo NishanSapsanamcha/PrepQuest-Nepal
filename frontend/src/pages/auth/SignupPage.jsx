@@ -3,6 +3,7 @@ import {
   FaBookOpen,
   FaChartLine,
   FaCoins,
+  FaExclamationCircle,
   FaFire,
   FaLock,
   FaShieldAlt,
@@ -14,6 +15,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { registerUser } from "../../services/authService";
 import "./SignupPage.css";
+
+const getSignupErrorMessage = (submitError) => {
+  const data = submitError?.response?.data;
+  const firstDetail = Array.isArray(data?.errors) ? data.errors.find(Boolean) : "";
+
+  return firstDetail || data?.message || "Unable to create your account right now.";
+};
 
 function SignupPage() {
   const navigate = useNavigate();
@@ -51,7 +59,7 @@ function SignupPage() {
       login(response, true);
       navigate("/dashboard", { replace: true });
     } catch (submitError) {
-      setError(submitError?.response?.data?.message || "Unable to create your account right now.");
+      setError(getSignupErrorMessage(submitError));
     } finally {
       setLoading(false);
     }
@@ -165,7 +173,17 @@ function SignupPage() {
             </header>
 
             <form className="signup-form" onSubmit={handleSubmit}>
-              {error ? <div className="form-error">{error}</div> : null}
+              {error ? (
+                <div className="form-error" role="alert" aria-live="polite">
+                  <span className="form-error-icon">
+                    <FaExclamationCircle aria-hidden="true" />
+                  </span>
+                  <div className="form-error-content">
+                    <strong>Account could not be created</strong>
+                    <span>{error}</span>
+                  </div>
+                </div>
+              ) : null}
               <div className="signup-form-scroll">
                 <div className="form-group">
                   <label htmlFor="fullname">Full Name</label>

@@ -16,35 +16,35 @@ const authCookieOptions = {
 };
 
 const loginSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(6)
+	email: z.string().trim().email("Enter a valid email address"),
+	password: z.string().min(6, "Password must be at least 6 characters")
 });
 
 const registerSchema = z.object({
-	fullName: z.string().min(2),
-	email: z.string().email(),
-	password: z.string().min(6),
-	confirmPassword: z.string().min(6),
-	securityQuestion: z.string().min(2),
-	securityAnswer: z.string().min(1)
+	fullName: z.string().trim().min(2, "Full name must be at least 2 characters"),
+	email: z.string().trim().email("Enter a valid email address"),
+	password: z.string().min(6, "Password must be at least 6 characters"),
+	confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
+	securityQuestion: z.string().min(2, "Choose a security question"),
+	securityAnswer: z.string().trim().min(1, "Security answer is required")
 }).refine((data) => data.password === data.confirmPassword, {
 	message: "Passwords do not match",
 	path: ["confirmPassword"]
 });
 
 const forgotPasswordSchema = z.object({
-	email: z.string().email()
+	email: z.string().trim().email("Enter a valid email address")
 });
 
 const verifySecurityAnswerSchema = z.object({
-	email: z.string().email(),
-	securityAnswer: z.string().min(1)
+	email: z.string().trim().email("Enter a valid email address"),
+	securityAnswer: z.string().trim().min(1, "Security answer is required")
 });
 
 const resetPasswordSchema = z.object({
 	resetToken: z.string().min(32),
-	password: z.string().min(6),
-	confirmPassword: z.string().min(6)
+	password: z.string().min(6, "Password must be at least 6 characters"),
+	confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters")
 }).refine((data) => data.password === data.confirmPassword, {
 	message: "Passwords do not match",
 	path: ["confirmPassword"]
