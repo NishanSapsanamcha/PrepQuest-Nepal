@@ -21,16 +21,28 @@ const errorHandler = (err, req, res, next) => {
 	if (err.name === "SequelizeUniqueConstraintError") {
 		return res.status(409).json({
 			success: false,
-			message: "This record already exists",
+			message: err.errors?.[0]?.message || "This record already exists",
 			errors: err.errors?.map((error) => error.message) || []
 		});
 	}
 
 	if (err.name === "SequelizeValidationError") {
+		const errors = err.errors?.map((error) => error.message).filter(Boolean) || [];
+
 		return res.status(400).json({
 			success: false,
-			message: "Validation failed",
-			errors: err.errors?.map((error) => error.message) || []
+			message: errors[0] || "Please check the form and try again",
+			errors
+		});
+	}
+
+	if (err.name === "ZodError") {
+		const errors = err.issues?.map((issue) => issue.message).filter(Boolean) || [];
+
+		return res.status(400).json({
+			success: false,
+			message: errors[0] || "Please check the form and try again",
+			errors
 		});
 	}
 

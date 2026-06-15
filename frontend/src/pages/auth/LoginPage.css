@@ -511,6 +511,69 @@ body { box-sizing: border-box; }
   background: #fafbfc;
 }
 
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-left: 4px solid #e11d48;
+  border-radius: var(--radius-sm);
+  color: #9f1239;
+  box-shadow: 0 8px 22px rgba(225,29,72,0.08);
+}
+
+.form-error-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  color: #e11d48;
+}
+
+.form-error-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.form-error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.form-error-content strong {
+  color: #881337;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.form-error-content span {
+  color: #9f1239;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-error-content a {
+  width: fit-content;
+  margin-top: 4px;
+  color: #0f766e;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.form-error-content a:hover {
+  color: var(--emerald-dark);
+  text-decoration: underline;
+}
+
 .form-options {
   display: flex;
   align-items: center;
@@ -574,6 +637,13 @@ body { box-sizing: border-box; }
 
 .login-button:active {
   transform: translateY(0);
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
 }
 
 .security-note {

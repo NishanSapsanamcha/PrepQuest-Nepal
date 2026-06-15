@@ -25,19 +25,19 @@ const authCookieOptions = {
 // Zod schema for login validation
 // Ensures email is valid format and password meets minimum length requirement
 const loginSchema = z.object({
-	email: z.string().email(),
-	password: z.string().min(6)
+	email: z.string().trim().email("Enter a valid email address"),
+	password: z.string().min(6, "Password must be at least 6 characters")
 });
 
 // Zod schema for user registration validation
 // Validates all required fields and ensures passwords match
 const registerSchema = z.object({
-	fullName: z.string().min(2),
-	email: z.string().email(),
-	password: z.string().min(6),
-	confirmPassword: z.string().min(6),
-	securityQuestion: z.string().min(2),
-	securityAnswer: z.string().min(1)
+	fullName: z.string().trim().min(2, "Full name must be at least 2 characters"),
+	email: z.string().trim().email("Enter a valid email address"),
+	password: z.string().min(6, "Password must be at least 6 characters"),
+	confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
+	securityQuestion: z.string().min(2, "Choose a security question"),
+	securityAnswer: z.string().trim().min(1, "Security answer is required")
 }).refine((data) => data.password === data.confirmPassword, {
 	message: "Passwords do not match",
 	path: ["confirmPassword"]
@@ -46,22 +46,22 @@ const registerSchema = z.object({
 // Zod schema for forgot password request
 // Only requires email to identify the user account
 const forgotPasswordSchema = z.object({
-	email: z.string().email()
+	email: z.string().trim().email("Enter a valid email address")
 });
 
 // Zod schema for security answer verification
 // Used when user answers security question during password reset flow
 const verifySecurityAnswerSchema = z.object({
-	email: z.string().email(),
-	securityAnswer: z.string().min(1)
+	email: z.string().trim().email("Enter a valid email address"),
+	securityAnswer: z.string().trim().min(1, "Security answer is required")
 });
 
 // Zod schema for password reset with token validation
 // Ensures new password and confirmation password match
 const resetPasswordSchema = z.object({
 	resetToken: z.string().min(32),
-	password: z.string().min(6),
-	confirmPassword: z.string().min(6)
+	password: z.string().min(6, "Password must be at least 6 characters"),
+	confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters")
 }).refine((data) => data.password === data.confirmPassword, {
 	message: "Passwords do not match",
 	path: ["confirmPassword"]

@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { FaBookOpen, FaCoins, FaFire, FaLock, FaShieldAlt, FaTrophy } from "react-icons/fa";
+import {
+  FaBookOpen,
+  FaCoins,
+  FaExclamationCircle,
+  FaFire,
+  FaLock,
+  FaShieldAlt,
+  FaTrophy
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { loginUser } from "../../services/authService";
@@ -23,6 +31,10 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -33,9 +45,23 @@ function LoginPage() {
       });
 
       login(response, formData.remember);
-      navigate("/dashboard", { replace: true });
+
+      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
+      const selectedExam = localStorage.getItem("selectedExam");
+      const preferredLanguage = localStorage.getItem("preferredLanguage");
+
+      if (onboardingCompleted === "true" && selectedExam && preferredLanguage) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/setup", { replace: true });
+      }
     } catch (submitError) {
-      setError(submitError?.response?.data?.message || "Unable to login right now.");
+      const status = submitError?.response?.status;
+      setError(
+        status === 401
+          ? "Invalid email or password. Create an account first if you have not signed up yet."
+          : submitError?.response?.data?.message || "Unable to login right now."
+      );
     } finally {
       setLoading(false);
     }
@@ -133,7 +159,18 @@ function LoginPage() {
               Continue your PrepQuest journey and keep your progress moving.
             </p>
             <form className="auth-form" onSubmit={handleSubmit}>
-              {error ? <div className="form-error">{error}</div> : null}
+              {error ? (
+                <div className="form-error" role="alert" aria-live="polite">
+                  <span className="form-error-icon">
+                    <FaExclamationCircle aria-hidden="true" />
+                  </span>
+                  <div className="form-error-content">
+                    <strong>Login failed</strong>
+                    <span>{error}</span>
+                    <Link to="/signup">Create an account</Link>
+                  </div>
+                </div>
+              ) : null}
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>{" "}
                 <input
@@ -177,7 +214,7 @@ function LoginPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <button type="submit" className="login-button" disabled={loading}>
+              <button type="submit" className="login-button" disabled={loading} aria-busy={loading}>
                 {loading ? "Logging in..." : "Login to Dashboard"}
               </button>
               <div className="security-note">

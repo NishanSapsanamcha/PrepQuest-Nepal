@@ -83,7 +83,13 @@ User.init(
 			type: DataTypes.STRING(120),
 			allowNull: false,
 			validate: {
-				notEmpty: true
+				notEmpty: {
+					msg: "Full name is required"
+				},
+				len: {
+					args: [2, 120],
+					msg: "Full name must be between 2 and 120 characters"
+				}
 			}
 		},
 		// User email - unique, immutable, validated format
@@ -92,7 +98,9 @@ User.init(
 			allowNull: false,
 			unique: true,
 			validate: {
-				isEmail: true
+				isEmail: {
+					msg: "Enter a valid email address"
+				}
 			},
 			// Automatically normalize email to lowercase when set
 			set(value) {
@@ -158,20 +166,18 @@ User.init(
 		underscored: true,  // Use snake_case for database column names
 		// Database hooks for automatic data processing
 		hooks: {
-			// Before saving, hash password if changed and hash security answer
-			beforeSave: async (user) => {
-				// Hash password if it was modified (new password or update)
-				if (user.changed("password")) {
-					user.password = await bcrypt.hash(user.password, SALT_ROUNDS);
-				}
-
-				// Hash security answer if provided
+			beforeValidate: async (user) => {
 				const securityAnswer = user.getDataValue("securityAnswer");
 				if (typeof securityAnswer === "string" && securityAnswer.trim()) {
 					// Normalize and hash security answer using bcrypt
 					user.securityAnswerHash = await bcrypt.hash(normalizeText(securityAnswer), SALT_ROUNDS);
 					// Remove plain text security answer from memory
 					user.setDataValue("securityAnswer", undefined);
+				}
+			},
+			beforeSave: async (user) => {
+				if (user.changed("password")) {
+					user.password = await bcrypt.hash(user.password, SALT_ROUNDS);
 				}
 			}
 		}
