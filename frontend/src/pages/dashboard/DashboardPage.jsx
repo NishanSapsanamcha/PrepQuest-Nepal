@@ -1,16 +1,15 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FaAward,
   FaBook,
   FaBookOpen,
   FaBriefcase,
   FaBuilding,
   FaCheck,
   FaCheckCircle,
-  FaCircle,
   FaCoins,
   FaExclamationCircle,
+  FaFire,
   FaFileAlt,
   FaGift,
   FaGlobe,
@@ -35,7 +34,6 @@ import {
   FiChevronRight,
   FiClipboard,
   FiFileText,
-  FiFlame,
   FiGrid,
   FiHelpCircle,
   FiLogOut,
@@ -110,7 +108,7 @@ const sidebarItems = [
 const statCards = [
   { value: "Level 5", label: "XP / Focused Learner", helper: "1,250 XP earned", Icon: HiOutlineSparkles },
   { value: "340", label: "Coins", helper: "Use coins for extra mock tests", Icon: FaCoins },
-  { value: "4 Days", label: "Current Streak", helper: "Complete one activity today", Icon: FiFlame },
+  { value: "4 Days", label: "Current Streak", helper: "Complete one activity today", Icon: FaFire },
   { value: "2/3", label: "Free Mocks Left", helper: "Resets daily", Icon: FiFileText },
 ];
 
@@ -136,7 +134,7 @@ const recentActivities = [
   { title: "Completed Daily Quiz", reward: "+50 XP", time: "Today", Icon: FaCheckCircle },
   { title: "Finished Constitution Practice", reward: "+30 Coins", time: "Today", Icon: FiBookOpen },
   { title: "Mock Test Score: 82%", reward: "+100 XP", time: "1 day ago", Icon: FiTarget },
-  { title: "Streak increased to 4 days", reward: "Momentum kept", time: "1 day ago", Icon: FiFlame },
+  { title: "Streak increased to 4 days", reward: "Momentum kept", time: "1 day ago", Icon: FaFire },
 ];
 
 const weeklyXpData = [
@@ -216,7 +214,7 @@ function DashboardPage() {
 
   const showProgressionSection = () => {
     setShowProgression(true);
-    window.requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
       progressionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };

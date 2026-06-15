@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Brain,
@@ -90,9 +90,11 @@ const languages = [
 
 function SetupPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedExam, setSelectedExam] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+  const allowPreferenceChange = Boolean(location.state?.allowPreferenceChange);
 
   const isReady = Boolean(selectedExam && selectedLanguage);
 
@@ -110,10 +112,15 @@ function SetupPage() {
     const storedExam = localStorage.getItem("selectedExam");
     const storedLanguage = localStorage.getItem("preferredLanguage");
 
-    if (onboardingCompleted === "true" && storedExam && storedLanguage) {
+    if (onboardingCompleted === "true" && storedExam && storedLanguage && !allowPreferenceChange) {
       navigate("/dashboard", { replace: true });
     }
-  }, [navigate]);
+
+    if (allowPreferenceChange) {
+      setSelectedExam(storedExam || "");
+      setSelectedLanguage(storedLanguage || "");
+    }
+  }, [allowPreferenceChange, navigate]);
 
   useEffect(() => {
     if (!toastMessage) {
