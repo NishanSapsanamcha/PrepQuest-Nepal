@@ -45,7 +45,16 @@ function LoginPage() {
       });
 
       login(response, formData.remember);
-      navigate("/dashboard", { replace: true });
+
+      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
+      const selectedExam = localStorage.getItem("selectedExam");
+      const preferredLanguage = localStorage.getItem("preferredLanguage");
+
+      if (onboardingCompleted === "true" && selectedExam && preferredLanguage) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/setup", { replace: true });
+      }
     } catch (submitError) {
       const status = submitError?.response?.status;
       setError(
