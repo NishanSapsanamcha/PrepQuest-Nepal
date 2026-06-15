@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaBook,
-  FaBookOpen,
   FaBriefcase,
   FaBuilding,
   FaCheck,
@@ -13,8 +12,6 @@ import {
   FaFileAlt,
   FaGift,
   FaGlobe,
-  FaGraduationCap,
-  FaLanguage,
   FaLightbulb,
   FaLock,
   FaMedal,
@@ -25,26 +22,22 @@ import {
   FaUser,
 } from "react-icons/fa";
 import {
-  FiActivity,
-  FiAward,
-  FiBarChart2,
   FiBookOpen,
   FiCalendar,
+  FiCheckCircle,
   FiChevronLeft,
   FiChevronRight,
   FiClipboard,
   FiFileText,
   FiGrid,
-  FiHelpCircle,
+  FiGlobe,
   FiLogOut,
   FiSettings,
-  FiStar,
   FiTarget,
   FiTrendingUp,
-  FiUser,
   FiZap,
 } from "react-icons/fi";
-import { HiOutlineSparkles } from "react-icons/hi";
+import { MdLeaderboard, MdMilitaryTech, MdOutlineQuiz } from "react-icons/md";
 import { useAuth } from "../../context/AuthContext";
 import "./DashboardPage.css";
 
@@ -96,20 +89,44 @@ const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: FiGrid },
   { key: "progression", label: "Progression", Icon: FiTrendingUp },
   { key: "practice", label: "Practice", Icon: FiBookOpen },
-  { key: "daily-quiz", label: "Daily Quiz", Icon: FiHelpCircle },
+  { key: "daily-quiz", label: "Daily Quiz", Icon: MdOutlineQuiz },
   { key: "mock-tests", label: "Mock Tests", Icon: FiClipboard },
   { key: "tournament", label: "Tournament", Icon: FaTrophy },
-  { key: "leaderboard", label: "Leaderboard", Icon: FiBarChart2 },
-  { key: "badges", label: "Badges", Icon: FaMedal },
+  { key: "leaderboard", label: "Leaderboard", Icon: MdLeaderboard },
+  { key: "badges", label: "Badges", Icon: MdMilitaryTech },
   { key: "suggestions", label: "Suggestions", Icon: FaLightbulb },
-  { key: "profile", label: "Profile", Icon: FiUser },
+  { key: "profile", label: "Profile", Icon: FaUser },
 ];
 
 const statCards = [
-  { value: "Level 5", label: "XP / Focused Learner", helper: "1,250 XP earned", Icon: HiOutlineSparkles },
-  { value: "340", label: "Coins", helper: "Use coins for extra mock tests", Icon: FaCoins },
-  { value: "4 Days", label: "Current Streak", helper: "Complete one activity today", Icon: FaFire },
-  { value: "2/3", label: "Free Mocks Left", helper: "Resets daily", Icon: FiFileText },
+  {
+    title: "Level 5",
+    subtitle: "XP / Focused Learner",
+    description: "1,250 XP earned",
+    icon: FaMedal,
+    variant: "level",
+  },
+  {
+    title: "340",
+    subtitle: "Coins",
+    description: "Use coins for extra mock tests",
+    icon: FaCoins,
+    variant: "coins",
+  },
+  {
+    title: "4 Days",
+    subtitle: "Current Streak",
+    description: "Complete one activity today",
+    icon: FaFire,
+    variant: "streak",
+  },
+  {
+    title: "2/3",
+    subtitle: "Free Mocks Left",
+    description: "Resets daily",
+    icon: FiFileText,
+    variant: "mock",
+  },
 ];
 
 const missions = [
@@ -119,7 +136,7 @@ const missions = [
 ];
 
 const quickActions = [
-  { title: "Daily Quiz", copy: "10 mixed questions based on your exam track.", button: "Start", routeKey: "daily-quiz", Icon: FiHelpCircle },
+  { title: "Daily Quiz", copy: "10 mixed questions based on your exam track.", button: "Start", routeKey: "daily-quiz", Icon: MdOutlineQuiz },
   { title: "Mock Test", copy: "Get score, accuracy, and weak-area feedback.", button: "Start", routeKey: "mock-tests", Icon: FiClipboard },
   { title: "Subject Practice", copy: "Choose a subject and improve weak areas.", button: "Choose", routeKey: "practice", Icon: FiBookOpen },
 ];
@@ -304,8 +321,8 @@ function DashboardPage() {
             </div>
             <div className="header-right">
               <div className="header-chips">
-                <span className="chip"><FaGraduationCap aria-hidden="true" /> Exam: <strong>{examLabel}</strong></span>
-                <span className="chip"><FaLanguage aria-hidden="true" /> Language: <strong>{languageLabel}</strong></span>
+                <span className="chip"><FiBookOpen aria-hidden="true" /> Exam: <strong>{examLabel}</strong></span>
+                <span className="chip"><FiGlobe aria-hidden="true" /> Language: <strong>{languageLabel}</strong></span>
               </div>
               <button className="outline-pill" type="button" onClick={handleChangePreferences}>
                 <FiSettings aria-hidden="true" /> Change Preferences
@@ -315,16 +332,22 @@ function DashboardPage() {
 
           <section className="dashboard-content">
             <section className="stats-grid" aria-label="Learning stats">
-              {statCards.map(({ value, label, helper, Icon }) => (
-                <article className="stat-card" key={label}>
-                  <div className="stat-icon"><Icon aria-hidden="true" /></div>
-                  <div>
-                    <div className="stat-value">{value}</div>
-                    <div className="stat-label">{label}</div>
-                    <div className="stat-helper">{helper}</div>
-                  </div>
-                </article>
-              ))}
+              {statCards.map((card) => {
+                const Icon = card.icon;
+
+                return (
+                  <article className={`stat-card stat-card-${card.variant}`} key={card.title}>
+                    <div className={`stat-icon stat-icon-${card.variant}`}>
+                      <Icon aria-hidden="true" />
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title stat-value">{card.title}</h3>
+                      <p className="stat-subtitle stat-label">{card.subtitle}</p>
+                      <p className="stat-description stat-helper">{card.description}</p>
+                    </div>
+                  </article>
+                );
+              })}
             </section>
 
             <section className="dashboard-card progression-preview">
@@ -370,7 +393,7 @@ function DashboardPage() {
                 </section>
 
                 <section className="dashboard-card">
-                  <h2 className="card-title"><FiZap aria-hidden="true" /> Quick Actions</h2>
+                  <h2 className="card-title"><FiTrendingUp aria-hidden="true" /> Quick Actions</h2>
                   <div className="quick-actions-grid">
                     {quickActions.map(({ title, copy, button, routeKey, Icon }) => (
                       <article className="action-card" key={title}>
@@ -410,7 +433,7 @@ function DashboardPage() {
                 </section>
 
                 <section className="dashboard-card">
-                  <h2 className="card-title"><FiActivity aria-hidden="true" /> Recent Activity</h2>
+                  <h2 className="card-title"><FiCheckCircle aria-hidden="true" /> Recent Activity</h2>
                   <div className="activity-list">
                     {recentActivities.map(({ title, reward, time, Icon }) => (
                       <article className="activity-item" key={`${title}-${time}`}>
@@ -504,7 +527,7 @@ function DashboardPage() {
                 </section>
 
                 <section className="dashboard-card">
-                  <h2 className="card-title"><FiAward aria-hidden="true" /> Weekly Leaderboard</h2>
+                  <h2 className="card-title"><MdLeaderboard aria-hidden="true" /> Weekly Leaderboard</h2>
                   <div className="leaderboard-list">
                     {leaderboardUsers.map(({ rank, name, xp, className }) => (
                       <article className="leaderboard-item top" key={rank}>
@@ -519,7 +542,7 @@ function DashboardPage() {
                 </section>
 
                 <section className="dashboard-card">
-                  <h2 className="card-title"><FiStar aria-hidden="true" /> Next Badge</h2>
+                  <h2 className="card-title"><MdMilitaryTech aria-hidden="true" /> Next Badge</h2>
                   <div className="badge-container">
                     <div className="badge-item"><FaMedal aria-hidden="true" /></div>
                     <h3>7-Day Warrior</h3>
