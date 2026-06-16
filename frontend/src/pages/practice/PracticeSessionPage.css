@@ -1,0 +1,126 @@
+@import "./PracticePage.css";
+
+.dashboard-page .practice-session-content {
+  width: min(920px, 100%);
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-page .session-progress {
+  padding: 0.25rem 0.2rem;
+}
+
+.dashboard-page .question-card {
+  padding: 1.5rem;
+}
+
+.dashboard-page .question-text {
+  margin: 0 0 1.2rem;
+  white-space: pre-line;
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.dashboard-page .answer-options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-page .answer-option {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+  border-radius: var(--radius);
+  background: rgba(15, 23, 39, 0.72) !important;
+  color: var(--soft);
+  cursor: pointer;
+  transition: border-color 0.22s ease, background 0.22s ease, transform 0.22s ease;
+}
+
+.dashboard-page .answer-option:hover,
+.dashboard-page .answer-option.selected {
+  border-color: rgba(45, 212, 191, 0.45) !important;
+  background: rgba(45, 212, 191, 0.1) !important;
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.dashboard-page .answer-option:disabled {
+  cursor: default;
+  transform: none;
+}
+
+.dashboard-page .question-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-page .xp-preview {
+  margin-right: auto;
+  color: var(--teal);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.dashboard-page .answer-feedback {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  background: rgba(20, 29, 49, 0.92);
+}
+
+.dashboard-page .answer-feedback.wrong {
+  border-color: rgba(251, 113, 133, 0.28);
+}
+
+.dashboard-page .answer-feedback h3,
+.dashboard-page .answer-feedback p {
+  margin: 0;
+}
+
+.dashboard-page .answer-feedback h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--teal);
+}
+
+.dashboard-page .answer-feedback.wrong h3 {
+  color: var(--red);
+}
+
+.dashboard-page .answer-feedback p,
+.dashboard-page .feedback-explanation,
+.dashboard-page .feedback-tip {
+  color: var(--soft);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.dashboard-page .feedback-explanation {
+  display: grid;
+  gap: 0.25rem;
+  white-space: pre-line;
+}
+
+.dashboard-page .feedback-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .dashboard-page .question-actions,
+  .dashboard-page .question-actions .btn,
+  .dashboard-page .feedback-actions .btn {
+    width: 100%;
+  }
+}

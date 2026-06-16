@@ -4,6 +4,10 @@ import SetupPage from "../pages/setup/SetupPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
+import PracticePage from "../pages/practice/PracticePage";
+import SubjectPracticePage from "../pages/practice/SubjectPracticePage";
+import PracticeSessionPage from "../pages/practice/PracticeSessionPage";
+import PracticeResultPage from "../pages/practice/PracticeResultPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -19,6 +23,38 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice"
+        element={
+          <ProtectedRoute>
+            <PracticePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/:subjectId"
+        element={
+          <ProtectedRoute>
+            <SubjectPracticePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/:subjectId/session"
+        element={
+          <ProtectedRoute>
+            <PracticeSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/:subjectId/result"
+        element={
+          <ProtectedRoute>
+            <PracticeResultPage />
           </ProtectedRoute>
         }
       />

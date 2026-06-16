@@ -69,7 +69,7 @@ const routeTargets = {
   profile: "/profile",
 };
 
-const existingRoutes = new Set(["/dashboard", "/login", "/signup", "/forgot-password", "/setup"]);
+const existingRoutes = new Set(["/dashboard", "/login", "/signup", "/forgot-password", "/setup", "/practice"]);
 
 const subjectData = {
   "nayab-subba": [

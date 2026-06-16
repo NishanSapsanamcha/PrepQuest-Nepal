@@ -1,0 +1,157 @@
+@import "./PracticePage.css";
+
+.dashboard-page .practice-result-content {
+  width: min(1040px, 100%);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.dashboard-page .result-summary {
+  display: grid;
+  gap: 1rem;
+  text-align: center;
+}
+
+.dashboard-page .result-summary h1 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.dashboard-page .result-hero-icon {
+  width: 4rem;
+  height: 4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  border-radius: 50%;
+  color: var(--gold);
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+.dashboard-page .result-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-page .result-metrics div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border-radius: var(--radius);
+  background: rgba(15, 23, 39, 0.72);
+}
+
+.dashboard-page .result-metrics span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.dashboard-page .result-metrics strong {
+  color: var(--text);
+}
+
+.dashboard-page .result-rewards {
+  justify-content: center;
+}
+
+.dashboard-page .subject-result-progress {
+  text-align: left;
+}
+
+.dashboard-page .level-up-panel {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem;
+  border-radius: var(--radius);
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--soft);
+}
+
+.dashboard-page .level-up-panel strong {
+  color: var(--teal);
+  font-size: 1rem;
+}
+
+.dashboard-page .result-next-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-page .result-next-card h2,
+.dashboard-page .result-next-card p {
+  margin: 0;
+}
+
+.dashboard-page .result-next-card h2 {
+  margin-top: 0.25rem;
+}
+
+.dashboard-page .result-next-card p {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+.dashboard-page .result-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(170px, 1fr));
+  gap: 0.65rem;
+}
+
+.dashboard-page .wrong-review-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.dashboard-page .wrong-review-item {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: rgba(15, 23, 39, 0.72);
+}
+
+.dashboard-page .wrong-review-item h3,
+.dashboard-page .wrong-review-item p {
+  margin: 0;
+}
+
+.dashboard-page .wrong-review-item h3 {
+  white-space: pre-line;
+  font-size: 0.95rem;
+}
+
+.dashboard-page .wrong-review-item p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.dashboard-page .empty-result {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .dashboard-page .result-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page .result-next-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-page .result-metrics,
+  .dashboard-page .result-action-grid {
+    grid-template-columns: 1fr;
+  }
+}
