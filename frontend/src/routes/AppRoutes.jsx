@@ -1,5 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
+import Badges from "../pages/Badges";
+import Leaderboard from "../pages/Leaderboard";
+import Tournament from "../pages/Tournament";
+import Profile from "../pages/Profile";
 import SetupPage from "../pages/setup/SetupPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import LoginPage from "../pages/auth/LoginPage";
@@ -19,6 +23,38 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/badges"
+        element={
+          <ProtectedRoute>
+            <Badges />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leaderboard"
+        element={
+          <ProtectedRoute>
+            <Leaderboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournament"
+        element={
+          <ProtectedRoute>
+            <Tournament />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />
