@@ -11,6 +11,7 @@ function PracticeResultPage() {
   const { subjectId } = useParams();
   const navigate = useNavigate();
   const user = getUser();
+  const language = localStorage.getItem("preferredLanguage") || user.preferredLanguage;
   const result = getLastPracticeResult();
   const [showReview, setShowReview] = useState(false);
 
@@ -50,7 +51,7 @@ function PracticeResultPage() {
         {showReview && (
           <WrongAnswerReview
             wrongAnswers={result.wrongAnswers}
-            language={user.preferredLanguage}
+            language={language}
             onTryAgain={() => navigate(`/practice/${subjectId}/session`)}
           />
         )}

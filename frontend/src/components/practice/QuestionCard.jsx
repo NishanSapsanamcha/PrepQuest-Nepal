@@ -1,17 +1,21 @@
-function QuestionCard({ questionText, options, selectedAnswer, feedbackShown, onSelect }) {
+import { getText } from "../../utils/practiceUtils";
+
+function QuestionCard({ question, selectedOptionKey, onSelectOption, languageMode, isAnswered }) {
+  const text = getText(question, languageMode);
+
   return (
     <section className="dashboard-card question-card">
-      <p className="question-text">{questionText}</p>
+      <p className="question-text">{text.question}</p>
       <div className="answer-options">
-        {options.map((option) => (
+        {text.options.map((option) => (
           <button
-            className={`answer-option${selectedAnswer === option ? " selected" : ""}`}
+            className={`answer-option${selectedOptionKey === option.key ? " selected" : ""}`}
             type="button"
-            key={option}
-            disabled={feedbackShown}
-            onClick={() => onSelect(option)}
+            key={option.key}
+            disabled={isAnswered}
+            onClick={() => onSelectOption(option.key)}
           >
-            {option}
+            {option.label}
           </button>
         ))}
       </div>

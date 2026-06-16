@@ -17,11 +17,48 @@ export function normalizeExamId(exam) {
   return examNameToId[exam] || exam || "sakha-adhikrit";
 }
 
-export function normalizeLanguage(language) {
+export function normalizeLanguageMode(language) {
   const value = String(language || "english").toLowerCase();
   if (value.includes("both")) return "both";
   if (value.includes("nepali")) return "nepali";
   return "english";
+}
+
+export const normalizeLanguage = normalizeLanguageMode;
+
+const placeholderPattern = /distractor|placeholder|sample question|lorem|fake explanation|generic practice item|practice item/i;
+const validOptionKeys = new Set(["A", "B", "C", "D"]);
+
+export function validateQuestionBank(questions) {
+  const warnings = [];
+
+  questions.forEach((question, index) => {
+    const label = question?.id || `question at index ${index}`;
+    if (!question?.id) warnings.push(`${label}: missing id`);
+    if (!question?.subjectId) warnings.push(`${label}: missing subjectId`);
+    if (!question?.question_en) warnings.push(`${label}: missing question_en`);
+    if (!question?.question_np) warnings.push(`${label}: missing question_np`);
+    if (!Array.isArray(question?.options) || question.options.length !== 4) warnings.push(`${label}: must have exactly 4 options`);
+    question?.options?.forEach((option) => {
+      if (!option?.key || !option?.en || !option?.np) warnings.push(`${label}: every option needs key, en, and np`);
+      if ([option?.en, option?.np].some((value) => placeholderPattern.test(String(value || "")))) {
+        warnings.push(`${label}: option contains placeholder text`);
+      }
+    });
+    if (!validOptionKeys.has(question?.correctOption)) warnings.push(`${label}: correctOption must be A, B, C, or D`);
+    if (!question?.explanation_en) warnings.push(`${label}: missing explanation_en`);
+    if (!question?.explanation_np) warnings.push(`${label}: missing explanation_np`);
+    if (question?.reviewed !== true) warnings.push(`${label}: reviewed must be true`);
+    if ([question?.explanation_en, question?.explanation_np, question?.question_en, question?.question_np].some((value) => placeholderPattern.test(String(value || "")))) {
+      warnings.push(`${label}: question or explanation contains placeholder text`);
+    }
+  });
+
+  if (warnings.length && import.meta.env.DEV) {
+    console.warn("Practice question bank validation warnings:", warnings);
+  }
+
+  return { valid: warnings.length === 0, warnings };
 }
 
 export function getExamSubjects(exam) {
@@ -31,26 +68,53 @@ export function getExamSubjects(exam) {
 }
 
 export function getSubjectQuestions(subjectId, exam) {
+  validateQuestionBank(practiceQuestions);
   const examId = normalizeExamId(exam);
   const examLabel = examTracks[examId]?.name || "Sakha Adhikrit";
+  const subjectAliases = {
+    "iq-mental-ability": "general-ability-iq",
+    "nepali-grammar": "nepali",
+    "english-grammar": "english",
+  };
+  const questionSubjectId = subjectAliases[subjectId] || subjectId;
   const questions = practiceQuestions.filter(
-    (question) => question.subjectId === subjectId && (!question.examTrack || question.examTrack === examLabel)
+    (question) =>
+      question.subjectId === questionSubjectId &&
+      (!question.examTracks?.length || question.examTracks.includes(examLabel))
   );
-  return questions.length >= 10 ? questions.slice(0, 10) : [...questions, ...questions].slice(0, 10);
+  if (questions.length >= 10) return questions.slice(0, 10);
+  if (!questions.length) return [];
+
+  return Array.from({ length: 10 }, (_, index) => {
+    const question = questions[index % questions.length];
+    return index < questions.length ? question : { ...question, id: `${question.id}-repeat-${index}` };
+  });
 }
 
 export function getText(question, language) {
-  const mode = normalizeLanguage(language);
+  const mode = normalizeLanguageMode(language);
+  const normalizedOptions = Array.isArray(question.options)
+    ? question.options
+    : (question.options_en || []).map((en, index) => ({
+        key: ["A", "B", "C", "D"][index],
+        en,
+        np: question.options_np?.[index] || en,
+      }));
+  const normalizedCorrectOption =
+    question.correctOption ||
+    normalizedOptions.find((option) => option.en === question.correctAnswer || option.np === question.correctAnswerNp)?.key ||
+    "A";
+  const correctOption = normalizedOptions.find((option) => option.key === normalizedCorrectOption) || normalizedOptions[0];
   const english = {
     question: question.question_en,
-    options: question.options_en,
-    correctAnswer: question.correctAnswer,
+    options: normalizedOptions.map((option) => ({ key: option.key, label: `${option.key}. ${option.en}` })),
+    correctAnswer: correctOption?.en,
     explanation: question.explanation_en,
   };
   const nepali = {
     question: question.question_np || question.question_en,
-    options: question.options_np || question.options_en,
-    correctAnswer: question.correctAnswerNp || question.correctAnswer,
+    options: normalizedOptions.map((option) => ({ key: option.key, label: `${option.key}. ${option.np || option.en}` })),
+    correctAnswer: correctOption?.np || correctOption?.en,
     explanation: question.explanation_np || question.explanation_en,
   };
 
@@ -58,12 +122,32 @@ export function getText(question, language) {
   if (mode === "both") {
     return {
       question: `${english.question}\n${nepali.question}`,
-      options: english.options.map((option, index) => `${option} / ${nepali.options[index] || option}`),
+      options: normalizedOptions.map((option) => ({
+        key: option.key,
+        label: `${option.key}. ${option.en}\n   ${option.np || option.en}`,
+      })),
       correctAnswer: `${english.correctAnswer} / ${nepali.correctAnswer}`,
       explanation: `${english.explanation}\n${nepali.explanation}`,
     };
   }
   return english;
+}
+
+export function getOptionLabel(question, optionKey, language) {
+  if (!optionKey || optionKey === "SKIPPED") return "Skipped";
+  const mode = normalizeLanguageMode(language);
+  const normalizedOptions = Array.isArray(question.options)
+    ? question.options
+    : (question.options_en || []).map((en, index) => ({
+        key: ["A", "B", "C", "D"][index],
+        en,
+        np: question.options_np?.[index] || en,
+      }));
+  const option = normalizedOptions.find((item) => item.key === optionKey);
+  if (!option) return optionKey;
+  if (mode === "nepali") return option.np || option.en;
+  if (mode === "both") return `${option.en} / ${option.np || option.en}`;
+  return option.en;
 }
 
 export function buildSubjectProgress(subjectId) {
@@ -113,7 +197,21 @@ export function completePracticeSession({ subjectId, subjectName, answers, quest
     .filter((answer) => !answer.isCorrect)
     .map((answer) => {
       const question = questions.find((item) => item.id === answer.questionId);
-      return { ...answer, question, subjectId, subjectName, savedAt: new Date().toISOString() };
+      return {
+        questionId: question.id,
+        question_en: question.question_en,
+        question_np: question.question_np,
+        selectedOptionKey: answer.selectedOptionKey,
+        correctOption: question.correctOption,
+        explanation_en: question.explanation_en,
+        explanation_np: question.explanation_np,
+        topic: question.topic,
+        subjectId,
+        subjectName,
+        languageMode: answer.languageMode,
+        question,
+        savedAt: new Date().toISOString(),
+      };
     });
   const topicCounts = wrongAnswers.reduce((counts, answer) => {
     const topic = answer.question?.topic || "Core concepts";

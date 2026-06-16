@@ -13,7 +13,7 @@ function PracticePage() {
   const user = getUser();
   const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
-  const languageLabel = user.preferredLanguage || "English";
+  const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
   const subjects = getExamSubjects(selectedExamId);
 
   return (

@@ -37,6 +37,7 @@
   background: rgba(15, 23, 39, 0.72) !important;
   color: var(--soft);
   cursor: pointer;
+  white-space: pre-line;
   transition: border-color 0.22s ease, background 0.22s ease, transform 0.22s ease;
 }
 

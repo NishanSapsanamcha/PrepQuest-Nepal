@@ -1,5 +1,5 @@
 import { FaRedo } from "react-icons/fa";
-import { getText } from "../../utils/practiceUtils";
+import { getOptionLabel, getText, normalizeLanguageMode } from "../../utils/practiceUtils";
 
 function WrongAnswerReview({ wrongAnswers, language, onTryAgain }) {
   if (!wrongAnswers?.length) {
@@ -16,13 +16,23 @@ function WrongAnswerReview({ wrongAnswers, language, onTryAgain }) {
       <h2 className="card-title">Wrong Answer Review</h2>
       <div className="wrong-review-list">
         {wrongAnswers.map((item) => {
-          const text = getText(item.question, language);
+          const question = item.question || {
+            id: item.questionId,
+            question_en: item.question_en,
+            question_np: item.question_np,
+            correctOption: item.correctOption,
+            explanation_en: item.explanation_en,
+            explanation_np: item.explanation_np,
+            options: item.options || [],
+          };
+          const mode = normalizeLanguageMode(language || item.languageMode);
+          const text = getText(question, mode);
           return (
-            <article className="wrong-review-item" key={`${item.questionId}-${item.savedAt || item.userAnswer}`}>
-              <span className="subject-badge">{item.question.topic}</span>
+            <article className="wrong-review-item" key={`${item.questionId}-${item.savedAt || item.selectedOptionKey}`}>
+              <span className="subject-badge">{item.topic || question.topic}</span>
               <h3>{text.question}</h3>
-              <p>Your answer: <strong>{item.userAnswer || "Skipped"}</strong></p>
-              <p>Correct answer: <strong>{text.correctAnswer}</strong></p>
+              <p>Your answer: <strong>{getOptionLabel(question, item.selectedOptionKey, mode)}</strong></p>
+              <p>Correct answer: <strong>{getOptionLabel(question, item.correctOption, mode)}</strong></p>
               <p>{text.explanation}</p>
               <button className="subject-btn" type="button" onClick={onTryAgain}><FaRedo /> Try Again</button>
             </article>

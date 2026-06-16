@@ -45,7 +45,7 @@ function SubjectPracticePage() {
         <div className="header-right">
           <div className="header-chips">
             <span className="chip"><FaGraduationCap /> Exam: <strong>{user.selectedExam}</strong></span>
-            <span className="chip"><FaLanguage /> Language: <strong>{user.preferredLanguage}</strong></span>
+            <span className="chip"><FaLanguage /> Language: <strong>{localStorage.getItem("preferredLanguage") || user.preferredLanguage}</strong></span>
           </div>
           <button className="outline-pill" type="button" onClick={() => navigate("/practice")}><FaArrowLeft /> All Subjects</button>
         </div>
