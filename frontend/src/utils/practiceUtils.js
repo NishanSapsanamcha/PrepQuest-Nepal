@@ -1,7 +1,7 @@
 import { examNameToId, examTracks } from "../data/examTracks";
 import { practiceQuestions } from "../data/practiceQuestions";
-import { getSubjectById } from "../data/subjects";
-import { calculateAccuracy, calculatePracticeRewards, checkLevelUp, getSubjectLevel } from "./xpUtils";
+import { getSubjectById, subjects } from "../data/subjects";
+import { calculateAccuracy, calculatePracticeRewards, checkLevelUp, getNextLevelProgress } from "./xpUtils";
 import {
   getPracticeHistory,
   getReviewQuestions,
@@ -26,8 +26,18 @@ export function normalizeLanguageMode(language) {
 
 export const normalizeLanguage = normalizeLanguageMode;
 
-const placeholderPattern = /distractor|placeholder|sample question|lorem|fake explanation|generic practice item|practice item/i;
+const placeholderPattern = /distractor|placeholder|sample|fake|lorem|test question|option a|option b|option c|option d/i;
 const validOptionKeys = new Set(["A", "B", "C", "D"]);
+const requiredOptionKeys = ["A", "B", "C", "D"];
+
+export const defaultSubjectProgress = {
+  xp: 0,
+  questionsSolved: 0,
+  correctAnswers: 0,
+  wrongAnswers: 0,
+  savedForReview: 0,
+  lastPracticedAt: null,
+};
 
 export function validateQuestionBank(questions) {
   const warnings = [];
@@ -35,17 +45,25 @@ export function validateQuestionBank(questions) {
   questions.forEach((question, index) => {
     const label = question?.id || `question at index ${index}`;
     if (!question?.id) warnings.push(`${label}: missing id`);
+    if (!Array.isArray(question?.examTracks)) warnings.push(`${label}: examTracks must be an array`);
     if (!question?.subjectId) warnings.push(`${label}: missing subjectId`);
+    if (!question?.subject) warnings.push(`${label}: missing subject`);
+    if (!question?.topic) warnings.push(`${label}: missing topic`);
+    if (!question?.difficulty) warnings.push(`${label}: missing difficulty`);
     if (!question?.question_en) warnings.push(`${label}: missing question_en`);
     if (!question?.question_np) warnings.push(`${label}: missing question_np`);
     if (!Array.isArray(question?.options) || question.options.length !== 4) warnings.push(`${label}: must have exactly 4 options`);
+    const optionKeys = question?.options?.map((option) => option.key) || [];
+    if (requiredOptionKeys.some((key) => !optionKeys.includes(key))) warnings.push(`${label}: option keys must be A, B, C, and D`);
     question?.options?.forEach((option) => {
       if (!option?.key || !option?.en || !option?.np) warnings.push(`${label}: every option needs key, en, and np`);
+      if (!validOptionKeys.has(option?.key)) warnings.push(`${label}: option key must be A, B, C, or D`);
       if ([option?.en, option?.np].some((value) => placeholderPattern.test(String(value || "")))) {
         warnings.push(`${label}: option contains placeholder text`);
       }
     });
     if (!validOptionKeys.has(question?.correctOption)) warnings.push(`${label}: correctOption must be A, B, C, or D`);
+    if (question?.correctOption && !optionKeys.includes(question.correctOption)) warnings.push(`${label}: correctOption does not match an option key`);
     if (!question?.explanation_en) warnings.push(`${label}: missing explanation_en`);
     if (!question?.explanation_np) warnings.push(`${label}: missing explanation_np`);
     if (question?.reviewed !== true) warnings.push(`${label}: reviewed must be true`);
@@ -61,34 +79,123 @@ export function validateQuestionBank(questions) {
   return { valid: warnings.length === 0, warnings };
 }
 
+function isQuestionValid(question) {
+  return validateQuestionBank([question]).valid;
+}
+
 export function getExamSubjects(exam) {
   const examId = normalizeExamId(exam);
   const track = examTracks[examId] || examTracks["sakha-adhikrit"];
   return track.subjectIds.map(getSubjectById).filter(Boolean);
 }
 
-export function getSubjectQuestions(subjectId, exam) {
+export function getValidatedQuestions() {
   validateQuestionBank(practiceQuestions);
-  const examId = normalizeExamId(exam);
+  return practiceQuestions.filter(isQuestionValid);
+}
+
+const subjectAliases = {
+  "iq-mental-ability": "general-ability-iq",
+  "nepali-grammar": "nepali",
+  "english-grammar": "english",
+};
+
+export function getQuestionsBySubject(subjectId, selectedExam) {
+  const examId = normalizeExamId(selectedExam);
   const examLabel = examTracks[examId]?.name || "Sakha Adhikrit";
-  const subjectAliases = {
-    "iq-mental-ability": "general-ability-iq",
-    "nepali-grammar": "nepali",
-    "english-grammar": "english",
-  };
   const questionSubjectId = subjectAliases[subjectId] || subjectId;
-  const questions = practiceQuestions.filter(
+  return getValidatedQuestions().filter(
     (question) =>
       question.subjectId === questionSubjectId &&
       (!question.examTracks?.length || question.examTracks.includes(examLabel))
   );
-  if (questions.length >= 10) return questions.slice(0, 10);
-  if (!questions.length) return [];
+}
 
-  return Array.from({ length: 10 }, (_, index) => {
-    const question = questions[index % questions.length];
-    return index < questions.length ? question : { ...question, id: `${question.id}-repeat-${index}` };
+export function getSubjectQuestions(subjectId, exam) {
+  return getQuestionsBySubject(subjectId, exam).slice(0, 10);
+}
+
+export function getValidatedQuestionCountBySubject(subjectId, selectedExam) {
+  return getQuestionsBySubject(subjectId, selectedExam).length;
+}
+
+export function getAvailableSubjectsForExam(selectedExam) {
+  return getExamSubjects(selectedExam).filter((subject) => getValidatedQuestionCountBySubject(subject.id, selectedExam) > 0);
+}
+
+export function normalizeSubjectProgress(progress = {}) {
+  const normalized = {};
+
+  subjects.forEach((subject) => {
+    const existing = progress[subject.id] || {};
+    const correctAnswers = Number.isFinite(existing.correctAnswers)
+      ? existing.correctAnswers
+      : Number.isFinite(existing.correct)
+        ? existing.correct
+        : 0;
+    const wrongAnswers = Number.isFinite(existing.wrongAnswers)
+      ? existing.wrongAnswers
+      : Number.isFinite(existing.wrong)
+        ? existing.wrong
+        : 0;
+    const questionsSolved = Number.isFinite(existing.questionsSolved)
+      ? existing.questionsSolved
+      : correctAnswers + wrongAnswers;
+    const xp = Number.isFinite(existing.xp) ? Math.max(0, existing.xp) : 0;
+    const impossible =
+      xp > 0 && questionsSolved === 0 ||
+      correctAnswers + wrongAnswers > questionsSolved ||
+      correctAnswers < 0 ||
+      wrongAnswers < 0 ||
+      questionsSolved < 0;
+    const oldFakeSeed =
+      (existing.xp === 80 && existing.questionsSolved === 12 && (existing.correct === 8 || existing.correctAnswers === 8)) ||
+      (subject.id === "constitution" && existing.xp === 160 && existing.questionsSolved === 30 && (existing.correct === 19 || existing.correctAnswers === 19));
+
+    normalized[subject.id] = impossible || oldFakeSeed
+      ? { ...defaultSubjectProgress }
+      : {
+          ...defaultSubjectProgress,
+          xp,
+          questionsSolved: Math.max(0, questionsSolved),
+          correctAnswers: Math.max(0, correctAnswers),
+          wrongAnswers: Math.max(0, wrongAnswers),
+          savedForReview: Number.isFinite(existing.savedForReview) ? Math.max(0, existing.savedForReview) : 0,
+          lastPracticedAt: existing.lastPracticedAt || null,
+        };
   });
+
+  return normalized;
+}
+
+export function getNormalizedSubjectProgress() {
+  const normalized = normalizeSubjectProgress(getSubjectProgress());
+  saveSubjectProgress(normalized);
+  return normalized;
+}
+
+export function buildSubjectCardData(subject, userProgress, selectedExam) {
+  const progress = { ...defaultSubjectProgress, ...(userProgress?.[subject.id] || {}) };
+  const questionsAvailable = getValidatedQuestionCountBySubject(subject.id, selectedExam);
+  const levelProgress = getNextLevelProgress(progress.xp);
+  const accuracy = progress.questionsSolved > 0 ? Math.round((progress.correctAnswers / progress.questionsSolved) * 100) : null;
+  const masteryStatus =
+    progress.questionsSolved === 0 ? "Not Started"
+    : accuracy < 50 ? "Needs Practice"
+    : accuracy < 70 ? "Developing"
+    : accuracy < 85 ? "Strong"
+    : "Exam Ready";
+
+  return {
+    ...subject,
+    progress,
+    questionsAvailable,
+    levelProgress,
+    currentLevel: levelProgress.currentLevel,
+    accuracy,
+    masteryStatus,
+    canPractice: questionsAvailable > 0,
+  };
 }
 
 export function getText(question, language) {
@@ -151,15 +258,8 @@ export function getOptionLabel(question, optionKey, language) {
 }
 
 export function buildSubjectProgress(subjectId) {
-  const progress = getSubjectProgress();
-  return progress[subjectId] || {
-    xp: subjectId === "constitution" ? 160 : 80,
-    questionsSolved: subjectId === "constitution" ? 30 : 12,
-    correct: subjectId === "constitution" ? 19 : 8,
-    wrong: subjectId === "constitution" ? 11 : 4,
-    accuracy: subjectId === "constitution" ? 62 : 67,
-    level: getSubjectLevel(subjectId === "constitution" ? 160 : 80).level,
-  };
+  const progress = getNormalizedSubjectProgress();
+  return progress[subjectId] || { ...defaultSubjectProgress };
 }
 
 export function completePracticeSession({ subjectId, subjectName, answers, questions, practiceType = "Quick Practice" }) {
@@ -180,19 +280,21 @@ export function completePracticeSession({ subjectId, subjectName, answers, quest
   const levelUp = checkLevelUp(previousXp, newSubjectXp);
   const levelCoins = levelUp.didLevelUp ? 30 : 0;
   const totalCoinsEarned = rewards.coinsEarned + levelCoins;
-  const newCorrect = (previousProgress.correct || 0) + correctCount;
-  const newWrong = (previousProgress.wrong || 0) + wrongCount;
+  const newCorrect = (previousProgress.correctAnswers || previousProgress.correct || 0) + correctCount;
+  const newWrong = (previousProgress.wrongAnswers || previousProgress.wrong || 0) + wrongCount;
   const questionsSolved = (previousProgress.questionsSolved || 0) + questions.length;
   const updatedProgress = {
     ...previousProgress,
     xp: newSubjectXp,
     questionsSolved,
-    correct: newCorrect,
-    wrong: newWrong,
+    correctAnswers: newCorrect,
+    wrongAnswers: newWrong,
+    savedForReview: previousProgress.savedForReview || 0,
+    lastPracticedAt: new Date().toISOString(),
     accuracy: calculateAccuracy(newCorrect, newCorrect + newWrong),
     level: levelUp.newLevel.level,
   };
-  const progressMap = { ...getSubjectProgress(), [subjectId]: updatedProgress };
+  const progressMap = { ...getNormalizedSubjectProgress(), [subjectId]: updatedProgress };
   const wrongAnswers = answers
     .filter((answer) => !answer.isCorrect)
     .map((answer) => {
@@ -248,4 +350,16 @@ export function completePracticeSession({ subjectId, subjectName, answers, quest
   saveReviewQuestions([...wrongAnswers, ...getReviewQuestions()]);
   savePracticeHistory([result, ...getPracticeHistory()]);
   return result;
+}
+
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  window.resetPrepQuestPracticeProgress = () => {
+    [
+      "prepquest_subject_progress",
+      "prepquest_practice_history",
+      "prepquest_review_questions",
+      "prepquest_last_practice_result",
+    ].forEach((key) => localStorage.removeItem(key));
+    console.info("PrepQuest practice progress has been reset.");
+  };
 }

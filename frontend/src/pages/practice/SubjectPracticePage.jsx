@@ -4,7 +4,7 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import PracticeTypeCard from "../../components/practice/PracticeTypeCard";
 import { subjectLevels } from "../../data/subjectLevels";
 import { getSubjectById } from "../../data/subjects";
-import { buildSubjectProgress } from "../../utils/practiceUtils";
+import { buildSubjectCardData, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
 import { getUser } from "../../utils/storageUtils";
 import { getNextLevelProgress } from "../../utils/xpUtils";
 import "./SubjectPracticePage.css";
@@ -23,8 +23,10 @@ function SubjectPracticePage() {
   const navigate = useNavigate();
   const user = getUser();
   const subject = getSubjectById(subjectId);
-  const progress = buildSubjectProgress(subjectId);
-  const levelProgress = getNextLevelProgress(progress.xp);
+  const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
+  const cardData = subject ? buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExamId) : null;
+  const progress = cardData?.progress || {};
+  const levelProgress = getNextLevelProgress(progress.xp || 0);
 
   if (!subject) {
     return (
@@ -57,30 +59,31 @@ function SubjectPracticePage() {
             <div>
               <p className="eyebrow">Subject XP</p>
               <h2>{progress.xp} / {levelProgress.nextLevelXp} XP</h2>
-              <p>{levelProgress.remainingXp} XP needed to unlock Level {levelProgress.nextLevel?.level || levelProgress.currentLevel.level}: {levelProgress.nextLevel?.name || "Mastered"}</p>
+              <p>{levelProgress.xpNeeded} XP needed to unlock Level {levelProgress.nextLevel?.level || levelProgress.currentLevel.level}: {levelProgress.nextLevel?.name || "Mastered"}</p>
             </div>
             <div className="subject-progress-stats">
-              <span>Progress to Level {levelProgress.nextLevel?.level || levelProgress.currentLevel.level}: <strong>{levelProgress.percent}%</strong></span>
-              <span>Accuracy: <strong>{progress.accuracy}%</strong></span>
+              <span>Progress to Level {levelProgress.nextLevel?.level || levelProgress.currentLevel.level}: <strong>{levelProgress.progressPercent}%</strong></span>
+              <span>Accuracy: <strong>{cardData.accuracy === null ? "Not started" : `${cardData.accuracy}%`}</strong></span>
               <span>Questions Solved: <strong>{progress.questionsSolved}</strong></span>
+              <span>Validated Questions: <strong>{cardData.questionsAvailable}</strong></span>
             </div>
           </div>
           <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${levelProgress.percent}%` }} />
+            <div className="progress-fill" style={{ width: `${levelProgress.progressPercent}%` }} />
           </div>
         </section>
 
         <section className="practice-type-grid">
           {practiceTypes.map((type) => {
             const level = subjectLevels.find((item) => item.level === type.level);
-            const unlocked = progress.xp >= level.requiredXp;
+            const unlocked = cardData.canPractice && progress.xp >= level.requiredXp;
             return (
               <PracticeTypeCard
                 key={type.name}
                 type={type}
                 unlocked={unlocked}
-                requirement={`${level.requiredXp} XP required`}
-                onStart={() => navigate(`/practice/${subjectId}/session`)}
+                requirement={cardData.canPractice ? `${level.requiredXp} XP required` : "Question bank not ready"}
+                onStart={() => cardData.canPractice && navigate(`/practice/${subjectId}/session`)}
               />
             );
           })}

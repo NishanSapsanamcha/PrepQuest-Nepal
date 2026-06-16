@@ -4,7 +4,12 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
 import { examTracks } from "../../data/examTracks";
-import { getExamSubjects, buildSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
+import {
+  buildSubjectCardData,
+  getExamSubjects,
+  getNormalizedSubjectProgress,
+  normalizeExamId,
+} from "../../utils/practiceUtils";
 import { getUser } from "../../utils/storageUtils";
 import "./PracticePage.css";
 
@@ -14,7 +19,35 @@ function PracticePage() {
   const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
   const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
-  const subjects = getExamSubjects(selectedExamId);
+  const subjectProgress = getNormalizedSubjectProgress();
+  const subjectCards = getExamSubjects(selectedExamId).map((subject) =>
+    buildSubjectCardData(subject, subjectProgress, selectedExamId)
+  );
+  const practicedSubjects = subjectCards.filter((subject) => subject.progress.questionsSolved > 0 && subject.canPractice);
+  const recommendationSubject =
+    practicedSubjects.length > 0
+      ? [...practicedSubjects].sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101))[0]
+      : subjectCards.find((subject) => subject.id === "constitution" && subject.canPractice) ||
+        subjectCards.find((subject) => subject.id === "general-knowledge" && subject.canPractice) ||
+        [...subjectCards].sort((a, b) => b.questionsAvailable - a.questionsAvailable)[0];
+  const recommendation = recommendationSubject
+    ? {
+        title: `Start with ${recommendationSubject.name}`,
+        text:
+          recommendationSubject.progress.questionsSolved > 0
+            ? `${recommendationSubject.name} has your lowest current accuracy. Complete a focused practice to improve it.`
+            : `Start with ${recommendationSubject.name} to build your foundation.`,
+        questionsAvailable: recommendationSubject.questionsAvailable,
+        canPractice: recommendationSubject.canPractice,
+        subjectId: recommendationSubject.id,
+      }
+    : {
+        title: "Question bank not ready",
+        text: "Validated practice questions are not available yet.",
+        questionsAvailable: 0,
+        canPractice: false,
+        subjectId: null,
+      };
 
   return (
     <DashboardLayout activeKey="practice">
@@ -51,11 +84,14 @@ function PracticePage() {
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaLayerGroup /></div>
-            <div><div className="stat-value">{subjects.length} Subjects</div><div className="stat-label">Subjects</div><div className="stat-helper">Based on your exam track</div></div>
+            <div><div className="stat-value">{subjectCards.length} Subjects</div><div className="stat-label">Subjects</div><div className="stat-helper">Based on your exam track</div></div>
           </article>
         </section>
 
-        <RecommendedPracticeCard onStart={() => navigate("/practice/constitution/session")} />
+        <RecommendedPracticeCard
+          recommendation={recommendation}
+          onStart={() => recommendation.canPractice && navigate(`/practice/${recommendation.subjectId}/session`)}
+        />
 
         <section className="practice-section-heading">
           <h2><FaBookOpen /> Subject Mastery Quest</h2>
@@ -63,12 +99,11 @@ function PracticePage() {
         </section>
 
         <section className="subject-grid">
-          {subjects.map((subject) => (
+          {subjectCards.map((subject) => (
             <SubjectCard
               key={subject.id}
               subject={subject}
-              progress={buildSubjectProgress(subject.id)}
-              onPractice={() => navigate(`/practice/${subject.id}`)}
+              onPractice={() => subject.canPractice && navigate(`/practice/${subject.id}`)}
             />
           ))}
         </section>

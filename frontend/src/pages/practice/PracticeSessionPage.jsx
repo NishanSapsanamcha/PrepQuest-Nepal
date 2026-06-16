@@ -15,7 +15,8 @@ function PracticeSessionPage() {
   const navigate = useNavigate();
   const user = getUser();
   const subject = getSubjectById(subjectId);
-  const questions = useMemo(() => getSubjectQuestions(subjectId, user.selectedExam), [subjectId, user.selectedExam]);
+  const selectedExam = user.selectedExam || localStorage.getItem("selectedExam");
+  const questions = useMemo(() => getSubjectQuestions(subjectId, selectedExam), [subjectId, selectedExam]);
   const progress = buildSubjectProgress(subjectId);
   const level = getSubjectLevel(progress.xp);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,7 +28,12 @@ function PracticeSessionPage() {
   if (!subject || !questions.length) {
     return (
       <DashboardLayout activeKey="practice">
-        <section className="dashboard-content"><div className="dashboard-card"><h1>No practice questions found</h1></div></section>
+        <section className="dashboard-content">
+          <div className="dashboard-card">
+            <h1>No validated practice questions found</h1>
+            <p className="card-copy">This subject question bank is not ready yet.</p>
+          </div>
+        </section>
       </DashboardLayout>
     );
   }

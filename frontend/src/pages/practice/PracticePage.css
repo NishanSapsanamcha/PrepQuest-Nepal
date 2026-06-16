@@ -70,6 +70,10 @@
   min-height: 330px;
 }
 
+.dashboard-page .practice-subject-card.disabled {
+  opacity: 0.72;
+}
+
 .dashboard-page .practice-card-top,
 .dashboard-page .subject-card-metrics {
   display: flex;
@@ -93,6 +97,7 @@
   color: var(--muted);
   font-size: 0.8rem;
   line-height: 1.5;
+  flex-wrap: wrap;
 }
 
 .dashboard-page .subject-level-line {
@@ -103,6 +108,13 @@
 
 .dashboard-page .subject-card-metrics strong {
   color: var(--teal);
+}
+
+.dashboard-page .practice-subject-card .subject-btn:disabled,
+.dashboard-page .recommended-practice-card .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
 }
 
 @media (max-width: 860px) {
