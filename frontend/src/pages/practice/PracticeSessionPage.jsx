@@ -6,15 +6,10 @@ import AnswerFeedback from "../../components/practice/AnswerFeedback";
 import QuestionCard from "../../components/practice/QuestionCard";
 import { getSubjectById } from "../../data/subjects";
 import { buildSubjectProgress, completePracticeSession, getSubjectQuestions, normalizeLanguageMode } from "../../utils/practiceUtils";
+import { getSoundMuted, playSound, toggleSoundMuted } from "../../utils/soundUtils";
 import { getReviewQuestions, getUser, saveLastPracticeResult, saveReviewQuestions } from "../../utils/storageUtils";
 import { getNextLevelProgress, getSubjectLevel } from "../../utils/xpUtils";
 import "./PracticeSessionPage.css";
-
-const soundModules = import.meta.glob("../../assets/audio/*.mp3", { eager: true, import: "default", query: "?url" });
-const sounds = Object.entries(soundModules).reduce((library, [path, url]) => {
-  const fileName = path.split("/").pop();
-  return { ...library, [fileName]: url };
-}, {});
 
 function PracticeSessionPage() {
   const { subjectId } = useParams();
@@ -30,7 +25,7 @@ function PracticeSessionPage() {
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [answers, setAnswers] = useState([]);
-  const [isMuted, setIsMuted] = useState(() => localStorage.getItem("prepquest_sound_muted") === "true");
+  const [isMuted, setIsMuted] = useState(getSoundMuted);
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
   const isRecommendedPractice = searchParams.get("recommended") === "1";
 
@@ -49,44 +44,27 @@ function PracticeSessionPage() {
 
   const question = questions[currentIndex];
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
-  const soundAvailable = Boolean(sounds["correct.mp3"] || sounds["wrong.mp3"] || sounds["click.mp3"] || sounds["level-up.mp3"] || sounds["complete.mp3"]);
   const correctCount = answers.filter((answer) => answer.isCorrect).length;
   const wrongCount = answers.filter((answer) => !answer.isCorrect).length;
   const answeredCount = answers.length;
   const accuracySoFar = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
   const subjectLevelProgress = getNextLevelProgress(progress.xp);
 
-  const playSound = (fileName) => {
-    if (isMuted || !sounds[fileName]) return;
-    const audio = new Audio(sounds[fileName]);
-    audio.volume = 0.42;
-    audio.play().catch(() => {});
-  };
-
   const handleSoundToggle = () => {
-    setIsMuted((current) => {
-      const next = !current;
-      localStorage.setItem("prepquest_sound_muted", String(next));
-
-      if (!next && sounds["click.mp3"]) {
-        const audio = new Audio(sounds["click.mp3"]);
-        audio.volume = 0.35;
-        audio.play().catch(() => {});
-      }
-
-      return next;
-    });
+    const next = toggleSoundMuted();
+    setIsMuted(next);
+    if (!next) playSound("click");
   };
 
   const handleOptionSelect = (optionKey) => {
     if (feedback) return;
-    playSound("click.mp3");
+    playSound("click");
     setSelectedOptionKey(optionKey);
   };
 
   const handleSubmit = () => {
     if (!selectedOptionKey || feedback) return;
-    playSound("click.mp3");
+    playSound("click");
     const isCorrect = selectedOptionKey === question.correctOption;
     const answer = {
       questionId: question.id,
@@ -97,7 +75,7 @@ function PracticeSessionPage() {
     };
     setAnswers((current) => [...current, answer]);
     setFeedback({ isCorrect, answer });
-    playSound(isCorrect ? "correct.mp3" : "wrong.mp3");
+    playSound(isCorrect ? "correct" : "wrong");
   };
 
   const finishSession = (finalAnswers) => {
@@ -109,12 +87,13 @@ function PracticeSessionPage() {
       practiceType: "Quick Practice",
       isRecommendedPractice,
     });
+    playSound(result.levelUp?.didLevelUp ? "levelUp" : "complete");
     saveLastPracticeResult(result);
     navigate(`/practice/${subjectId}/result`);
   };
 
   const handleNext = () => {
-    playSound("click.mp3");
+    playSound("click");
     const currentAnswers = feedback?.answer && !answers.some((answer) => answer.questionId === feedback.answer.questionId)
       ? [...answers, feedback.answer]
       : answers;
@@ -129,7 +108,7 @@ function PracticeSessionPage() {
 
   const handleSkip = () => {
     if (feedback) return;
-    playSound("click.mp3");
+    playSound("click");
     const skippedAnswer = {
       questionId: question.id,
       selectedOptionKey: "SKIPPED",
@@ -144,7 +123,7 @@ function PracticeSessionPage() {
 
   const handleSaveReview = () => {
     if (!feedback?.answer) return;
-    playSound("click.mp3");
+    playSound("click");
     saveReviewQuestions([
       {
         questionId: question.id,
@@ -175,15 +154,22 @@ function PracticeSessionPage() {
         </div>
         <div className="header-right">
           <button
-            className={`sound-toggle${!soundAvailable ? " unavailable" : ""}`}
+            className="sound-toggle"
             type="button"
-            aria-label={isMuted ? "Unmute practice sounds" : "Mute practice sounds"}
-            title={soundAvailable ? (isMuted ? "Unmute practice sounds" : "Mute practice sounds") : "Audio files not found"}
+            aria-label={isMuted ? "Sound Off" : "Sound On"}
+            title={isMuted ? "Sound Off" : "Sound On"}
             onClick={handleSoundToggle}
           >
             {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
           </button>
-          <button className="outline-pill exit-practice-btn" type="button" onClick={() => navigate(`/practice/${subjectId}`)}>
+          <button
+            className="outline-pill exit-practice-btn"
+            type="button"
+            onClick={() => {
+              playSound("click");
+              navigate(`/practice/${subjectId}`);
+            }}
+          >
             <FaDoorOpen /> Exit Practice
           </button>
         </div>

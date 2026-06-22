@@ -1,12 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { FaCoins, FaFire, FaStar, FaTrophy } from "react-icons/fa";
 import { getNextLevelProgress } from "../../utils/xpUtils";
-
-const soundModules = import.meta.glob("../../assets/audio/*.mp3", { eager: true, import: "default", query: "?url" });
-const sounds = Object.entries(soundModules).reduce((library, [path, url]) => {
-  const fileName = path.split("/").pop();
-  return { ...library, [fileName]: url };
-}, {});
 
 function ResultSummary({ result }) {
   const progress = getNextLevelProgress(result.newSubjectXp);
@@ -36,16 +30,6 @@ function ResultSummary({ result }) {
     { label: "Level-up Coins", amount: rewardCoins.levelUpCoins || 0 },
     { label: "Perfect Score Coins", amount: rewardCoins.perfectScoreCoins || 0 },
   ].filter((row) => row.amount > 0);
-
-  useEffect(() => {
-    if (result.rewardValidationFailed) return;
-    if (localStorage.getItem("prepquest_sound_muted") === "true") return;
-    const fileName = result.levelUp?.didLevelUp ? "level-up.mp3" : "complete.mp3";
-    if (!sounds[fileName]) return;
-    const audio = new Audio(sounds[fileName]);
-    audio.volume = 0.42;
-    audio.play().catch(() => {});
-  }, [result.levelUp?.didLevelUp]);
 
   if (result.rewardValidationFailed) {
     return (
