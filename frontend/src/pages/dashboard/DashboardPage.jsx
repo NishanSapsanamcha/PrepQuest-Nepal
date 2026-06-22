@@ -71,7 +71,28 @@ const routeTargets = {
   profile: "/profile",
 };
 
-const existingRoutes = new Set(["/dashboard", "/login", "/signup", "/forgot-password", "/setup", "/practice"]);
+const existingRoutes = new Set(["/dashboard", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
+
+const subjectData = {
+  "nayab-subba": [
+    { name: "General Knowledge", progress: 60, accuracy: 75, solved: "120/200", Icon: Globe },
+    { name: "Constitution of Nepal", progress: 45, accuracy: 62, solved: "90/200", Icon: FileText },
+    { name: "Current Affairs", progress: 35, accuracy: 68, solved: "70/200", Icon: Newspaper },
+    { name: "IQ / Mental Ability", progress: 50, accuracy: 72, solved: "100/200", Icon: Brain },
+    { name: "Nepali Grammar", progress: 55, accuracy: 70, solved: "110/200", Icon: Type },
+    { name: "English Grammar", progress: 65, accuracy: 78, solved: "130/200", Icon: Book },
+  ],
+  "sakha-adhikrit": [
+    { name: "General Knowledge", progress: 60, accuracy: 75, solved: "120/200", Icon: Globe },
+    { name: "Constitution of Nepal", progress: 45, accuracy: 62, solved: "90/200", Icon: FileText },
+    { name: "Current Affairs", progress: 35, accuracy: 68, solved: "70/200", Icon: Newspaper },
+    { name: "Governance Basics", progress: 52, accuracy: 71, solved: "104/200", Icon: Building2 },
+    { name: "Public Administration", progress: 48, accuracy: 66, solved: "96/200", Icon: Briefcase },
+    { name: "General Ability / IQ", progress: 50, accuracy: 72, solved: "100/200", Icon: Brain },
+    { name: "Nepali", progress: 55, accuracy: 70, solved: "110/200", Icon: Type },
+    { name: "English", progress: 65, accuracy: 78, solved: "130/200", Icon: Book },
+  ],
+};
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },

@@ -1,5 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
+import Badges from "../pages/Badges";
+import Leaderboard from "../pages/Leaderboard";
+import Tournament from "../pages/Tournament";
+import Profile from "../pages/Profile";
 import SetupPage from "../pages/setup/SetupPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import LoginPage from "../pages/auth/LoginPage";
@@ -29,50 +33,34 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/practice"
+        path="/badges"
         element={
           <ProtectedRoute>
-            <PracticePage />
+            <Badges />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/practice/review"
+        path="/leaderboard"
         element={
           <ProtectedRoute>
-            <PracticeReviewPage />
+            <Leaderboard />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/practice/review/session/:questionId"
+        path="/tournament"
         element={
           <ProtectedRoute>
-            <ReviewSessionPage />
+            <Tournament />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/practice/:subjectId"
+        path="/profile"
         element={
           <ProtectedRoute>
-            <SubjectPracticePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/practice/:subjectId/session"
-        element={
-          <ProtectedRoute>
-            <PracticeSessionPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/practice/:subjectId/result"
-        element={
-          <ProtectedRoute>
-            <PracticeResultPage />
+            <Profile />
           </ProtectedRoute>
         }
       />
