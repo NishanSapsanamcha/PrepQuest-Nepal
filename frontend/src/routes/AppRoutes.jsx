@@ -8,6 +8,12 @@ import SetupPage from "../pages/setup/SetupPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
+import PracticePage from "../pages/practice/PracticePage";
+import PracticeReviewPage from "../pages/practice/PracticeReviewPage";
+import ReviewSessionPage from "../pages/practice/ReviewSessionPage";
+import SubjectPracticePage from "../pages/practice/SubjectPracticePage";
+import PracticeSessionPage from "../pages/practice/PracticeSessionPage";
+import PracticeResultPage from "../pages/practice/PracticeResultPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {

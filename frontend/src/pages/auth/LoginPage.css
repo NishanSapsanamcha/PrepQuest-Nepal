@@ -691,7 +691,7 @@ body { box-sizing: border-box; }
 }
 
 /* ===== DEMO NOTICE ===== */
-.demo-notice {
+.login-notice {
   display: none;
 }
 

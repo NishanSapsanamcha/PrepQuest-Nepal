@@ -1,0 +1,314 @@
+import { useMemo, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { FaBookmark, FaDoorOpen, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import AnswerFeedback from "../../components/practice/AnswerFeedback";
+import QuestionCard from "../../components/practice/QuestionCard";
+import { getSubjectById } from "../../data/subjects";
+import { buildSubjectProgress, completePracticeSession, getSubjectQuestions, normalizeLanguageMode } from "../../utils/practiceUtils";
+import { getSoundMuted, playSound, toggleSoundMuted } from "../../utils/soundUtils";
+import {
+  getSavedReviewQuestions,
+  getUser,
+  saveLastPracticeResult,
+  saveReviewQuestion,
+  saveWrongAnswer,
+} from "../../utils/storageUtils";
+import { addXPTransaction, getCorrectAnswerXP, getNextLevelProgress, getPracticeSessionXP, getSubjectLevel } from "../../utils/xpUtils";
+import "./PracticeSessionPage.css";
+
+function PracticeSessionPage() {
+  const { subjectId } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const user = getUser();
+  const subject = getSubjectById(subjectId);
+  const selectedExam = user.selectedExam || localStorage.getItem("selectedExam");
+  const questions = useMemo(() => getSubjectQuestions(subjectId, selectedExam), [subjectId, selectedExam]);
+  const practiceSessionIdRef = useRef(`practice-${subjectId}-${Date.now()}`);
+  const progress = buildSubjectProgress(subjectId);
+  const level = getSubjectLevel(progress.xp);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOptionKey, setSelectedOptionKey] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [sessionEarnedXp, setSessionEarnedXp] = useState(() => getPracticeSessionXP(practiceSessionIdRef.current));
+  const [savedQuestionIds, setSavedQuestionIds] = useState(() => getSavedReviewQuestions().map((item) => item.questionId));
+  const [isMuted, setIsMuted] = useState(getSoundMuted);
+  const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
+  const isRecommendedPractice = searchParams.get("recommended") === "1";
+
+  if (!subject || !questions.length) {
+    return (
+      <DashboardLayout activeKey="practice">
+        <section className="dashboard-content">
+          <div className="dashboard-card">
+            <h1>No validated practice questions found</h1>
+            <p className="card-copy">This subject question bank is not ready yet.</p>
+          </div>
+        </section>
+      </DashboardLayout>
+    );
+  }
+
+  const question = questions[currentIndex];
+  const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
+  const correctCount = answers.filter((answer) => answer.isCorrect).length;
+  const wrongCount = answers.filter((answer) => !answer.isCorrect).length;
+  const answeredCount = answers.length;
+  const accuracySoFar = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const subjectLevelProgress = getNextLevelProgress(progress.xp);
+  const isCurrentQuestionSaved = savedQuestionIds.includes(question.id);
+
+  const handleSoundToggle = () => {
+    const next = toggleSoundMuted();
+    setIsMuted(next);
+    if (!next) playSound("click");
+  };
+
+  const handleOptionSelect = (optionKey) => {
+    if (feedback) return;
+    playSound("click");
+    setSelectedOptionKey(optionKey);
+  };
+
+  const handleSubmit = () => {
+    if (!selectedOptionKey || feedback) return;
+    playSound("click");
+    const isCorrect = selectedOptionKey === question.correctOption;
+    const answer = {
+      questionId: question.id,
+      selectedOptionKey,
+      correctOption: question.correctOption,
+      languageMode,
+      isCorrect,
+    };
+    setAnswers((current) => [...current, answer]);
+    setFeedback({ isCorrect, answer });
+    if (isCorrect) {
+      const xpResult = addXPTransaction({
+        type: "practice_correct_answer",
+        amount: getCorrectAnswerXP(),
+        subjectId,
+        subjectName: subject.name,
+        questionId: question.id,
+        practiceSessionId: practiceSessionIdRef.current,
+        metadata: { source: "quick_practice" },
+      });
+      if (xpResult.added) setSessionEarnedXp((current) => current + xpResult.transaction.amount);
+    } else {
+      saveWrongAnswer(question, selectedOptionKey, languageMode);
+    }
+    playSound(isCorrect ? "correct" : "wrong");
+  };
+
+  const finishSession = (finalAnswers) => {
+    const result = completePracticeSession({
+      subjectId,
+      subjectName: subject.name,
+      answers: finalAnswers,
+      questions,
+      practiceSessionId: practiceSessionIdRef.current,
+      practiceType: "Quick Practice",
+      isRecommendedPractice,
+    });
+    playSound(result.levelUp?.didLevelUp ? "levelUp" : "complete");
+    saveLastPracticeResult(result);
+    navigate(`/practice/${subjectId}/result`);
+  };
+
+  const handleNext = () => {
+    playSound("click");
+    const currentAnswers = feedback?.answer && !answers.some((answer) => answer.questionId === feedback.answer.questionId)
+      ? [...answers, feedback.answer]
+      : answers;
+    if (currentIndex === questions.length - 1) {
+      finishSession(currentAnswers);
+      return;
+    }
+    setCurrentIndex((index) => index + 1);
+    setSelectedOptionKey("");
+    setFeedback(null);
+  };
+
+  const handleSkip = () => {
+    if (feedback) return;
+    playSound("click");
+    const skippedAnswer = {
+      questionId: question.id,
+      selectedOptionKey: "SKIPPED",
+      correctOption: question.correctOption,
+      languageMode,
+      isCorrect: false,
+    };
+    const nextAnswers = [...answers, skippedAnswer];
+    setAnswers(nextAnswers);
+    setFeedback({ isCorrect: false, answer: skippedAnswer });
+  };
+
+  const handleSaveReview = () => {
+    if (!feedback?.answer || isCurrentQuestionSaved) return;
+    playSound("click");
+    saveReviewQuestion(question, feedback.answer.selectedOptionKey, languageMode);
+    setSavedQuestionIds((current) => current.includes(question.id) ? current : [question.id, ...current]);
+  };
+
+  return (
+    <DashboardLayout activeKey="practice">
+      <header className="dashboard-header session-header">
+        <div className="header-left">
+          <p className="eyebrow subject-pill">{subject.name}</p>
+          <h1>Level {level.level}: {level.name}</h1>
+          <p>Quick Practice - Question {currentIndex + 1} of {questions.length}</p>
+        </div>
+        <div className="header-right">
+          <button
+            className="sound-toggle"
+            type="button"
+            aria-label={isMuted ? "Sound Off" : "Sound On"}
+            title={isMuted ? "Sound Off" : "Sound On"}
+            onClick={handleSoundToggle}
+          >
+            {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
+          </button>
+          <button
+            className="outline-pill exit-practice-btn"
+            type="button"
+            onClick={() => {
+              playSound("click");
+              navigate(`/practice/${subjectId}`);
+            }}
+          >
+            <FaDoorOpen /> Exit Practice
+          </button>
+        </div>
+      </header>
+
+      <section className="dashboard-content practice-session-content">
+        <div className={`practice-board${feedback ? " has-feedback" : ""}`}>
+          <div className="board-question-side">
+            <div className="board-top-strip">
+              <div className="preview-progress-row">
+                <span>Question {currentIndex + 1} of {questions.length}</span>
+                <span>{progressPercent}% complete</span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+              </div>
+              <div className="progress-strip-footer">
+                <span className="xp-chip">+10 XP for correct answer</span>
+                <span className="practice-mode-chip">Quick Practice</span>
+              </div>
+            </div>
+
+            <div className={`practice-question-stack${feedback?.isCorrect ? " answered-correct" : ""}`}>
+              {feedback?.isCorrect && (
+                <div className="celebration-burst" aria-hidden="true">
+                  {Array.from({ length: 12 }, (_, index) => <span key={index} />)}
+                </div>
+              )}
+              <QuestionCard
+                question={question}
+                selectedOptionKey={selectedOptionKey}
+                correctOptionKey={question.correctOption}
+                languageMode={languageMode}
+                isAnswered={Boolean(feedback)}
+                levelLabel={`Level ${level.level}`}
+                onSelectOption={handleOptionSelect}
+                showXpBurst={Boolean(feedback?.isCorrect)}
+              />
+            </div>
+
+            <div className={`question-actions${feedback ? " answered" : ""}`}>
+              <span className="xp-preview">
+                {!feedback && "Correct answer reward: +10 XP"}
+                {feedback?.isCorrect && "+10 XP earned"}
+                {feedback && !feedback.isCorrect && "No XP earned - Review explanation"}
+              </span>
+              {!feedback ? (
+                <>
+                  <button className="btn btn-secondary" type="button" onClick={handleSkip}>Skip</button>
+                  <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>Submit Answer</button>
+                </>
+              ) : (
+                <>
+                  <button className="btn btn-secondary" type="button" disabled={isCurrentQuestionSaved} onClick={handleSaveReview}>
+                    <FaBookmark /> {isCurrentQuestionSaved ? "Saved" : "Save for Review"}
+                  </button>
+                  <button className="btn" type="button" onClick={handleNext}>{currentIndex === questions.length - 1 ? "Finish Practice" : "Next Question"}</button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <aside className="board-coach-panel" aria-label="Practice coach panel">
+            <section className="coach-section mini-session-stats">
+              <div className="coach-section-heading">
+                <span>Session</span>
+                <strong>{currentIndex + 1}/{questions.length}</strong>
+              </div>
+              <div className="summary-grid">
+                <div>
+                  <span>Correct</span>
+                  <strong>{correctCount}</strong>
+                </div>
+                <div>
+                  <span>Wrong</span>
+                  <strong>{wrongCount}</strong>
+                </div>
+                <div>
+                  <span>Accuracy</span>
+                  <strong>{accuracySoFar}%</strong>
+                </div>
+                <div>
+                  <span>Question</span>
+                  <strong>{currentIndex + 1}/{questions.length}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section className="coach-section subject-mini-progress">
+              <div className="subject-progress-hero">
+                <span>{subject.name}</span>
+                <strong>Level {level.level}: {level.name}</strong>
+              </div>
+              <div className="subject-xp-row">
+                <span>{progress.xp} / {subjectLevelProgress.nextLevelXp} XP</span>
+                <strong>{subjectLevelProgress.percent}%</strong>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${subjectLevelProgress.percent}%` }} />
+              </div>
+              <p className="subject-progress-copy">
+                {subjectLevelProgress.nextLevel
+                  ? `${subjectLevelProgress.remainingXp} XP needed for Level ${subjectLevelProgress.nextLevel.level}: ${subjectLevelProgress.nextLevel.name}`
+                  : "Highest subject level reached."}
+              </p>
+              <p className="subject-progress-copy">This session: +{sessionEarnedXp} XP</p>
+            </section>
+
+            <section className="coach-feedback-shell">
+              {feedback ? (
+                <AnswerFeedback
+                  question={question}
+                  isCorrect={feedback.isCorrect}
+                  selectedOptionKey={feedback.answer.selectedOptionKey}
+                  languageMode={languageMode}
+                />
+              ) : (
+                <div className="coach-placeholder">
+                  <span>Coach</span>
+                  <strong>Choose an answer</strong>
+                  <p>Select one option and submit to see the explanation.</p>
+                  <small>Correct answer gives +10 XP.</small>
+                </div>
+              )}
+            </section>
+          </aside>
+        </div>
+      </section>
+    </DashboardLayout>
+  );
+}
+
+export default PracticeSessionPage;

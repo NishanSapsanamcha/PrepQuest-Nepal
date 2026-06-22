@@ -1,0 +1,548 @@
+@import "./PracticePage.css";
+
+.dashboard-page {
+  --bg-main: #07111f;
+  --bg-sidebar: #081727;
+  --bg-card: #111c31;
+  --bg-card-soft: #14243a;
+  --border-soft: #223653;
+  --border-teal: rgba(24, 224, 194, 0.35);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-soft: #cbd5e1;
+  --accent-teal: #18e0c2;
+  --accent-green: #22c55e;
+  --coin-gold-1: #facc15;
+  --coin-gold-2: #f59e0b;
+  --coin-bg: rgba(245, 158, 11, 0.14);
+  --coin-border: rgba(250, 204, 21, 0.35);
+  --danger: #fb7185;
+}
+
+.dashboard-page .subject-detail-header {
+  position: relative !important;
+  top: auto;
+  z-index: 2;
+  min-height: 0;
+  padding: 1.55rem clamp(1.5rem, 3vw, 2.2rem) 1.65rem;
+  border-bottom: 1px solid rgba(34, 54, 83, 0.75);
+  background: transparent;
+  backdrop-filter: none;
+  animation: none;
+}
+
+.dashboard-page .subject-header-content h1,
+.dashboard-page .subject-header-content p {
+  margin: 0;
+}
+
+.dashboard-page .subject-header-content h1 {
+  margin-top: 0.35rem;
+  color: var(--text);
+  font-size: clamp(1.55rem, 2.5vw, 2rem);
+  line-height: 1.1;
+}
+
+.dashboard-page .subject-header-content p:not(.eyebrow) {
+  max-width: 660px;
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.dashboard-page .subject-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.2rem;
+}
+
+.dashboard-page .subject-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 34px;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  background: rgba(24, 34, 56, 0.78);
+  color: var(--soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.dashboard-page .subject-info-chip strong {
+  color: var(--teal);
+}
+
+.dashboard-page .subject-detail-page {
+  display: grid;
+  gap: 1.45rem;
+  width: min(1440px, 100%);
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.dashboard-page .subject-progress-card {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.45rem;
+  border-color: var(--border-teal);
+  border-radius: 18px;
+  background: #111c31;
+}
+
+.dashboard-page .subject-progress-main {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(280px, 1.15fr) minmax(230px, 0.7fr);
+  gap: 1.05rem;
+  align-items: stretch;
+}
+
+.dashboard-page .subject-xp-block,
+.dashboard-page .next-unlock-box,
+.dashboard-page .subject-progress-stat,
+.dashboard-page .info-step-card,
+.dashboard-page .validation-notice-card,
+.dashboard-page .validation-warning-card {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 14px;
+  background: rgba(15, 23, 39, 0.62);
+}
+
+.dashboard-page .subject-xp-block {
+  padding: 1.05rem;
+}
+
+.dashboard-page .subject-xp-block span,
+.dashboard-page .next-unlock-box span,
+.dashboard-page .subject-progress-stat span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.dashboard-page .subject-xp-block strong {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--text);
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.dashboard-page .subject-xp-block p {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.dashboard-page .subject-progress-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-page .subject-progress-stat {
+  padding: 0.85rem;
+}
+
+.dashboard-page .subject-progress-stat strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--teal);
+  font-size: 1.1rem;
+}
+
+.dashboard-page .next-unlock-box {
+  padding: 1.05rem;
+  border-color: rgba(45, 212, 191, 0.22);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(15, 23, 39, 0.66));
+}
+
+.dashboard-page .next-unlock-box strong {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.dashboard-page .next-unlock-box p,
+.dashboard-page .next-unlock-box em {
+  display: block;
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.dashboard-page .next-unlock-box em {
+  color: var(--teal);
+  font-weight: 900;
+}
+
+.dashboard-page .subject-progress-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding-top: 0.15rem;
+}
+
+.dashboard-page .subject-progress-bar-row strong {
+  color: var(--teal);
+  font-size: 0.85rem;
+}
+
+.dashboard-page .reward-preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.dashboard-page .reward-preview-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 34px;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(45, 212, 191, 0.18);
+  border-radius: 999px;
+  background: rgba(45, 212, 191, 0.08);
+  color: var(--soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.dashboard-page .reward-preview-pill strong {
+  color: var(--teal);
+}
+
+.dashboard-page .reward-preview-pill.coin-pill,
+.dashboard-page .reward-preview-pill.mixed-reward b {
+  border-color: var(--coin-border);
+  background: var(--coin-bg);
+  color: var(--coin-gold-1);
+}
+
+.dashboard-page .reward-preview-pill.mixed-reward b {
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+}
+
+.dashboard-page .validation-warning-card,
+.dashboard-page .validation-notice-card {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1rem;
+}
+
+.dashboard-page .validation-warning-card {
+  border-color: rgba(250, 204, 21, 0.28);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.dashboard-page .validation-warning-card.soft {
+  border-color: rgba(56, 189, 248, 0.22);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.dashboard-page .validation-warning-card svg,
+.dashboard-page .validation-notice-card svg {
+  color: var(--teal);
+  flex: 0 0 auto;
+}
+
+.dashboard-page .validation-warning-card strong,
+.dashboard-page .validation-notice-card h2 {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.dashboard-page .validation-warning-card p,
+.dashboard-page .validation-notice-card p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.dashboard-page .practice-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.dashboard-page .practice-type-card {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.78rem;
+  padding: 1.15rem;
+  border-radius: 18px;
+}
+
+.dashboard-page .practice-type-card.unlocked {
+  border-color: rgba(45, 212, 191, 0.48);
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.1), #141d31 48%);
+  box-shadow: 0 14px 34px rgba(45, 212, 191, 0.08);
+}
+
+.dashboard-page .practice-type-card.unlocked:hover {
+  transform: translateY(-2px);
+  border-color: rgba(24, 224, 194, 0.58);
+  box-shadow: 0 16px 36px rgba(24, 224, 194, 0.12);
+}
+
+.dashboard-page .practice-type-card.locked {
+  opacity: 1;
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+.dashboard-page .practice-type-card.locked:hover {
+  transform: none;
+  border-color: rgba(148, 163, 184, 0.24);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.dashboard-page .practice-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-page .practice-card-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(45, 212, 191, 0.11);
+  color: var(--teal);
+}
+
+.dashboard-page .practice-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 28px;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.dashboard-page .practice-status-pill.is-unlocked {
+  color: var(--teal);
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.dashboard-page .practice-status-pill.is-locked {
+  color: var(--soft);
+  background: rgba(148, 163, 184, 0.11);
+}
+
+.dashboard-page .practice-card-body h3,
+.dashboard-page .practice-card-body p,
+.dashboard-page .how-it-works-section h2,
+.dashboard-page .info-step-card h3,
+.dashboard-page .validation-notice-card h2 {
+  margin: 0;
+}
+
+.dashboard-page .practice-card-kicker {
+  margin: 0 0 0.35rem !important;
+  color: var(--teal) !important;
+  font-size: 0.72rem !important;
+  font-weight: 900;
+}
+
+.dashboard-page .practice-card-body h3 {
+  color: var(--text);
+  font-size: 1.02rem;
+}
+
+.dashboard-page .practice-card-body {
+  flex: 0 1 auto;
+}
+
+.dashboard-page .practice-card-body p {
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.dashboard-page .practice-mode-facts {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  background: rgba(15, 23, 39, 0.42);
+  color: var(--soft);
+  font-size: 0.78rem;
+}
+
+.dashboard-page .practice-type-card.unlocked .practice-mode-facts {
+  border-color: rgba(24, 224, 194, 0.18);
+  background: rgba(24, 224, 194, 0.07);
+}
+
+.dashboard-page .unlock-requirement-box {
+  display: grid;
+  gap: 0.48rem;
+  padding: 0.78rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  background: rgba(15, 23, 39, 0.74);
+}
+
+.dashboard-page .unlock-requirement-box span,
+.dashboard-page .unlock-requirement-box em {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-style: normal;
+}
+
+.dashboard-page .unlock-requirement-box strong {
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.dashboard-page .unlock-requirement-box em {
+  color: var(--teal);
+  font-weight: 900;
+}
+
+.dashboard-page .unlock-progress-mini {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dashboard-page .unlock-progress-mini div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-page .practice-card-actions {
+  margin-top: auto;
+}
+
+.dashboard-page .practice-card-actions .btn {
+  min-height: 46px;
+}
+
+.dashboard-page .practice-card-actions .disabled-button,
+.dashboard-page .practice-card-actions .disabled-button:hover,
+.dashboard-page .practice-card-actions .btn:disabled {
+  border: 1px solid rgba(148, 163, 184, 0.18) !important;
+  background: #1b2638 !important;
+  color: #94a3b8 !important;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.82;
+  filter: none;
+  transform: none;
+}
+
+.dashboard-page .how-it-works-section {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.35rem;
+}
+
+.dashboard-page .how-it-works-section h2 {
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.dashboard-page .how-it-works-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-page .info-step-card {
+  padding: 1rem;
+  min-height: 150px;
+  transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+
+.dashboard-page .info-step-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(24, 224, 194, 0.26);
+  background: rgba(15, 23, 39, 0.78);
+}
+
+.dashboard-page .info-step-card span {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.8rem;
+  border-radius: 8px;
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--teal);
+}
+
+.dashboard-page .info-step-card h3 {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.dashboard-page .info-step-card p {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.dashboard-page .validation-notice-card {
+  border-color: rgba(45, 212, 191, 0.16);
+}
+
+.dashboard-page .validation-notice-card strong {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--teal);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-page .subject-progress-main,
+  .dashboard-page .practice-mode-grid,
+  .dashboard-page .how-it-works-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-page .subject-detail-header,
+  .dashboard-page .subject-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-page .subject-progress-main,
+  .dashboard-page .subject-progress-stats,
+  .dashboard-page .practice-mode-grid,
+  .dashboard-page .how-it-works-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .subject-progress-card,
+  .dashboard-page .practice-type-card {
+    padding: 1rem;
+  }
+}

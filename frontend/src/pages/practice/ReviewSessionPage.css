@@ -1,0 +1,180 @@
+/* Review Session Page Styles */
+
+.dashboard-page .review-session-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 2rem;
+}
+
+.dashboard-page .header-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(24, 224, 194, 0.12);
+  color: #18e0c2;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.dashboard-page .header-back-btn:hover {
+  background: rgba(24, 224, 194, 0.2);
+}
+
+.dashboard-page .review-session-header .header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.dashboard-page .review-session-header .header-left > div {
+  flex: 1;
+}
+
+.dashboard-page .review-session-header .eyebrow {
+  color: #18e0c2;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 0.3rem 0;
+}
+
+.dashboard-page .review-session-header h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.dashboard-page .review-session-loading {
+  padding: 3rem;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+.dashboard-page .review-session-content {
+  display: grid;
+  gap: 1.5rem;
+  width: min(900px, 100%);
+  max-width: none;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.dashboard-page .review-session-container {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.dashboard-page .review-session-question {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(58, 76, 112, 0.72);
+  border-radius: 8px;
+  background: #111c31;
+}
+
+.dashboard-page .session-meta-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-page .review-session-submit {
+  align-self: flex-start;
+  min-width: 160px;
+}
+
+.dashboard-page .mastered-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 6px;
+  background: rgba(134, 239, 172, 0.12);
+  border-left: 3px solid #86efac;
+  color: #86efac;
+}
+
+.dashboard-page .mastered-banner svg {
+  flex-shrink: 0;
+  font-size: 1.5rem;
+}
+
+.dashboard-page .mastered-title {
+  margin: 0 0 0.25rem 0;
+  color: #86efac;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dashboard-page .mastered-text {
+  margin: 0;
+  color: #86efac;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.dashboard-page .review-session-meta {
+  padding: 0.8rem;
+  border-radius: 6px;
+  background: rgba(20, 29, 49, 0.5);
+}
+
+.dashboard-page .meta-info {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.dashboard-page .meta-info strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.dashboard-page .review-session-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-page .review-session-actions .btn {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .dashboard-page .review-session-header {
+    padding: 1rem;
+  }
+
+  .dashboard-page .review-session-header .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-page .review-session-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .dashboard-page .review-session-question {
+    padding: 1rem;
+  }
+
+  .dashboard-page .review-session-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-page .review-session-actions .btn {
+    width: 100%;
+  }
+}
