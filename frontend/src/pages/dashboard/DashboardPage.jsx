@@ -62,8 +62,6 @@ const languageNames = {
 };
 
 const routeTargets = {
-  "daily-quiz": "/daily-quiz",
-  "mock-tests": "/mock-tests",
   practice: "/practice",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
@@ -71,7 +69,7 @@ const routeTargets = {
   profile: "/profile",
 };
 
-const existingRoutes = new Set(["/dashboard", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
+const existingRoutes = new Set(["/dashboard", "/practice", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
 
 const subjectData = {
   "nayab-subba": [
@@ -169,9 +167,7 @@ function DashboardPage() {
     const target = routeTargets[routeKey];
     if (target && existingRoutes.has(target)) {
       navigate(target);
-      return;
     }
-    console.log(`${routeKey} route is not connected yet.`);
   };
 
   const showProgressionSection = () => {
@@ -184,7 +180,6 @@ function DashboardPage() {
   const handleNavClick = (key) => {
     if (key === "dashboard") { navigate("/dashboard"); return; }
     if (key === "progression") { showProgressionSection(); return; }
-    if (key === "suggestions") { console.log("Suggestions page will be connected in the next step."); return; }
     navigateIfAvailable(key);
   };
 
