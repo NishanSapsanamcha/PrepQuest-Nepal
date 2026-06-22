@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FaBolt, FaCoins, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaTools } from "react-icons/fa";
+import { FaBolt, FaBookmark, FaCoins, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaLightbulb, FaTools } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
@@ -10,7 +10,14 @@ import {
   getNormalizedSubjectProgress,
   normalizeExamId,
 } from "../../utils/practiceUtils";
-import { getUser } from "../../utils/storageUtils";
+import {
+  getSavedCountBySubject,
+  getSavedReviewQuestions,
+  getUser,
+  getWeakTopicsFromWrongAnswers,
+  getWrongAnswerCountBySubject,
+  getWrongAnswerReview,
+} from "../../utils/storageUtils";
 import "./PracticePage.css";
 
 function PracticePage() {
@@ -20,8 +27,16 @@ function PracticePage() {
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
   const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
   const subjectProgress = getNormalizedSubjectProgress();
+  const savedQuestions = getSavedReviewQuestions();
+  const wrongAnswers = getWrongAnswerReview().filter((item) => !item.mastered);
+  const weakTopics = getWeakTopicsFromWrongAnswers();
+  const topWeakTopic = weakTopics[0];
   const subjectCards = getExamSubjects(selectedExamId).map((subject) =>
-    buildSubjectCardData(subject, subjectProgress, selectedExamId)
+    ({
+      ...buildSubjectCardData(subject, subjectProgress, selectedExamId),
+      savedReviewCount: getSavedCountBySubject(subject.id),
+      wrongReviewCount: getWrongAnswerCountBySubject(subject.id),
+    })
   );
   const practicedSubjects = subjectCards.filter((subject) => subject.progress.questionsSolved > 0 && subject.canPractice);
   const recommendationSubject =
@@ -92,6 +107,48 @@ function PracticePage() {
           recommendation={recommendation}
           onStart={() => recommendation.canPractice && navigate(`/practice/${recommendation.subjectId}/session?recommended=1`)}
         />
+
+        <section className="review-mistakes-section" aria-labelledby="review-mistakes-title">
+          <div className="practice-section-heading compact">
+            <h2 id="review-mistakes-title">Review &amp; Mistakes</h2>
+            <p>Revisit saved questions and correct your weak areas before your next practice.</p>
+          </div>
+          <div className="review-card-grid">
+            <article className="review-mini-card">
+              <div className="review-mini-icon"><FaBookmark /></div>
+              <div>
+                <h3>Saved Questions</h3>
+                <strong>{savedQuestions.length ? `${savedQuestions.length} saved` : "No saved questions yet"}</strong>
+                <p>Questions you bookmarked during practice.</p>
+              </div>
+              <button className="btn btn-secondary" type="button" disabled={!savedQuestions.length} onClick={() => navigate("/practice/review?tab=saved")}>
+                Review Saved
+              </button>
+            </article>
+            <article className="review-mini-card mistakes">
+              <div className="review-mini-icon"><FaExclamationTriangle /></div>
+              <div>
+                <h3>Wrong Answers</h3>
+                <strong>{wrongAnswers.length ? `${wrongAnswers.length} to review` : "No mistakes to review"}</strong>
+                <p>Learn from mistakes with explanations.</p>
+              </div>
+              <button className="btn btn-secondary" type="button" disabled={!wrongAnswers.length} onClick={() => navigate("/practice/review?tab=wrong")}>
+                Review Mistakes
+              </button>
+            </article>
+            <article className="review-mini-card">
+              <div className="review-mini-icon"><FaLightbulb /></div>
+              <div>
+                <h3>Weak Topic</h3>
+                <strong>{topWeakTopic ? topWeakTopic.topic : "No weak topic detected yet"}</strong>
+                <p>Most missed topic from recent practice.</p>
+              </div>
+              <button className="btn btn-secondary" type="button" disabled={!topWeakTopic} onClick={() => navigate("/practice/review?tab=weak")}>
+                Practice Topic
+              </button>
+            </article>
+          </div>
+        </section>
 
         <section className="practice-section-heading">
           <h2>Subjects</h2>

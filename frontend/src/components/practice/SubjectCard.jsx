@@ -32,6 +32,10 @@ function SubjectCard({ subject, onPractice }) {
   const nextLevelLabel = levelProgress.nextLevel ? `Level ${levelProgress.nextLevel.level}` : "Mastered";
   const statusLabel = subject.masteryStatus === "Not Started" ? "Starting" : subject.masteryStatus;
   const accuracyLabel = subject.accuracy === null ? "Not started" : `${subject.accuracy}%`;
+  const reviewLine = [
+    subject.savedReviewCount > 0 && `Saved: ${subject.savedReviewCount}`,
+    subject.wrongReviewCount > 0 && `Mistakes: ${subject.wrongReviewCount}`,
+  ].filter(Boolean).join(" · ");
   const displayProgressPercent = levelProgress.nextRequiredXp
     ? Math.min(100, Math.round((progress.xp / levelProgress.nextRequiredXp) * 100))
     : 100;
@@ -70,6 +74,7 @@ function SubjectCard({ subject, onPractice }) {
         <div>Accuracy: <span>{accuracyLabel}</span></div>
         <div>Solved: <span>{progress.questionsSolved}</span></div>
       </div>
+      {reviewLine && <div className="subject-card-review-counts">{reviewLine}</div>}
       <div className="subject-card-footer">
         <button className="primary-button small subject-btn" type="button" disabled={!subject.canPractice} onClick={onPractice}>
           {subject.canPractice ? "Practice Now" : "Coming Soon"}

@@ -210,12 +210,96 @@
   padding-inline: 0;
 }
 
+.dashboard-page .practice-section-heading.compact h2 {
+  margin-bottom: 0.3rem;
+}
+
+.dashboard-page .practice-section-heading p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
 .dashboard-page .practice-section-heading h2 {
   color: var(--text);
   font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: 20px;
+}
+
+.dashboard-page .review-mistakes-section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dashboard-page .review-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-page .review-mini-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.8rem;
+  min-height: 170px;
+  padding: 1rem;
+  border: 1px solid rgba(58, 76, 112, 0.72);
+  border-radius: 12px;
+  background: #111c31;
+}
+
+.dashboard-page .review-mini-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(24, 224, 194, 0.1);
+  color: #18e0c2;
+}
+
+.dashboard-page .review-mini-card.mistakes .review-mini-icon {
+  background: rgba(251, 113, 133, 0.11);
+  color: #fb7185;
+}
+
+.dashboard-page .review-mini-card h3,
+.dashboard-page .review-mini-card p {
+  margin: 0;
+}
+
+.dashboard-page .review-mini-card h3 {
+  color: #f8fafc;
+  font-size: 0.88rem;
+}
+
+.dashboard-page .review-mini-card strong {
+  display: block;
+  margin-top: 0.32rem;
+  color: #99f6e4;
+  font-size: 0.9rem;
+}
+
+.dashboard-page .review-mini-card.mistakes strong {
+  color: #fecdd3;
+}
+
+.dashboard-page .review-mini-card p {
+  margin-top: 0.45rem;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.dashboard-page .review-mini-card .btn {
+  grid-column: 1 / -1;
+  min-height: 38px;
+  border-radius: 8px;
 }
 
 .dashboard-page .practice-content .subject-grid {
@@ -346,6 +430,17 @@
   font-weight: 600;
 }
 
+.dashboard-page .subject-card-review-counts {
+  width: fit-content;
+  margin-bottom: 14px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(24, 224, 194, 0.08);
+  color: #99f6e4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .dashboard-page .subject-card-footer {
   padding-top: 12px;
   border-top: 1px solid #223653;
@@ -390,6 +485,10 @@
 }
 
 @media (max-width: 860px) {
+  .dashboard-page .review-card-grid {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-page .recommended-practice-card {
     grid-template-columns: 1fr;
     align-items: stretch;

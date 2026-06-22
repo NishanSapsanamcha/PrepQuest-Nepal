@@ -3,6 +3,8 @@ const keys = {
   subjectProgress: "prepquest_subject_progress",
   practiceHistory: "prepquest_practice_history",
   reviewQuestions: "prepquest_review_questions",
+  savedReviewQuestions: "prepquest_saved_review_questions",
+  wrongAnswerReview: "prepquest_wrong_answer_review",
   lastPracticeResult: "prepquest_last_practice_result",
   xpTransactions: "prepquest_xp_transactions",
   coinTransactions: "prepquest_coin_transactions",
@@ -112,6 +114,148 @@ export function getReviewQuestions() {
 
 export function saveReviewQuestions(questions) {
   writeJson(keys.reviewQuestions, questions);
+}
+
+function buildReviewQuestionRecord(question, selectedOptionKey, languageMode, timestamp) {
+  return {
+    reviewId: `${question.id}-${timestamp}`,
+    questionId: question.id,
+    subjectId: question.subjectId,
+    subjectName: question.subject,
+    topic: question.topic,
+    difficulty: question.difficulty,
+    examTracks: question.examTracks || [],
+    question_en: question.question_en,
+    question_np: question.question_np,
+    options: question.options || [],
+    correctOption: question.correctOption,
+    selectedOptionKey: selectedOptionKey || "",
+    explanation_en: question.explanation_en,
+    explanation_np: question.explanation_np,
+    languageMode,
+    question,
+  };
+}
+
+export function getSavedReviewQuestions() {
+  return readJson(keys.savedReviewQuestions, []);
+}
+
+export function saveSavedReviewQuestions(questions) {
+  writeJson(keys.savedReviewQuestions, questions);
+}
+
+export function isQuestionSaved(questionId) {
+  return getSavedReviewQuestions().some((item) => item.questionId === questionId);
+}
+
+export function saveReviewQuestion(question, selectedOptionKey = "", languageMode = "english") {
+  if (!question?.id) return { saved: false, alreadySaved: false, item: null };
+
+  const savedAt = new Date().toISOString();
+  const existing = getSavedReviewQuestions();
+  const existingIndex = existing.findIndex((item) => item.questionId === question.id);
+  const item = {
+    ...buildReviewQuestionRecord(question, selectedOptionKey, languageMode, savedAt),
+    reviewId: existing[existingIndex]?.reviewId || `saved-${question.id}`,
+    savedAt,
+    source: "practice",
+  };
+
+  if (existingIndex >= 0) {
+    const nextItems = [...existing];
+    nextItems[existingIndex] = { ...existing[existingIndex], ...item };
+    saveSavedReviewQuestions(nextItems);
+    saveReviewQuestions(nextItems);
+    return { saved: true, alreadySaved: true, item: nextItems[existingIndex] };
+  }
+
+  const nextItems = [item, ...existing];
+  saveSavedReviewQuestions(nextItems);
+  saveReviewQuestions(nextItems);
+  return { saved: true, alreadySaved: false, item };
+}
+
+export function removeSavedReviewQuestion(questionId) {
+  const nextItems = getSavedReviewQuestions().filter((item) => item.questionId !== questionId);
+  saveSavedReviewQuestions(nextItems);
+  saveReviewQuestions(nextItems);
+}
+
+export function getWrongAnswerReview() {
+  return readJson(keys.wrongAnswerReview, []);
+}
+
+export function saveWrongAnswerReview(items) {
+  writeJson(keys.wrongAnswerReview, items);
+}
+
+export function saveWrongAnswer(question, selectedOptionKey = "", languageMode = "english") {
+  if (!question?.id) return null;
+
+  const answeredAt = new Date().toISOString();
+  const existing = getWrongAnswerReview();
+  const existingIndex = existing.findIndex((item) => item.questionId === question.id);
+  const baseItem = {
+    ...buildReviewQuestionRecord(question, selectedOptionKey, languageMode, answeredAt),
+    reviewId: existing[existingIndex]?.reviewId || `wrong-${question.id}`,
+    answeredAt,
+    attemptsCount: 1,
+    mastered: false,
+  };
+
+  if (existingIndex >= 0) {
+    const nextItems = [...existing];
+    nextItems[existingIndex] = {
+      ...nextItems[existingIndex],
+      ...baseItem,
+      attemptsCount: (nextItems[existingIndex].attemptsCount || 1) + 1,
+      mastered: false,
+    };
+    saveWrongAnswerReview(nextItems);
+    return nextItems[existingIndex];
+  }
+
+  saveWrongAnswerReview([baseItem, ...existing]);
+  return baseItem;
+}
+
+export function removeWrongAnswer(questionId) {
+  saveWrongAnswerReview(getWrongAnswerReview().filter((item) => item.questionId !== questionId));
+}
+
+export function markWrongAnswerMastered(questionId) {
+  saveWrongAnswerReview(
+    getWrongAnswerReview().map((item) =>
+      item.questionId === questionId ? { ...item, mastered: true, masteredAt: new Date().toISOString() } : item
+    )
+  );
+}
+
+export function getWrongAnswerCountBySubject(subjectId) {
+  return getWrongAnswerReview().filter((item) => item.subjectId === subjectId && !item.mastered).length;
+}
+
+export function getSavedCountBySubject(subjectId) {
+  return getSavedReviewQuestions().filter((item) => item.subjectId === subjectId).length;
+}
+
+export function getWeakTopicsFromWrongAnswers() {
+  const counts = getWrongAnswerReview()
+    .filter((item) => !item.mastered)
+    .reduce((topics, item) => {
+      const key = `${item.subjectId || "unknown"}::${item.topic || "Core concepts"}`;
+      const existing = topics[key] || {
+        subjectId: item.subjectId,
+        subjectName: item.subjectName,
+        topic: item.topic || "Core concepts",
+        count: 0,
+      };
+      topics[key] = { ...existing, count: existing.count + 1 };
+      return topics;
+    }, {});
+
+  return Object.values(counts).sort((a, b) => b.count - a.count || a.topic.localeCompare(b.topic));
 }
 
 export function getLastPracticeResult() {

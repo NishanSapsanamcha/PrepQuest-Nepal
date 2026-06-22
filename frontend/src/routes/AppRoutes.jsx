@@ -5,6 +5,7 @@ import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
 import PracticePage from "../pages/practice/PracticePage";
+import PracticeReviewPage from "../pages/practice/PracticeReviewPage";
 import SubjectPracticePage from "../pages/practice/SubjectPracticePage";
 import PracticeSessionPage from "../pages/practice/PracticeSessionPage";
 import PracticeResultPage from "../pages/practice/PracticeResultPage";
@@ -31,6 +32,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PracticePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/review"
+        element={
+          <ProtectedRoute>
+            <PracticeReviewPage />
           </ProtectedRoute>
         }
       />

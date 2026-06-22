@@ -4,7 +4,7 @@ import { FaArrowLeft, FaRedo, FaSearch, FaTachometerAlt } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import ResultSummary from "../../components/practice/ResultSummary";
 import WrongAnswerReview from "../../components/practice/WrongAnswerReview";
-import { getLastPracticeResult, getUser } from "../../utils/storageUtils";
+import { getLastPracticeResult, getSavedReviewQuestions, getUser } from "../../utils/storageUtils";
 import "./PracticeResultPage.css";
 
 function PracticeResultPage() {
@@ -13,6 +13,7 @@ function PracticeResultPage() {
   const user = getUser();
   const language = localStorage.getItem("preferredLanguage") || user.preferredLanguage;
   const result = getLastPracticeResult();
+  const savedQuestions = getSavedReviewQuestions();
   const [showReview, setShowReview] = useState(false);
 
   if (!result || result.subjectId !== subjectId) {
@@ -42,7 +43,12 @@ function PracticeResultPage() {
           </div>
           <div className="result-action-grid">
             <button className="btn" type="button" onClick={() => navigate(`/practice/${subjectId}/session`)}><FaRedo /> Practice Again</button>
-            <button className="btn btn-secondary" type="button" onClick={() => setShowReview((value) => !value)}><FaSearch /> Review Wrong Answers</button>
+            {result.wrongAnswers?.length > 0 && (
+              <button className="btn btn-secondary" type="button" onClick={() => setShowReview((value) => !value)}><FaSearch /> Review Wrong Answers</button>
+            )}
+            {savedQuestions.length > 0 && (
+              <button className="btn btn-secondary" type="button" onClick={() => navigate("/practice/review?tab=saved")}><FaSearch /> Review Saved Questions</button>
+            )}
             <button className="btn btn-secondary" type="button" onClick={() => navigate("/practice")}><FaArrowLeft /> Choose Another Subject</button>
             <button className="btn btn-secondary" type="button" onClick={() => navigate("/dashboard")}><FaTachometerAlt /> Go to Dashboard</button>
           </div>

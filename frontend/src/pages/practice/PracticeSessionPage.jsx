@@ -7,7 +7,13 @@ import QuestionCard from "../../components/practice/QuestionCard";
 import { getSubjectById } from "../../data/subjects";
 import { buildSubjectProgress, completePracticeSession, getSubjectQuestions, normalizeLanguageMode } from "../../utils/practiceUtils";
 import { getSoundMuted, playSound, toggleSoundMuted } from "../../utils/soundUtils";
-import { getReviewQuestions, getUser, saveLastPracticeResult, saveReviewQuestions } from "../../utils/storageUtils";
+import {
+  getSavedReviewQuestions,
+  getUser,
+  saveLastPracticeResult,
+  saveReviewQuestion,
+  saveWrongAnswer,
+} from "../../utils/storageUtils";
 import { getNextLevelProgress, getSubjectLevel } from "../../utils/xpUtils";
 import "./PracticeSessionPage.css";
 
@@ -25,6 +31,7 @@ function PracticeSessionPage() {
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [answers, setAnswers] = useState([]);
+  const [savedQuestionIds, setSavedQuestionIds] = useState(() => getSavedReviewQuestions().map((item) => item.questionId));
   const [isMuted, setIsMuted] = useState(getSoundMuted);
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
   const isRecommendedPractice = searchParams.get("recommended") === "1";
@@ -49,6 +56,7 @@ function PracticeSessionPage() {
   const answeredCount = answers.length;
   const accuracySoFar = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
   const subjectLevelProgress = getNextLevelProgress(progress.xp);
+  const isCurrentQuestionSaved = savedQuestionIds.includes(question.id);
 
   const handleSoundToggle = () => {
     const next = toggleSoundMuted();
@@ -75,6 +83,7 @@ function PracticeSessionPage() {
     };
     setAnswers((current) => [...current, answer]);
     setFeedback({ isCorrect, answer });
+    if (!isCorrect) saveWrongAnswer(question, selectedOptionKey, languageMode);
     playSound(isCorrect ? "correct" : "wrong");
   };
 
@@ -122,26 +131,10 @@ function PracticeSessionPage() {
   };
 
   const handleSaveReview = () => {
-    if (!feedback?.answer) return;
+    if (!feedback?.answer || isCurrentQuestionSaved) return;
     playSound("click");
-    saveReviewQuestions([
-      {
-        questionId: question.id,
-        question_en: question.question_en,
-        question_np: question.question_np,
-        selectedOptionKey: feedback.answer.selectedOptionKey,
-        correctOption: question.correctOption,
-        explanation_en: question.explanation_en,
-        explanation_np: question.explanation_np,
-        topic: question.topic,
-        subjectId,
-        subjectName: subject.name,
-        languageMode,
-        question,
-        savedAt: new Date().toISOString(),
-      },
-      ...getReviewQuestions(),
-    ]);
+    saveReviewQuestion(question, feedback.answer.selectedOptionKey, languageMode);
+    setSavedQuestionIds((current) => current.includes(question.id) ? current : [question.id, ...current]);
   };
 
   return (
@@ -223,8 +216,8 @@ function PracticeSessionPage() {
                 </>
               ) : (
                 <>
-                  <button className="btn btn-secondary" type="button" onClick={handleSaveReview}>
-                    <FaBookmark /> Save for Review
+                  <button className="btn btn-secondary" type="button" disabled={isCurrentQuestionSaved} onClick={handleSaveReview}>
+                    <FaBookmark /> {isCurrentQuestionSaved ? "Saved" : "Save for Review"}
                   </button>
                   <button className="btn" type="button" onClick={handleNext}>{currentIndex === questions.length - 1 ? "Finish Practice" : "Next Question"}</button>
                 </>
