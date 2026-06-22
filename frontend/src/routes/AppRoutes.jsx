@@ -6,6 +6,7 @@ import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
 import PracticePage from "../pages/practice/PracticePage";
 import PracticeReviewPage from "../pages/practice/PracticeReviewPage";
+import ReviewSessionPage from "../pages/practice/ReviewSessionPage";
 import SubjectPracticePage from "../pages/practice/SubjectPracticePage";
 import PracticeSessionPage from "../pages/practice/PracticeSessionPage";
 import PracticeResultPage from "../pages/practice/PracticeResultPage";
@@ -40,6 +41,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PracticeReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/review/session/:questionId"
+        element={
+          <ProtectedRoute>
+            <ReviewSessionPage />
           </ProtectedRoute>
         }
       />

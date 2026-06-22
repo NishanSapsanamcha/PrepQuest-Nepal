@@ -31,7 +31,7 @@ function SubjectCard({ subject, onPractice }) {
   const currentLevel = subject.currentLevel;
   const nextLevelLabel = levelProgress.nextLevel ? `Level ${levelProgress.nextLevel.level}` : "Mastered";
   const statusLabel = subject.masteryStatus === "Not Started" ? "Starting" : subject.masteryStatus;
-  const accuracyLabel = subject.accuracy === null ? "Not started" : `${subject.accuracy}%`;
+  const accuracyLabel = subject.accuracyLabel || (subject.accuracy === null ? "Not Started Yet" : `${subject.accuracy}%`);
   const reviewLine = [
     subject.savedReviewCount > 0 && `Saved: ${subject.savedReviewCount}`,
     subject.wrongReviewCount > 0 && `Mistakes: ${subject.wrongReviewCount}`,

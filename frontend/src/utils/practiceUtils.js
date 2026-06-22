@@ -19,6 +19,8 @@ import {
   getRewardedSessions,
   getSubjectProgress,
   getUser,
+  getSavedCountBySubject,
+  getWrongAnswerCountBySubject,
   hasSessionBeenRewarded,
   markSessionAsRewarded,
   savePracticeHistory,
@@ -140,25 +142,16 @@ export function getAvailableSubjectsForExam(selectedExam) {
 
 export function normalizeSubjectProgress(progress = {}) {
   const normalized = {};
+  const history = getPracticeHistory();
 
   subjects.forEach((subject) => {
     const existing = progress[subject.id] || {};
-    const correctAnswers = Number.isFinite(existing.correctAnswers)
-      ? existing.correctAnswers
-      : Number.isFinite(existing.correct)
-        ? existing.correct
-        : 0;
-    const wrongAnswers = Number.isFinite(existing.wrongAnswers)
-      ? existing.wrongAnswers
-      : Number.isFinite(existing.wrong)
-        ? existing.wrong
-        : 0;
-    const questionsSolved = Number.isFinite(existing.questionsSolved)
-      ? existing.questionsSolved
-      : correctAnswers + wrongAnswers;
+    const subjectHistory = history.filter((session) => session.subjectId === subject.id);
+    const correctAnswers = subjectHistory.reduce((sum, session) => sum + (Number.isFinite(session.correctCount) ? session.correctCount : 0), 0);
+    const wrongAnswers = subjectHistory.reduce((sum, session) => sum + (Number.isFinite(session.wrongCount) ? session.wrongCount : 0), 0);
+    const questionsSolved = correctAnswers + wrongAnswers;
     const xp = calculateSubjectXPFromTransactions(subject.id);
     const impossible =
-      correctAnswers + wrongAnswers > questionsSolved ||
       correctAnswers < 0 ||
       wrongAnswers < 0 ||
       questionsSolved < 0;
@@ -189,20 +182,19 @@ export function getNormalizedSubjectProgress() {
 }
 
 export function buildSubjectCardData(subject, userProgress, selectedExam) {
+  const displayProgress = getSubjectDisplayProgress(subject.id);
   const progress = {
     ...defaultSubjectProgress,
     ...(userProgress?.[subject.id] || {}),
-    xp: calculateSubjectXPFromTransactions(subject.id),
+    xp: displayProgress.subjectXP,
+    questionsSolved: displayProgress.attemptedCount,
+    correctAnswers: displayProgress.correctAnswers,
+    wrongAnswers: displayProgress.wrongAnswers,
   };
   const questionsAvailable = getValidatedQuestionCountBySubject(subject.id, selectedExam);
-  const levelProgress = getNextLevelProgress(progress.xp);
-  const accuracy = progress.questionsSolved > 0 ? Math.round((progress.correctAnswers / progress.questionsSolved) * 100) : null;
-  const masteryStatus =
-    progress.questionsSolved === 0 ? "Not Started"
-    : accuracy < 50 ? "Needs Practice"
-    : accuracy < 70 ? "Developing"
-    : accuracy < 85 ? "Strong"
-    : "Exam Ready";
+  const levelProgress = displayProgress.levelProgress;
+  const accuracy = displayProgress.accuracy;
+  const masteryStatus = displayProgress.masteryLabel;
 
   return {
     ...subject,
@@ -211,8 +203,56 @@ export function buildSubjectCardData(subject, userProgress, selectedExam) {
     levelProgress,
     currentLevel: levelProgress.currentLevel,
     accuracy,
+    accuracyLabel: displayProgress.accuracyLabel,
     masteryStatus,
+    savedReviewCount: displayProgress.savedCount,
+    wrongReviewCount: displayProgress.mistakeCount,
+    hasStarted: displayProgress.hasStarted,
     canPractice: questionsAvailable > 0,
+  };
+}
+
+export function getSubjectDisplayProgress(subjectId) {
+  const subjectXP = calculateSubjectXPFromTransactions(subjectId);
+  const history = getPracticeHistory();
+  const subjectAttempts = history.filter((session) => session.subjectId === subjectId);
+  const totals = subjectAttempts.reduce(
+    (state, session) => ({
+      attemptedCount: state.attemptedCount + (session.answerRecords?.length || session.totalQuestions || 0),
+      correctAnswers: state.correctAnswers + (Number.isFinite(session.correctCount) ? session.correctCount : 0),
+      wrongAnswers: state.wrongAnswers + (Number.isFinite(session.wrongCount) ? session.wrongCount : 0),
+    }),
+    { attemptedCount: 0, correctAnswers: 0, wrongAnswers: 0 }
+  );
+  const attemptedCount = Math.max(0, totals.correctAnswers + totals.wrongAnswers || totals.attemptedCount);
+  const correctAnswers = Math.max(0, totals.correctAnswers);
+  const wrongAnswers = Math.max(0, attemptedCount - correctAnswers);
+  const hasStarted = attemptedCount > 0;
+  const accuracy = hasStarted ? calculateAccuracy(correctAnswers, attemptedCount) : null;
+  const masteryLabel =
+    !hasStarted ? "Not Started"
+    : accuracy < 50 ? "Needs Practice"
+    : accuracy < 70 ? "Developing"
+    : accuracy < 85 ? "Strong"
+    : "Exam Ready";
+  const levelProgress = getNextLevelProgress(subjectXP);
+
+  return {
+    subjectXP,
+    currentLevel: levelProgress.currentLevel,
+    nextLevel: levelProgress.nextLevel,
+    xpToNextLevel: levelProgress.remainingXp,
+    progressPercent: levelProgress.percent,
+    levelProgress,
+    attemptedCount,
+    correctAnswers,
+    wrongAnswers,
+    accuracy,
+    accuracyLabel: hasStarted ? `${accuracy}%` : "Not Started Yet",
+    masteryLabel,
+    savedCount: getSavedCountBySubject(subjectId),
+    mistakeCount: getWrongAnswerCountBySubject(subjectId),
+    hasStarted,
   };
 }
 
