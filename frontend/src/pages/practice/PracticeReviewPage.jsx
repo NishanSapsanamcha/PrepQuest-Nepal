@@ -31,6 +31,18 @@ const tabs = [
   { key: "weak", label: "Weak Topics", icon: FaLightbulb },
 ];
 
+function formatReviewDate(value) {
+  if (!value) return "Saved recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Saved recently";
+
+  return `Saved ${date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+  })}`;
+}
+
 function toQuestion(item) {
   return item.question || {
     id: item.questionId,
@@ -97,7 +109,8 @@ function PracticeReviewPage() {
         return (
           question.question.toLowerCase().includes(query) ||
           item.subjectName?.toLowerCase().includes(query) ||
-          item.topic?.toLowerCase().includes(query)
+          item.topic?.toLowerCase().includes(query) ||
+          item.difficulty?.toLowerCase().includes(query)
         );
       });
     }
@@ -223,6 +236,8 @@ function PracticeReviewPage() {
   const renderCompactListItem = (item, source) => {
     const question = toQuestion(item);
     const text = getText(question, languageMode);
+    const primaryTopic = item.topic || item.subjectName || "General Review";
+    const showSubjectMeta = item.subjectName && item.subjectName !== primaryTopic;
     const isSelected =
       reviewItem?.questionId === item.questionId && reviewItem?.source === source;
 
@@ -234,17 +249,24 @@ function PracticeReviewPage() {
         onClick={() => startReview(item, source)}
       >
         <div className="list-item-chips">
-          <span className="chip chip-subject">{item.subjectName}</span>
-          {item.topic && <span className="chip chip-topic">{item.topic}</span>}
+          <span className="chip chip-topic">{primaryTopic}</span>
           {item.difficulty && <span className="chip chip-difficulty">{item.difficulty}</span>}
+          {item.mastered && <span className="chip chip-status">Mastered</span>}
         </div>
         <p className="list-item-question">{text.question}</p>
-        {source === "wrong" && (
-          <div className="list-item-meta">
-            <span>Attempts: {item.attemptsCount || 1}</span>
-            {item.mastered && <span className="badge-mastered">✓ Mastered</span>}
-          </div>
-        )}
+        <div className="list-item-meta">
+          <span>
+            {source === "wrong"
+              ? `Attempts: ${item.attemptsCount || 1}`
+              : formatReviewDate(item.savedAt)}
+          </span>
+          {showSubjectMeta && (
+            <>
+              <span className="meta-separator">·</span>
+              <span>{item.subjectName}</span>
+            </>
+          )}
+        </div>
       </button>
     );
   };
