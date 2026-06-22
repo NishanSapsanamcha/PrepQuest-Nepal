@@ -1,16 +1,31 @@
 import { examNameToId, examTracks } from "../data/examTracks";
 import { practiceQuestions } from "../data/practiceQuestions";
 import { getSubjectById, subjects } from "../data/subjects";
-import { calculateAccuracy, calculatePracticeRewards, checkLevelUp, getNextLevelProgress } from "./xpUtils";
 import {
+  calculateAccuracy,
+  calculateMaxCorrectStreak,
+  calculatePracticeRewards,
+  checkLevelUp,
+  getNextLevelProgress,
+  getSubjectLevel,
+} from "./xpUtils";
+import {
+  getCoinTransactions,
   getPracticeHistory,
   getReviewQuestions,
+  getRewardedSessions,
   getSubjectProgress,
   getUser,
+  getXpTransactions,
+  hasSessionBeenRewarded,
+  markSessionAsRewarded,
+  saveCoinTransactions,
   savePracticeHistory,
   saveReviewQuestions,
+  saveRewardedSessions,
   saveSubjectProgress,
   saveUser,
+  saveXpTransactions,
 } from "./storageUtils";
 
 export function normalizeExamId(exam) {
@@ -148,11 +163,11 @@ export function normalizeSubjectProgress(progress = {}) {
       correctAnswers < 0 ||
       wrongAnswers < 0 ||
       questionsSolved < 0;
-    const oldFakeSeed =
+    const oldSeededProgress =
       (existing.xp === 80 && existing.questionsSolved === 12 && (existing.correct === 8 || existing.correctAnswers === 8)) ||
       (subject.id === "constitution" && existing.xp === 160 && existing.questionsSolved === 30 && (existing.correct === 19 || existing.correctAnswers === 19));
 
-    normalized[subject.id] = impossible || oldFakeSeed
+    normalized[subject.id] = impossible || oldSeededProgress
       ? { ...defaultSubjectProgress }
       : {
           ...defaultSubjectProgress,
@@ -262,39 +277,161 @@ export function buildSubjectProgress(subjectId) {
   return progress[subjectId] || { ...defaultSubjectProgress };
 }
 
-export function completePracticeSession({ subjectId, subjectName, answers, questions, practiceType = "Quick Practice" }) {
+export function validateRewardCalculation(result) {
+  const warnings = [];
+  const expectedAccuracy = calculateAccuracy(result.correctCount, result.totalQuestions);
+  const expectedRewards = calculatePracticeRewards({
+    totalQuestions: result.totalQuestions,
+    correctCount: result.correctCount,
+    maxCorrectStreak: result.maxCorrectStreak,
+    isRecommendedPractice: result.isRecommendedPractice,
+    didLevelUp: result.didLevelUp,
+    isPerfectScore: result.accuracy === 100,
+  });
+
+  if (result.correctCount > result.totalQuestions) warnings.push("correctCount cannot be greater than totalQuestions");
+  if (result.wrongCount > result.totalQuestions) warnings.push("wrongCount cannot be greater than totalQuestions");
+  if (result.correctCount + result.wrongCount > result.totalQuestions) warnings.push("answered count cannot exceed totalQuestions");
+  if (result.accuracy !== expectedAccuracy) warnings.push("accuracy does not match correctCount / totalQuestions");
+  if (result.rewards?.xp?.totalXp !== expectedRewards.xp.totalXp) warnings.push("XP total does not match reward rules");
+  if (result.rewards?.coins?.totalCoins !== expectedRewards.coins.totalCoins) warnings.push("coin total does not match reward rules");
+  if (result.newUserXp < result.previousUserXp) warnings.push("total XP cannot decrease");
+  if (result.newCoins < result.previousCoins) warnings.push("coins cannot decrease");
+  if (result.newSubjectXp < result.previousSubjectXp) warnings.push("subject XP cannot decrease");
+  if (hasSessionBeenRewarded(result.sessionId)) warnings.push("session reward has already been applied");
+
+  if (warnings.length && import.meta.env.DEV) {
+    console.warn("Practice reward validation failed:", warnings, result);
+  }
+
+  return { valid: warnings.length === 0, warnings };
+}
+
+function buildTransactions({ sessionId, subjectId, rewards, createdAt }) {
+  const xpTransactions = [
+    rewards.xp.correctAnswerXp > 0 && { amount: rewards.xp.correctAnswerXp, reason: "Correct answer XP" },
+    rewards.xp.completionXp > 0 && { amount: rewards.xp.completionXp, reason: "Practice completion bonus" },
+    rewards.xp.comboXp > 0 && { amount: rewards.xp.comboXp, reason: "Correct streak combo bonus" },
+    rewards.xp.recommendedPracticeXp > 0 && { amount: rewards.xp.recommendedPracticeXp, reason: "Recommended practice bonus" },
+    rewards.xp.levelUpXp > 0 && { amount: rewards.xp.levelUpXp, reason: "Subject level-up bonus" },
+  ].filter(Boolean).map((transaction, index) => ({
+    id: `xp-${Date.now()}-${index}`,
+    sessionId,
+    type: "practice",
+    subjectId,
+    amount: transaction.amount,
+    reason: transaction.reason,
+    createdAt,
+  }));
+  const coinTransactions = [
+    rewards.coins.accuracyBonusCoins > 0 && { amount: rewards.coins.accuracyBonusCoins, reason: "80% accuracy bonus" },
+    rewards.coins.recommendedPracticeCoins > 0 && { amount: rewards.coins.recommendedPracticeCoins, reason: "Recommended practice bonus" },
+    rewards.coins.levelUpCoins > 0 && { amount: rewards.coins.levelUpCoins, reason: "Subject level-up bonus" },
+    rewards.coins.perfectScoreCoins > 0 && { amount: rewards.coins.perfectScoreCoins, reason: "Perfect score bonus" },
+  ].filter(Boolean).map((transaction, index) => ({
+    id: `coin-${Date.now()}-${index}`,
+    sessionId,
+    type: "practice",
+    subjectId,
+    amount: transaction.amount,
+    reason: transaction.reason,
+    createdAt,
+  }));
+
+  return { xpTransactions, coinTransactions };
+}
+
+export function applyPracticeRewards({ user, subjectProgress, subjectId, sessionId, rewards, result }) {
+  if (hasSessionBeenRewarded(sessionId)) {
+    return { applied: false, user, subjectProgress, result: { ...result, alreadyRewarded: true } };
+  }
+
+  const validation = validateRewardCalculation(result);
+  if (!validation.valid) {
+    return { applied: false, user, subjectProgress, result: { ...result, rewardValidationFailed: true, validationWarnings: validation.warnings } };
+  }
+
+  const createdAt = result.createdAt;
+  const currentSubjectProgress = subjectProgress[subjectId] || { ...defaultSubjectProgress };
+  const updatedUser = {
+    ...user,
+    totalXp: (user.totalXp || 0) + rewards.xp.totalXp,
+    coins: (user.coins || 0) + rewards.coins.totalCoins,
+  };
+  const updatedSubjectProgress = {
+    ...currentSubjectProgress,
+    xp: (currentSubjectProgress.xp || 0) + rewards.xp.totalXp,
+    questionsSolved: (currentSubjectProgress.questionsSolved || 0) + result.totalQuestions,
+    correctAnswers: (currentSubjectProgress.correctAnswers || 0) + result.correctCount,
+    wrongAnswers: (currentSubjectProgress.wrongAnswers || 0) + result.wrongCount,
+    lastPracticedAt: createdAt,
+  };
+  updatedSubjectProgress.accuracy = calculateAccuracy(updatedSubjectProgress.correctAnswers, updatedSubjectProgress.questionsSolved);
+
+  const nextSubjectProgress = { ...subjectProgress, [subjectId]: updatedSubjectProgress };
+  const transactions = buildTransactions({ sessionId, subjectId, rewards, createdAt });
+
+  saveUser(updatedUser);
+  saveSubjectProgress(nextSubjectProgress);
+  saveXpTransactions([...transactions.xpTransactions, ...getXpTransactions()]);
+  saveCoinTransactions([...transactions.coinTransactions, ...getCoinTransactions()]);
+  markSessionAsRewarded(sessionId);
+
+  return {
+    applied: true,
+    user: updatedUser,
+    subjectProgress: nextSubjectProgress,
+    result: {
+      ...result,
+      newUserXp: updatedUser.totalXp,
+      newCoins: updatedUser.coins,
+      newSubjectXp: updatedSubjectProgress.xp,
+      subjectProgress: updatedSubjectProgress,
+      xpTransactions: transactions.xpTransactions,
+      coinTransactions: transactions.coinTransactions,
+    },
+  };
+}
+
+export function completePracticeSession({
+  subjectId,
+  subjectName,
+  answers,
+  questions,
+  practiceType = "Quick Practice",
+  isRecommendedPractice = false,
+}) {
   const user = getUser();
-  const previousProgress = buildSubjectProgress(subjectId);
+  const subjectProgress = getNormalizedSubjectProgress();
+  const previousProgress = subjectProgress[subjectId] || { ...defaultSubjectProgress };
+  const sessionId = `practice-${subjectId}-${Date.now()}`;
+  const createdAt = new Date().toISOString();
   const correctCount = answers.filter((answer) => answer.isCorrect).length;
   const wrongCount = answers.length - correctCount;
-  const maxStreak = answers.reduce(
-    (state, answer) => {
-      const current = answer.isCorrect ? state.current + 1 : 0;
-      return { current, max: Math.max(state.max, current) };
-    },
-    { current: 0, max: 0 }
-  ).max;
-  const rewards = calculatePracticeRewards(correctCount, questions.length, maxStreak);
-  const previousXp = previousProgress.xp || 0;
-  const newSubjectXp = previousXp + rewards.xpEarned;
-  const levelUp = checkLevelUp(previousXp, newSubjectXp);
-  const levelCoins = levelUp.didLevelUp ? 30 : 0;
-  const totalCoinsEarned = rewards.coinsEarned + levelCoins;
-  const newCorrect = (previousProgress.correctAnswers || previousProgress.correct || 0) + correctCount;
-  const newWrong = (previousProgress.wrongAnswers || previousProgress.wrong || 0) + wrongCount;
-  const questionsSolved = (previousProgress.questionsSolved || 0) + questions.length;
-  const updatedProgress = {
-    ...previousProgress,
-    xp: newSubjectXp,
-    questionsSolved,
-    correctAnswers: newCorrect,
-    wrongAnswers: newWrong,
-    savedForReview: previousProgress.savedForReview || 0,
-    lastPracticedAt: new Date().toISOString(),
-    accuracy: calculateAccuracy(newCorrect, newCorrect + newWrong),
-    level: levelUp.newLevel.level,
-  };
-  const progressMap = { ...getNormalizedSubjectProgress(), [subjectId]: updatedProgress };
+  const totalQuestions = questions.length;
+  const accuracy = calculateAccuracy(correctCount, totalQuestions);
+  const maxCorrectStreak = calculateMaxCorrectStreak(answers);
+  const previewRewards = calculatePracticeRewards({
+    totalQuestions,
+    correctCount,
+    maxCorrectStreak,
+    isRecommendedPractice,
+    didLevelUp: false,
+    isPerfectScore: accuracy === 100,
+  });
+  const previousSubjectXp = previousProgress.xp || 0;
+  const previousSubjectLevel = getSubjectLevel(previousSubjectXp);
+  const levelPreview = checkLevelUp(previousSubjectXp, previousSubjectXp + previewRewards.xp.totalXp);
+  const didLevelUp = levelPreview.didLevelUp;
+  const rewards = calculatePracticeRewards({
+    totalQuestions,
+    correctCount,
+    maxCorrectStreak,
+    isRecommendedPractice,
+    didLevelUp,
+    isPerfectScore: accuracy === 100,
+  });
+  const newSubjectLevel = getSubjectLevel(previousSubjectXp + rewards.xp.totalXp);
   const wrongAnswers = answers
     .filter((answer) => !answer.isCorrect)
     .map((answer) => {
@@ -322,34 +459,58 @@ export function completePracticeSession({ subjectId, subjectName, answers, quest
   }, {});
   const weakTopic = Object.entries(topicCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "Revision";
   const result = {
-    id: `practice-${Date.now()}`,
-    completedAt: new Date().toISOString(),
+    id: sessionId,
+    sessionId,
+    completedAt: createdAt,
+    createdAt,
     subjectId,
     subjectName,
     practiceType,
     score: correctCount,
-    totalQuestions: questions.length,
-    accuracy: calculateAccuracy(correctCount, questions.length),
+    totalQuestions,
+    accuracy,
     correctCount,
     wrongCount,
-    xpEarned: rewards.xpEarned,
-    coinsEarned: totalCoinsEarned,
-    comboBonus: rewards.comboBonus,
-    levelCoins,
-    previousSubjectXp: previousXp,
-    newSubjectXp,
-    subjectProgress: updatedProgress,
-    levelUp,
+    maxCorrectStreak,
+    answerRecords: answers,
+    isRecommendedPractice,
+    didLevelUp,
+    rewards,
+    xpEarned: rewards.xp.totalXp,
+    coinsEarned: rewards.coins.totalCoins,
+    comboBonus: rewards.xp.comboXp,
+    levelCoins: rewards.coins.levelUpCoins,
+    previousUserXp: user.totalXp || 0,
+    newUserXp: (user.totalXp || 0) + rewards.xp.totalXp,
+    previousCoins: user.coins || 0,
+    newCoins: (user.coins || 0) + rewards.coins.totalCoins,
+    previousSubjectXp,
+    newSubjectXp: previousSubjectXp + rewards.xp.totalXp,
+    previousSubjectLevel,
+    newSubjectLevel,
+    levelUp: {
+      didLevelUp,
+      previousLevel: previousSubjectLevel,
+      newLevel: newSubjectLevel,
+      unlockedPractice: didLevelUp ? newSubjectLevel.unlock : null,
+    },
     weakTopic,
     recommendation: `Practice 10 more ${weakTopic} questions.`,
     wrongAnswers,
   };
+  const rewarded = applyPracticeRewards({
+    user,
+    subjectProgress,
+    subjectId,
+    sessionId,
+    rewards,
+    result,
+  });
+  const finalResult = rewarded.result;
 
-  saveUser({ ...user, totalXp: (user.totalXp || 0) + rewards.xpEarned, coins: (user.coins || 0) + totalCoinsEarned });
-  saveSubjectProgress(progressMap);
   saveReviewQuestions([...wrongAnswers, ...getReviewQuestions()]);
-  savePracticeHistory([result, ...getPracticeHistory()]);
-  return result;
+  savePracticeHistory([finalResult, ...getPracticeHistory()]);
+  return finalResult;
 }
 
 if (typeof window !== "undefined" && import.meta.env.DEV) {
@@ -359,6 +520,9 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
       "prepquest_practice_history",
       "prepquest_review_questions",
       "prepquest_last_practice_result",
+      "prepquest_xp_transactions",
+      "prepquest_coin_transactions",
+      "prepquest_rewarded_sessions",
     ].forEach((key) => localStorage.removeItem(key));
     console.info("PrepQuest practice progress has been reset.");
   };

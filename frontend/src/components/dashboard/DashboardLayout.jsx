@@ -47,11 +47,12 @@ function DashboardLayout({ activeKey, children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const isPracticeRoute = location.pathname.startsWith("/practice");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => localStorage.getItem("sidebarCollapsed") === "true"
+    () => isPracticeRoute || localStorage.getItem("sidebarCollapsed") === "true"
   );
 
-  const currentActiveKey = activeKey || (location.pathname.startsWith("/practice") ? "practice" : "dashboard");
+  const currentActiveKey = activeKey || (isPracticeRoute ? "practice" : "dashboard");
 
   const handleSidebarToggle = () => {
     setSidebarCollapsed((current) => {
@@ -76,7 +77,7 @@ function DashboardLayout({ activeKey, children }) {
   };
 
   return (
-    <main className={`dashboard-page${sidebarCollapsed ? " sidebar-collapsed" : " sidebar-expanded-by-user"}`}>
+    <main className={`dashboard-page ${currentActiveKey}-dashboard-page${sidebarCollapsed ? " sidebar-collapsed" : " sidebar-expanded-by-user"}`}>
       <div className="dashboard-wrapper">
         <aside className="sidebar" aria-label="Dashboard navigation">
           <button
@@ -96,9 +97,11 @@ function DashboardLayout({ activeKey, children }) {
             aria-label="PrepQuest Nepal dashboard"
             onClick={() => navigate("/dashboard")}
           >
-            <span className="brand-icon"><FiShield /></span>
+            <span className="brand-icon">{currentActiveKey === "practice" ? "PQ" : <FiShield />}</span>
             <span className="brand-copy">
-              <span className="brand-title">PrepQuest</span>
+              <span className="brand-title">
+                Prep{currentActiveKey === "practice" ? <strong>Quest</strong> : "Quest"}
+              </span>
               <span className="brand-subtitle">Nepal</span>
             </span>
           </button>

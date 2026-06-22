@@ -58,6 +58,49 @@
   justify-content: center;
 }
 
+.dashboard-page .reward-breakdown,
+.dashboard-page .reward-ledger {
+  display: grid;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.dashboard-page .reward-breakdown h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dashboard-page .reward-breakdown-list,
+.dashboard-page .reward-ledger {
+  padding: 0.9rem;
+  border-radius: var(--radius);
+  background: rgba(15, 23, 39, 0.72);
+}
+
+.dashboard-page .reward-breakdown-row,
+.dashboard-page .reward-breakdown-total,
+.dashboard-page .reward-ledger div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.dashboard-page .reward-breakdown-total {
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+}
+
+.dashboard-page .reward-breakdown-row strong,
+.dashboard-page .reward-breakdown-total strong,
+.dashboard-page .reward-ledger strong {
+  color: var(--teal);
+}
+
 .dashboard-page .subject-result-progress {
   text-align: left;
 }

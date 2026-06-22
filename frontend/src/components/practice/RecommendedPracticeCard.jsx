@@ -1,20 +1,27 @@
-import { FaArrowRight, FaCoins, FaStar } from "react-icons/fa";
-
 function RecommendedPracticeCard({ recommendation, onStart }) {
+  const lowAccuracyMatch = recommendation.text.match(/^(.*?) has your lowest current accuracy\.(.*)$/);
+
   return (
     <section className="dashboard-card recommended-practice-card">
       <div>
-        <p className="eyebrow">Recommended Practice</p>
-        <h2>{recommendation.title}</h2>
-        <p>{recommendation.text}</p>
-        <p className="card-copy">Validated Questions: <strong>{recommendation.questionsAvailable}</strong></p>
+        <h2>Recommended Practice</h2>
+        <p className="recommendation-message">
+          {lowAccuracyMatch ? (
+            <>
+              <strong>{lowAccuracyMatch[1]}</strong> has your lowest current accuracy.
+              {lowAccuracyMatch[2]}
+            </>
+          ) : (
+            recommendation.text
+          )}
+        </p>
         <div className="reward-pills">
-          <span><FaStar /> +100 XP</span>
-          <span><FaCoins /> +20 Coins</span>
+          <span>+100 XP</span>
+          <span>+20 Coins</span>
         </div>
       </div>
       <button className="btn" type="button" disabled={!recommendation.canPractice} onClick={onStart}>
-        Start Recommended Practice <FaArrowRight />
+        Start Recommended Practice
       </button>
     </section>
   );

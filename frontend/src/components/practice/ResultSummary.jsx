@@ -3,6 +3,32 @@ import { getNextLevelProgress } from "../../utils/xpUtils";
 
 function ResultSummary({ result }) {
   const progress = getNextLevelProgress(result.newSubjectXp);
+  const rewardXp = result.rewards?.xp || {};
+  const rewardCoins = result.rewards?.coins || {};
+  const xpRows = [
+    { label: "Correct Answer XP", amount: rewardXp.correctAnswerXp || 0, show: true },
+    { label: "Completion Bonus", amount: rewardXp.completionXp || 0, show: (rewardXp.completionXp || 0) > 0 },
+    { label: "Combo Bonus", amount: rewardXp.comboXp || result.comboBonus || 0, show: (rewardXp.comboXp || result.comboBonus || 0) > 0 },
+    { label: "Recommended Practice Bonus", amount: rewardXp.recommendedPracticeXp || 0, show: (rewardXp.recommendedPracticeXp || 0) > 0 },
+    { label: "Level-up Bonus", amount: rewardXp.levelUpXp || 0, show: (rewardXp.levelUpXp || 0) > 0 },
+  ].filter((row) => row.show);
+  const coinRows = [
+    { label: "Accuracy Coins", amount: rewardCoins.accuracyBonusCoins || 0 },
+    { label: "Recommended Practice Coins", amount: rewardCoins.recommendedPracticeCoins || 0 },
+    { label: "Level-up Coins", amount: rewardCoins.levelUpCoins || 0 },
+    { label: "Perfect Score Coins", amount: rewardCoins.perfectScoreCoins || 0 },
+  ].filter((row) => row.amount > 0);
+
+  if (result.rewardValidationFailed) {
+    return (
+      <section className="dashboard-card result-summary">
+        <div className="result-hero-icon"><FaTrophy /></div>
+        <p className="eyebrow">Practice Complete</p>
+        <h1>Reward validation failed</h1>
+        <p className="card-copy">Reward validation failed. Please retry the practice session.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="dashboard-card result-summary">
@@ -17,9 +43,39 @@ function ResultSummary({ result }) {
         <div><span>Wrong</span><strong>{result.wrongCount}</strong></div>
       </div>
       <div className="reward-pills result-rewards">
-        <span><FaStar /> +{result.xpEarned} XP</span>
-        <span><FaCoins /> +{result.coinsEarned} Coins</span>
-        <span><FaFire /> Combo +{result.comboBonus} XP</span>
+        <span><FaStar /> +{result.rewards?.xp?.totalXp || result.xpEarned} XP</span>
+        <span><FaCoins /> +{result.rewards?.coins?.totalCoins || result.coinsEarned} Coins</span>
+        <span><FaFire /> Combo +{result.rewards?.xp?.comboXp || result.comboBonus || 0} XP</span>
+      </div>
+      <div className="reward-breakdown">
+        <h2>Rewards Earned</h2>
+        <div className="reward-breakdown-list">
+          {xpRows.map((item) => (
+            <div className="reward-breakdown-row" key={item.label}>
+              <span>{item.label}</span>
+              <strong>+{item.amount} XP</strong>
+            </div>
+          ))}
+          {coinRows.map((item) => (
+            <div className="reward-breakdown-row" key={item.label}>
+              <span>{item.label}</span>
+              <strong>+{item.amount} Coins</strong>
+            </div>
+          ))}
+          <div className="reward-breakdown-total">
+            <span>Total XP Earned</span>
+            <strong>+{result.rewards?.xp?.totalXp || result.xpEarned} XP</strong>
+          </div>
+          <div className="reward-breakdown-total coins-total">
+            <span>Coins Earned</span>
+            <strong>+{result.rewards?.coins?.totalCoins || result.coinsEarned} Coins</strong>
+          </div>
+        </div>
+      </div>
+      <div className="reward-ledger">
+        <div><span>Total XP</span><strong>{result.previousUserXp?.toLocaleString()}{" -> "}{result.newUserXp?.toLocaleString()}</strong></div>
+        <div><span>Coins</span><strong>{result.previousCoins?.toLocaleString()}{" -> "}{result.newCoins?.toLocaleString()}</strong></div>
+        <div><span>Subject XP Before / After</span><strong>{result.previousSubjectXp?.toLocaleString()}{" -> "}{result.newSubjectXp?.toLocaleString()}</strong></div>
       </div>
       <div className="subject-result-progress">
         <div className="preview-progress-row">

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FaBookOpen, FaCoins, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaStar, FaTools } from "react-icons/fa";
+import { FaBolt, FaCoins, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaTools } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
@@ -51,7 +51,7 @@ function PracticePage() {
 
   return (
     <DashboardLayout activeKey="practice">
-      <header className="dashboard-header">
+      <header className="dashboard-header practice-header">
         <div className="header-left">
           <p className="eyebrow">Welcome back, <span>{user.name}</span></p>
           <h1>Practice Mode</h1>
@@ -71,31 +71,30 @@ function PracticePage() {
       <section className="dashboard-content practice-content">
         <section className="stats-grid" aria-label="Practice stats">
           <article className="stat-card">
-            <div className="stat-icon"><FaStar /></div>
-            <div><div className="stat-value">{user.totalXp.toLocaleString()} XP</div><div className="stat-label">Total XP</div><div className="stat-helper">Earned across all activities</div></div>
+            <div className="stat-icon"><FaBolt /></div>
+            <div><div className="stat-value">{user.totalXp.toLocaleString()} XP</div><div className="stat-helper">Earned across all activities</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaCoins /></div>
-            <div><div className="stat-value">{user.coins} Coins</div><div className="stat-label">Coins</div><div className="stat-helper">Use coins for extra mock tests</div></div>
+            <div><div className="stat-value">{user.coins} Coins</div><div className="stat-helper">Use coins for extra mock tests</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaFire /></div>
-            <div><div className="stat-value">{user.streak} Days</div><div className="stat-label">Practice Streak</div><div className="stat-helper">Complete one practice today</div></div>
+            <div><div className="stat-value">{user.streak} Days</div><div className="stat-helper">Complete one practice today</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaLayerGroup /></div>
-            <div><div className="stat-value">{subjectCards.length} Subjects</div><div className="stat-label">Subjects</div><div className="stat-helper">Based on your exam track</div></div>
+            <div><div className="stat-value">{subjectCards.length} Subjects</div><div className="stat-helper">Based on your exam track</div></div>
           </article>
         </section>
 
         <RecommendedPracticeCard
           recommendation={recommendation}
-          onStart={() => recommendation.canPractice && navigate(`/practice/${recommendation.subjectId}/session`)}
+          onStart={() => recommendation.canPractice && navigate(`/practice/${recommendation.subjectId}/session?recommended=1`)}
         />
 
         <section className="practice-section-heading">
-          <h2><FaBookOpen /> Subject Mastery Quest</h2>
-          <p>Pick one subject, earn focused XP, and unlock deeper practice modes as your level grows.</p>
+          <h2>Subjects</h2>
         </section>
 
         <section className="subject-grid">
