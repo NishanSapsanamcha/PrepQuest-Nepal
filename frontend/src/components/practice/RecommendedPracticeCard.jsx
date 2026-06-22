@@ -16,8 +16,7 @@ function RecommendedPracticeCard({ recommendation, onStart }) {
           )}
         </p>
         <div className="reward-pills">
-          <span>+100 XP</span>
-          <span>+20 Coins</span>
+          <span>Earn +10 XP for each correct answer</span>
         </div>
       </div>
       <button className="btn" type="button" disabled={!recommendation.canPractice} onClick={onStart}>

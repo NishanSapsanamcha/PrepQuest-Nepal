@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FaBolt, FaBookmark, FaCoins, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaLightbulb, FaTools } from "react-icons/fa";
+import { FaBolt, FaBookmark, FaBullseye, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaLightbulb, FaTools } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
@@ -18,6 +18,7 @@ import {
   getWrongAnswerCountBySubject,
   getWrongAnswerReview,
 } from "../../utils/storageUtils";
+import { calculateTotalXPFromTransactions, getCorrectAnswerXP } from "../../utils/xpUtils";
 import "./PracticePage.css";
 
 function PracticePage() {
@@ -27,6 +28,7 @@ function PracticePage() {
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
   const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
   const subjectProgress = getNormalizedSubjectProgress();
+  const totalXp = calculateTotalXPFromTransactions();
   const savedQuestions = getSavedReviewQuestions();
   const wrongAnswers = getWrongAnswerReview().filter((item) => !item.mastered);
   const weakTopics = getWeakTopicsFromWrongAnswers();
@@ -87,11 +89,11 @@ function PracticePage() {
         <section className="stats-grid" aria-label="Practice stats">
           <article className="stat-card">
             <div className="stat-icon"><FaBolt /></div>
-            <div><div className="stat-value">{user.totalXp.toLocaleString()} XP</div><div className="stat-helper">Earned across all activities</div></div>
+            <div><div className="stat-value">{totalXp.toLocaleString()} XP</div><div className="stat-helper">Earned from completed practice activity</div></div>
           </article>
           <article className="stat-card">
-            <div className="stat-icon"><FaCoins /></div>
-            <div><div className="stat-value">{user.coins} Coins</div><div className="stat-helper">Use coins for extra mock tests</div></div>
+            <div className="stat-icon"><FaBullseye /></div>
+            <div><div className="stat-value">+{getCorrectAnswerXP()} XP</div><div className="stat-helper">For each correct practice answer</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaFire /></div>

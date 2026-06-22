@@ -46,6 +46,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
+import { calculateTotalXPFromTransactions, getNextLevelProgress, getXPTransactions } from "../../utils/xpUtils";
 import "./DashboardPage.css";
 
 const examNames = {
@@ -71,27 +73,6 @@ const routeTargets = {
 
 const existingRoutes = new Set(["/dashboard", "/login", "/signup", "/forgot-password", "/setup", "/practice"]);
 
-const subjectData = {
-  "nayab-subba": [
-    { name: "General Knowledge", progress: 60, accuracy: 75, solved: "120/200", Icon: Globe },
-    { name: "Constitution of Nepal", progress: 45, accuracy: 62, solved: "90/200", Icon: FileText },
-    { name: "Current Affairs", progress: 35, accuracy: 68, solved: "70/200", Icon: Newspaper },
-    { name: "IQ / Mental Ability", progress: 50, accuracy: 72, solved: "100/200", Icon: Brain },
-    { name: "Nepali Grammar", progress: 55, accuracy: 70, solved: "110/200", Icon: Type },
-    { name: "English Grammar", progress: 65, accuracy: 78, solved: "130/200", Icon: Book },
-  ],
-  "sakha-adhikrit": [
-    { name: "General Knowledge", progress: 60, accuracy: 75, solved: "120/200", Icon: Globe },
-    { name: "Constitution of Nepal", progress: 45, accuracy: 62, solved: "90/200", Icon: FileText },
-    { name: "Current Affairs", progress: 35, accuracy: 68, solved: "70/200", Icon: Newspaper },
-    { name: "Governance Basics", progress: 52, accuracy: 71, solved: "104/200", Icon: Building2 },
-    { name: "Public Administration", progress: 48, accuracy: 66, solved: "96/200", Icon: Briefcase },
-    { name: "General Ability / IQ", progress: 50, accuracy: 72, solved: "100/200", Icon: Brain },
-    { name: "Nepali", progress: 55, accuracy: 70, solved: "110/200", Icon: Type },
-    { name: "English", progress: 65, accuracy: 78, solved: "130/200", Icon: Book },
-  ],
-};
-
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { key: "progression", label: "Progression", Icon: Route },
@@ -105,34 +86,15 @@ const sidebarItems = [
   { key: "profile", label: "Profile", Icon: UserRound },
 ];
 
-const weeklyXpData = [
-  { day: "Mon", xp: 120 },
-  { day: "Tue", xp: 80 },
-  { day: "Wed", xp: 150 },
-  { day: "Thu", xp: 200 },
-  { day: "Fri", xp: 300 },
-  { day: "Sat", xp: 100 },
-  { day: "Sun", xp: 180 },
+const ranks = [
+  "New Aspirant",
+  "Focused Learner",
+  "Kharidar Candidate",
+  "Nayab Subba Candidate",
+  "Officer Candidate",
+  "Loksewa Warrior",
+  "PrepQuest Legend",
 ];
-
-const progressionData = {
-  currentLevel: 5,
-  currentXP: 1250,
-  nextLevelXP: 2000,
-  xpRemaining: 750,
-  progressPercent: 62,
-  currentRank: "Focused Learner",
-  nextRank: "Kharidar Candidate",
-  ranks: [
-    "New Aspirant",
-    "Focused Learner",
-    "Kharidar Candidate",
-    "Nayab Subba Candidate",
-    "Officer Candidate",
-    "Loksewa Warrior",
-    "PrepQuest Legend",
-  ],
-};
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -143,27 +105,36 @@ function DashboardPage() {
   );
   const [showProgression, setShowProgression] = useState(false);
 
-  const selectedExam = localStorage.getItem("selectedExam") || "nayab-subba";
+  const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
+  const totalXp = calculateTotalXPFromTransactions();
+  const xpProgress = getNextLevelProgress(totalXp);
+  const currentRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level - 1)] || ranks[0];
+  const nextRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level)] || "Highest rank reached";
+  const xpTransactions = getXPTransactions();
+  const subjectCards = getExamSubjects(selectedExam).map((subject) =>
+    buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExam)
+  );
+  const weeklyXpData = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => ({
+    day,
+    xp: xpTransactions
+      .filter((transaction) => new Date(transaction.createdAt).getDay() === index)
+      .reduce((sum, transaction) => sum + transaction.amount, 0),
+  }));
 
   const examLabel = examNames[selectedExam] || "Nayab Subba";
   const languageLabel = languageNames[preferredLanguage] || "English";
 
   const weakSubjects = useMemo(() => {
-    const subjects = subjectData[selectedExam] || subjectData["nayab-subba"];
-    const requiredWeakAreas = [
-      { name: "Constitution of Nepal", progress: 45, accuracy: 62, solved: "90/200", Icon: FileText },
-      { name: "Current Affairs", progress: 35, accuracy: 68, solved: "70/200", Icon: Newspaper },
-      { name: "Public Administration", progress: 48, accuracy: 66, solved: "96/200", Icon: Briefcase },
-    ];
-    return requiredWeakAreas.map(
-      (fallback) => subjects.find((subject) => subject.name === fallback.name) || fallback
-    );
-  }, [selectedExam]);
+    return subjectCards
+      .filter((subject) => subject.progress.questionsSolved > 0)
+      .sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101))
+      .slice(0, 3);
+  }, [subjectCards]);
 
-  const maxWeeklyXp = Math.max(...weeklyXpData.map((d) => d.xp));
-  const currentRankIndex = progressionData.ranks.indexOf(progressionData.currentRank);
+  const maxWeeklyXp = Math.max(1, ...weeklyXpData.map((d) => d.xp));
+  const currentRankIndex = ranks.indexOf(currentRank);
 
   const handleSidebarToggle = () => {
     setSidebarCollapsed((current) => {
@@ -287,19 +258,19 @@ function DashboardPage() {
             {/* Stats Grid */}
             <section className="stats-grid" aria-label="Learning stats">
               <article className="stat-card">
-                <div className="stat-icon"><Sparkles /></div>
+                  <div className="stat-icon"><Sparkles /></div>
                 <div>
-                  <div className="stat-value">Level 5</div>
-                  <div className="stat-label">XP / Focused Learner</div>
-                  <div className="stat-helper">1,250 XP earned</div>
+                  <div className="stat-value">Level {xpProgress.currentLevel.level}</div>
+                  <div className="stat-label">XP / {currentRank}</div>
+                  <div className="stat-helper">{totalXp.toLocaleString()} XP earned</div>
                 </div>
               </article>
               <article className="stat-card">
                 <div className="stat-icon"><Coins /></div>
                 <div>
-                  <div className="stat-value">340</div>
+                  <div className="stat-value">0</div>
                   <div className="stat-label">Coins</div>
-                  <div className="stat-helper">Use coins for extra mock tests</div>
+                  <div className="stat-helper">Coin rewards are coming later</div>
                 </div>
               </article>
               <article className="stat-card">
@@ -324,16 +295,16 @@ function DashboardPage() {
             <section className="dashboard-card progression-preview">
               <div>
                 <p className="eyebrow">Your Progress</p>
-                <h2>Focused Learner</h2>
+                <h2>{currentRank}</h2>
                 <p>
-                  <strong>1,250 / 2,000 XP</strong> earned. Next Rank: <strong>{progressionData.nextRank}</strong>.
+                  <strong>{totalXp.toLocaleString()} / {xpProgress.nextLevelXp.toLocaleString()} XP</strong> earned. Next Rank: <strong>{nextRank}</strong>.
                 </p>
                 <div className="preview-progress-row">
-                  <span>Current Level: {progressionData.currentRank}</span>
-                  <span>{progressionData.progressPercent}%</span>
+                  <span>Current Level: {currentRank}</span>
+                  <span>{xpProgress.percent}%</span>
                 </div>
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${progressionData.progressPercent}%` }} />
+                  <div className="progress-fill" style={{ width: `${xpProgress.percent}%` }} />
                 </div>
               </div>
               <button className="outline-pill view-progression-btn" type="button" onClick={showProgressionSection}>
@@ -369,7 +340,7 @@ function DashboardPage() {
                       <Circle /><span>Practice your weak subject</span>
                     </div>
                   </div>
-                  <div className="mission-reward"><Gift /> +50 XP +30 Coins</div>
+                  <div className="mission-reward"><Gift /> Mission rewards coming later</div>
                   <button className="btn btn-full" type="button" onClick={() => navigateIfAvailable("daily-quiz")}>
                     Start Daily Quiz
                   </button>
@@ -408,7 +379,7 @@ function DashboardPage() {
                   </div>
                   <p className="card-copy">Focus here first to raise your mock score faster.</p>
                   <div className="weak-subject-list">
-                    {weakSubjects.map(({ name, accuracy, solved, Icon }) => (
+                    {weakSubjects.length ? weakSubjects.map(({ name, accuracy, progress, Icon = BookOpen }) => (
                       <article className="weak-subject-item" key={name}>
                         <div className="weak-subject-top">
                           <div className="weak-subject-name"><Icon /> {name}</div>
@@ -416,13 +387,13 @@ function DashboardPage() {
                         </div>
                         <div className="weak-subject-meta">
                           <span>Accuracy</span>
-                          <span>{solved} solved</span>
+                          <span>{progress.questionsSolved} solved</span>
                         </div>
                         <div className="progress-bar">
                           <div className="progress-fill" style={{ width: `${accuracy}%` }} />
                         </div>
                       </article>
-                    ))}
+                    )) : <p className="card-copy">Complete practice sessions to generate weak subject insights.</p>}
                   </div>
                   <button
                     className="btn btn-full btn-secondary"
@@ -437,26 +408,20 @@ function DashboardPage() {
                 <section className="dashboard-card">
                   <h2 className="card-title"><Activity /> Recent Activity</h2>
                   <div className="activity-list">
-                    <article className="activity-item">
-                      <div className="activity-icon"><CheckCircle /></div>
-                      <div><p>Completed Daily Quiz</p><span>+50 XP</span></div>
-                      <time>Today</time>
-                    </article>
-                    <article className="activity-item">
-                      <div className="activity-icon"><BookOpen /></div>
-                      <div><p>Finished Constitution Practice</p><span>+30 Coins</span></div>
-                      <time>Today</time>
-                    </article>
-                    <article className="activity-item">
-                      <div className="activity-icon"><Target /></div>
-                      <div><p>Mock Test Score: 82%</p><span>+100 XP</span></div>
-                      <time>1 day ago</time>
-                    </article>
-                    <article className="activity-item">
-                      <div className="activity-icon"><Flame /></div>
-                      <div><p>Streak increased to 4 days</p><span>Momentum kept</span></div>
-                      <time>1 day ago</time>
-                    </article>
+                    {xpTransactions.slice(0, 4).map((transaction) => (
+                      <article className="activity-item" key={transaction.id}>
+                        <div className="activity-icon"><CheckCircle /></div>
+                        <div><p>{transaction.subjectName || "Practice"} correct answer</p><span>+{transaction.amount} XP</span></div>
+                        <time>{new Date(transaction.createdAt).toLocaleDateString()}</time>
+                      </article>
+                    ))}
+                    {!xpTransactions.length && (
+                      <article className="activity-item">
+                        <div className="activity-icon"><BookOpen /></div>
+                        <div><p>No XP activity yet</p><span>Correct practice answers will appear here</span></div>
+                        <time>Now</time>
+                      </article>
+                    )}
                   </div>
                 </section>
 
@@ -486,32 +451,32 @@ function DashboardPage() {
                 >
                   <div className="card-heading">
                     <h2 className="card-title"><Route /> Learning Progression</h2>
-                    <span className="status-chip">{progressionData.progressPercent}% complete</span>
+                    <span className="status-chip">{xpProgress.percent}% complete</span>
                   </div>
                   <div className="progression-overview">
                     <div className="progression-hero">
-                      <span className="progression-level">Level {progressionData.currentLevel}</span>
-                      <h3>{progressionData.currentRank}</h3>
-                      <p>Next Rank: <strong>{progressionData.nextRank}</strong></p>
+                      <span className="progression-level">Level {xpProgress.currentLevel.level}</span>
+                      <h3>{currentRank}</h3>
+                      <p>Next Rank: <strong>{nextRank}</strong></p>
                     </div>
                     <div className="xp-panel">
                       <div className="xp-row">
                         <span>XP Progress</span>
                         <strong>
-                          {progressionData.currentXP.toLocaleString()} / {progressionData.nextLevelXP.toLocaleString()} XP
+                          {totalXp.toLocaleString()} / {xpProgress.nextLevelXp.toLocaleString()} XP
                         </strong>
                       </div>
                       <div className="progress-bar xp-progress-bar">
-                        <div className="progress-fill" style={{ width: `${progressionData.progressPercent}%` }} />
+                        <div className="progress-fill" style={{ width: `${xpProgress.percent}%` }} />
                       </div>
                       <p>
-                        <strong>{progressionData.progressPercent}%</strong> complete to next level.{" "}
-                        <span>{progressionData.xpRemaining} XP remaining</span>.
+                        <strong>{xpProgress.percent}%</strong> complete to next level.{" "}
+                        <span>{xpProgress.remainingXp} XP remaining</span>.
                       </p>
                     </div>
                   </div>
                   <div className="rank-timeline" aria-label="Rank journey">
-                    {progressionData.ranks.map((rank, index) => {
+                    {ranks.map((rank, index) => {
                       const state =
                         index < currentRankIndex ? "completed"
                         : index === currentRankIndex ? "current"
@@ -541,9 +506,9 @@ function DashboardPage() {
                     <strong>2/3</strong>
                   </div>
                   <p className="card-copy">
-                    Complete a mock test to earn <strong>+100 XP</strong> and <strong>+40 coins</strong>.
+                    Mock test rewards are coming later.
                   </p>
-                  <p className="muted-copy">Extra mock tests cost 100 coins after your free limit.</p>
+                  <p className="muted-copy">Mock tests are not connected to XP yet.</p>
                   <button className="btn btn-full" type="button" onClick={() => navigateIfAvailable("mock-tests")}>
                     Start Free Mock
                   </button>
@@ -556,13 +521,10 @@ function DashboardPage() {
                     <span className="gold-chip">Friday 7 PM</span>
                   </div>
                   <p className="tournament-description">
-                    Compete with other Loksewa learners every Friday. Answer timed questions, earn points, and win XP, coins, and badges.
+                    Compete with other Loksewa learners every Friday. Tournament rewards are coming later.
                   </p>
                   <div className="reward-badges">
-                    <span>1st: 500 Coins</span>
-                    <span>2nd: 300 Coins</span>
-                    <span>3rd: 150 Coins</span>
-                    <span>Everyone: 50 Coins</span>
+                    <span>Rewards coming later</span>
                   </div>
                   <p className="ethical-note">No coin betting. Everyone earns participation rewards.</p>
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("tournament")}>
@@ -576,21 +538,11 @@ function DashboardPage() {
                   <div className="leaderboard-list">
                     <article className="leaderboard-item top">
                       <span className="leaderboard-rank medal">1</span>
-                      <span className="leaderboard-name">Aayush</span>
-                      <strong>2,400 XP</strong>
-                    </article>
-                    <article className="leaderboard-item top">
-                      <span className="leaderboard-rank medal silver">2</span>
-                      <span className="leaderboard-name">Suman</span>
-                      <strong>2,100 XP</strong>
-                    </article>
-                    <article className="leaderboard-item top">
-                      <span className="leaderboard-rank medal bronze">3</span>
-                      <span className="leaderboard-name">Ramesh</span>
-                      <strong>1,850 XP</strong>
+                      <span className="leaderboard-name">{userName}</span>
+                      <strong>{totalXp.toLocaleString()} XP</strong>
                     </article>
                   </div>
-                  <div className="your-rank">Your Rank: <strong>#12</strong> this week</div>
+                  <div className="your-rank">Leaderboard will expand when more users are connected.</div>
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("leaderboard")}>
                     View Full Leaderboard
                   </button>
@@ -606,7 +558,7 @@ function DashboardPage() {
                     <div className="progress-bar">
                       <div className="progress-fill gold-fill" style={{ width: "57%" }} />
                     </div>
-                    <span>Reward: +150 coins + badge</span>
+                    <span>Badge rewards coming later</span>
                   </div>
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("badges")}>
                     View Badges
@@ -620,8 +572,8 @@ function DashboardPage() {
                     <div className="profile-item"><span>Name</span><strong>{userName}</strong></div>
                     <div className="profile-item"><span>Exam</span><strong>{examLabel}</strong></div>
                     <div className="profile-item"><span>Language</span><strong>{languageLabel}</strong></div>
-                    <div className="profile-item"><span>Rank</span><strong>Focused Learner</strong></div>
-                    <div className="profile-item"><span>Accuracy</span><strong>72%</strong></div>
+                    <div className="profile-item"><span>Rank</span><strong>{currentRank}</strong></div>
+                    <div className="profile-item"><span>Total XP</span><strong>{totalXp.toLocaleString()} XP</strong></div>
                   </div>
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("profile")}>
                     View Profile

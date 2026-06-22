@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FaBookmark, FaDoorOpen, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
@@ -14,7 +14,7 @@ import {
   saveReviewQuestion,
   saveWrongAnswer,
 } from "../../utils/storageUtils";
-import { getNextLevelProgress, getSubjectLevel } from "../../utils/xpUtils";
+import { addXPTransaction, getCorrectAnswerXP, getNextLevelProgress, getPracticeSessionXP, getSubjectLevel } from "../../utils/xpUtils";
 import "./PracticeSessionPage.css";
 
 function PracticeSessionPage() {
@@ -25,12 +25,14 @@ function PracticeSessionPage() {
   const subject = getSubjectById(subjectId);
   const selectedExam = user.selectedExam || localStorage.getItem("selectedExam");
   const questions = useMemo(() => getSubjectQuestions(subjectId, selectedExam), [subjectId, selectedExam]);
+  const practiceSessionIdRef = useRef(`practice-${subjectId}-${Date.now()}`);
   const progress = buildSubjectProgress(subjectId);
   const level = getSubjectLevel(progress.xp);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [answers, setAnswers] = useState([]);
+  const [sessionEarnedXp, setSessionEarnedXp] = useState(() => getPracticeSessionXP(practiceSessionIdRef.current));
   const [savedQuestionIds, setSavedQuestionIds] = useState(() => getSavedReviewQuestions().map((item) => item.questionId));
   const [isMuted, setIsMuted] = useState(getSoundMuted);
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
@@ -83,7 +85,20 @@ function PracticeSessionPage() {
     };
     setAnswers((current) => [...current, answer]);
     setFeedback({ isCorrect, answer });
-    if (!isCorrect) saveWrongAnswer(question, selectedOptionKey, languageMode);
+    if (isCorrect) {
+      const xpResult = addXPTransaction({
+        type: "practice_correct_answer",
+        amount: getCorrectAnswerXP(),
+        subjectId,
+        subjectName: subject.name,
+        questionId: question.id,
+        practiceSessionId: practiceSessionIdRef.current,
+        metadata: { source: "quick_practice" },
+      });
+      if (xpResult.added) setSessionEarnedXp((current) => current + xpResult.transaction.amount);
+    } else {
+      saveWrongAnswer(question, selectedOptionKey, languageMode);
+    }
     playSound(isCorrect ? "correct" : "wrong");
   };
 
@@ -93,6 +108,7 @@ function PracticeSessionPage() {
       subjectName: subject.name,
       answers: finalAnswers,
       questions,
+      practiceSessionId: practiceSessionIdRef.current,
       practiceType: "Quick Practice",
       isRecommendedPractice,
     });
@@ -268,6 +284,7 @@ function PracticeSessionPage() {
                   ? `${subjectLevelProgress.remainingXp} XP needed for Level ${subjectLevelProgress.nextLevel.level}: ${subjectLevelProgress.nextLevel.name}`
                   : "Highest subject level reached."}
               </p>
+              <p className="subject-progress-copy">This session: +{sessionEarnedXp} XP</p>
             </section>
 
             <section className="coach-feedback-shell">

@@ -3,7 +3,6 @@ import {
   FaArrowLeft,
   FaBookOpen,
   FaCheckCircle,
-  FaCoins,
   FaGraduationCap,
   FaLanguage,
   FaLayerGroup,
@@ -35,7 +34,7 @@ const practiceTypes = [
     detail: "Instant feedback and explanation",
     description: "Start with focused questions, no pressure, and build subject XP every day.",
     level: 1,
-    reward: "XP + possible coins",
+    reward: "+10 XP per correct answer",
     buttonLabel: "Start Quick Practice",
   },
   {
@@ -58,8 +57,8 @@ const practiceTypes = [
   },
   {
     name: "Accuracy Challenge",
-    detail: "Score 80% or above for bonus coins",
-    description: "Practice with a high-accuracy target and earn bonus coins.",
+    detail: "Practice with a high-accuracy target",
+    description: "Accuracy rewards are coming later.",
     level: 5,
   },
   {
@@ -189,9 +188,8 @@ function SubjectPracticePage() {
 
           <div className="reward-preview-row">
             <span className="reward-preview-pill"><FaStar /> Correct Answer: <strong>+10 XP</strong></span>
-            <span className="reward-preview-pill"><FaCheckCircle /> Complete Practice: <strong>+30 XP</strong></span>
-            <span className="reward-preview-pill coin-pill"><FaCoins /> Score 80%+: <strong>+20 Coins</strong></span>
-            <span className="reward-preview-pill mixed-reward"><FaLockOpen /> Level Up: <strong>+50 XP</strong> <b>+30 Coins</b></span>
+            <span className="reward-preview-pill"><FaCheckCircle /> Completion bonuses coming later</span>
+            <span className="reward-preview-pill mixed-reward"><FaLockOpen /> Level-up rewards coming later</span>
           </div>
         </section>
 

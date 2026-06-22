@@ -69,7 +69,7 @@
   background: #2dd4bf;
   opacity: 0;
   transform: rotate(var(--rotation)) translate3d(0, 0, 0);
-  animation: resultConfetti 1250ms ease-out forwards;
+  animation: resultConfetti 1.25s ease-out forwards;
 }
 
 .dashboard-page .result-celebration.major span {

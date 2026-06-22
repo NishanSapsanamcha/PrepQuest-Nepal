@@ -11,15 +11,15 @@ const keys = {
   rewardedSessions: "prepquest_rewarded_sessions",
 };
 
-const sampleUser = {
+const defaultUser = {
   name: "Prajal Danai",
   selectedExam: "Sakha Adhikrit",
   preferredLanguage: "English",
-  totalXp: 1250,
-  coins: 340,
-  level: 5,
-  rank: "Focused Learner",
-  streak: 4,
+  totalXp: 0,
+  coins: 0,
+  level: 1,
+  rank: "New Aspirant",
+  streak: 0,
   freeMocksLeft: 2,
 };
 
@@ -38,12 +38,12 @@ function writeJson(key, value) {
 
 export function normalizeUser(user) {
   return {
-    ...sampleUser,
+    ...defaultUser,
     ...(user || {}),
-    totalXp: Number.isFinite(user?.totalXp) && user.totalXp >= 0 ? user.totalXp : sampleUser.totalXp,
-    coins: Number.isFinite(user?.coins) && user.coins >= 0 ? user.coins : sampleUser.coins,
-    streak: Number.isFinite(user?.streak) && user.streak >= 0 ? user.streak : sampleUser.streak,
-    freeMocksLeft: Number.isFinite(user?.freeMocksLeft) && user.freeMocksLeft >= 0 ? user.freeMocksLeft : sampleUser.freeMocksLeft,
+    totalXp: Number.isFinite(user?.totalXp) && user.totalXp >= 0 ? user.totalXp : defaultUser.totalXp,
+    coins: Number.isFinite(user?.coins) && user.coins >= 0 ? user.coins : defaultUser.coins,
+    streak: Number.isFinite(user?.streak) && user.streak >= 0 ? user.streak : defaultUser.streak,
+    freeMocksLeft: Number.isFinite(user?.freeMocksLeft) && user.freeMocksLeft >= 0 ? user.freeMocksLeft : defaultUser.freeMocksLeft,
   };
 }
 
@@ -81,11 +81,11 @@ export function getUser() {
   const user = readJson(keys.user, null);
   if (user) return normalizeUser(user);
 
-  writeJson(keys.user, sampleUser);
+  writeJson(keys.user, defaultUser);
   localStorage.setItem("selectedExam", "sakha-adhikrit");
   localStorage.setItem("preferredLanguage", "english");
-  localStorage.setItem("userName", sampleUser.name);
-  return sampleUser;
+  localStorage.setItem("userName", defaultUser.name);
+  return defaultUser;
 }
 
 export function saveUser(user) {
