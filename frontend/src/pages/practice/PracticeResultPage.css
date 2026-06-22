@@ -7,15 +7,96 @@
 }
 
 .dashboard-page .result-summary {
+  position: relative;
   display: grid;
   gap: 1rem;
   text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.dashboard-page .result-summary > *:not(.result-celebration) {
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-page .result-summary h1 {
   margin: 0;
   font-size: 1.7rem;
 }
+
+.dashboard-page .milestone-toast {
+  width: min(100%, 620px);
+  display: grid;
+  gap: 0.22rem;
+  justify-self: center;
+  padding: 0.78rem 0.95rem;
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  border-radius: 14px;
+  background: rgba(15, 23, 39, 0.78);
+  color: var(--soft);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
+  animation: milestoneToastIn 320ms ease-out both;
+}
+
+.dashboard-page .milestone-toast strong {
+  color: var(--teal);
+  font-size: 0.92rem;
+}
+
+.dashboard-page .milestone-toast span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.dashboard-page .result-celebration {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.dashboard-page .result-celebration span {
+  position: absolute;
+  top: 0.65rem;
+  left: 50%;
+  width: 8px;
+  height: 14px;
+  border-radius: 4px;
+  background: #2dd4bf;
+  opacity: 0;
+  transform: rotate(var(--rotation)) translate3d(0, 0, 0);
+  animation: resultConfetti 1250ms ease-out forwards;
+}
+
+.dashboard-page .result-celebration.major span {
+  animation-duration: 1550ms;
+}
+
+.dashboard-page .result-celebration span:nth-child(2n) { background: #22c55e; }
+.dashboard-page .result-celebration span:nth-child(3n) { background: #fbbf24; }
+.dashboard-page .result-celebration span:nth-child(4n) { background: #38bdf8; }
+.dashboard-page .result-celebration span:nth-child(1) { --rotation: 8deg; --x: -270px; --y: 110px; animation-delay: 20ms; }
+.dashboard-page .result-celebration span:nth-child(2) { --rotation: 32deg; --x: -210px; --y: 150px; animation-delay: 70ms; }
+.dashboard-page .result-celebration span:nth-child(3) { --rotation: 58deg; --x: -150px; --y: 98px; animation-delay: 35ms; }
+.dashboard-page .result-celebration span:nth-child(4) { --rotation: 86deg; --x: -90px; --y: 170px; animation-delay: 95ms; }
+.dashboard-page .result-celebration span:nth-child(5) { --rotation: 118deg; --x: -35px; --y: 120px; animation-delay: 10ms; }
+.dashboard-page .result-celebration span:nth-child(6) { --rotation: 146deg; --x: 35px; --y: 160px; animation-delay: 75ms; }
+.dashboard-page .result-celebration span:nth-child(7) { --rotation: 174deg; --x: 86px; --y: 112px; animation-delay: 45ms; }
+.dashboard-page .result-celebration span:nth-child(8) { --rotation: 204deg; --x: 140px; --y: 174px; animation-delay: 105ms; }
+.dashboard-page .result-celebration span:nth-child(9) { --rotation: 236deg; --x: 202px; --y: 118px; animation-delay: 60ms; }
+.dashboard-page .result-celebration span:nth-child(10) { --rotation: 264deg; --x: 266px; --y: 154px; animation-delay: 120ms; }
+.dashboard-page .result-celebration span:nth-child(11) { --rotation: 292deg; --x: -246px; --y: 218px; animation-delay: 160ms; }
+.dashboard-page .result-celebration span:nth-child(12) { --rotation: 318deg; --x: -178px; --y: 238px; animation-delay: 135ms; }
+.dashboard-page .result-celebration span:nth-child(13) { --rotation: 344deg; --x: -104px; --y: 216px; animation-delay: 190ms; }
+.dashboard-page .result-celebration span:nth-child(14) { --rotation: 24deg; --x: -18px; --y: 252px; animation-delay: 145ms; }
+.dashboard-page .result-celebration span:nth-child(15) { --rotation: 64deg; --x: 78px; --y: 214px; animation-delay: 175ms; }
+.dashboard-page .result-celebration span:nth-child(16) { --rotation: 104deg; --x: 158px; --y: 242px; animation-delay: 150ms; }
+.dashboard-page .result-celebration span:nth-child(17) { --rotation: 152deg; --x: 232px; --y: 218px; animation-delay: 205ms; }
+.dashboard-page .result-celebration span:nth-child(18) { --rotation: 212deg; --x: 286px; --y: 250px; animation-delay: 185ms; }
 
 .dashboard-page .result-hero-icon {
   width: 4rem;
@@ -196,5 +277,35 @@
   .dashboard-page .result-metrics,
   .dashboard-page .result-action-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page .milestone-toast,
+  .dashboard-page .result-celebration span {
+    animation: none;
+  }
+
+  .dashboard-page .result-celebration {
+    display: none;
+  }
+}
+
+@keyframes milestoneToastIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes resultConfetti {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--rotation)) translate3d(0, 0, 0) scale(0.4);
+  }
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--rotation) + 110deg)) translate3d(var(--x), var(--y), 0) scale(1);
   }
 }

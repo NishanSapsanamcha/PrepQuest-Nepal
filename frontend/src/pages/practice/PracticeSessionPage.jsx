@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FaBookmark, FaDoorOpen, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
@@ -30,8 +30,7 @@ function PracticeSessionPage() {
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [answers, setAnswers] = useState([]);
-  const [isMuted, setIsMuted] = useState(() => localStorage.getItem("prepquest_sound_muted") !== "false");
-  const bgAudioRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem("prepquest_sound_muted") === "true");
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
   const isRecommendedPractice = searchParams.get("recommended") === "1";
 
@@ -50,7 +49,7 @@ function PracticeSessionPage() {
 
   const question = questions[currentIndex];
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
-  const soundAvailable = Boolean(sounds["correct.mp3"] || sounds["wrong.mp3"] || sounds["click.mp3"] || sounds["practice-bg.mp3"]);
+  const soundAvailable = Boolean(sounds["correct.mp3"] || sounds["wrong.mp3"] || sounds["click.mp3"] || sounds["level-up.mp3"] || sounds["complete.mp3"]);
   const correctCount = answers.filter((answer) => answer.isCorrect).length;
   const wrongCount = answers.filter((answer) => !answer.isCorrect).length;
   const answeredCount = answers.length;
@@ -60,7 +59,7 @@ function PracticeSessionPage() {
   const playSound = (fileName) => {
     if (isMuted || !sounds[fileName]) return;
     const audio = new Audio(sounds[fileName]);
-    audio.volume = fileName === "practice-bg.mp3" ? 0.18 : 0.45;
+    audio.volume = 0.42;
     audio.play().catch(() => {});
   };
 
@@ -68,16 +67,6 @@ function PracticeSessionPage() {
     setIsMuted((current) => {
       const next = !current;
       localStorage.setItem("prepquest_sound_muted", String(next));
-
-      if (!next && sounds["practice-bg.mp3"]) {
-        const bgAudio = bgAudioRef.current || new Audio(sounds["practice-bg.mp3"]);
-        bgAudioRef.current = bgAudio;
-        bgAudio.loop = true;
-        bgAudio.volume = 0.12;
-        bgAudio.play().catch(() => {});
-      } else if (bgAudioRef.current) {
-        bgAudioRef.current.pause();
-      }
 
       if (!next && sounds["click.mp3"]) {
         const audio = new Audio(sounds["click.mp3"]);
@@ -97,6 +86,7 @@ function PracticeSessionPage() {
 
   const handleSubmit = () => {
     if (!selectedOptionKey || feedback) return;
+    playSound("click.mp3");
     const isCorrect = selectedOptionKey === question.correctOption;
     const answer = {
       questionId: question.id,
@@ -124,6 +114,7 @@ function PracticeSessionPage() {
   };
 
   const handleNext = () => {
+    playSound("click.mp3");
     const currentAnswers = feedback?.answer && !answers.some((answer) => answer.questionId === feedback.answer.questionId)
       ? [...answers, feedback.answer]
       : answers;
@@ -131,7 +122,6 @@ function PracticeSessionPage() {
       finishSession(currentAnswers);
       return;
     }
-    playSound("click.mp3");
     setCurrentIndex((index) => index + 1);
     setSelectedOptionKey("");
     setFeedback(null);
@@ -139,6 +129,7 @@ function PracticeSessionPage() {
 
   const handleSkip = () => {
     if (feedback) return;
+    playSound("click.mp3");
     const skippedAnswer = {
       questionId: question.id,
       selectedOptionKey: "SKIPPED",
@@ -149,10 +140,11 @@ function PracticeSessionPage() {
     const nextAnswers = [...answers, skippedAnswer];
     setAnswers(nextAnswers);
     setFeedback({ isCorrect: false, answer: skippedAnswer });
-    playSound("wrong.mp3");
   };
 
   const handleSaveReview = () => {
+    if (!feedback?.answer) return;
+    playSound("click.mp3");
     saveReviewQuestions([
       {
         questionId: question.id,
@@ -171,7 +163,6 @@ function PracticeSessionPage() {
       },
       ...getReviewQuestions(),
     ]);
-    playSound("click.mp3");
   };
 
   return (
@@ -180,7 +171,7 @@ function PracticeSessionPage() {
         <div className="header-left">
           <p className="eyebrow subject-pill">{subject.name}</p>
           <h1>Level {level.level}: {level.name}</h1>
-          <p>Quick Practice · Question {currentIndex + 1} of {questions.length}</p>
+          <p>Quick Practice - Question {currentIndex + 1} of {questions.length}</p>
         </div>
         <div className="header-right">
           <button
@@ -229,6 +220,7 @@ function PracticeSessionPage() {
                 isAnswered={Boolean(feedback)}
                 levelLabel={`Level ${level.level}`}
                 onSelectOption={handleOptionSelect}
+                showXpBurst={Boolean(feedback?.isCorrect)}
               />
             </div>
 
@@ -236,7 +228,7 @@ function PracticeSessionPage() {
               <span className="xp-preview">
                 {!feedback && "Correct answer reward: +10 XP"}
                 {feedback?.isCorrect && "+10 XP earned"}
-                {feedback && !feedback.isCorrect && "No XP earned · Review explanation"}
+                {feedback && !feedback.isCorrect && "No XP earned - Review explanation"}
               </span>
               {!feedback ? (
                 <>

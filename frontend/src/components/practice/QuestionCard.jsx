@@ -1,7 +1,7 @@
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import { getText } from "../../utils/practiceUtils";
 
-function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectOption, languageMode, isAnswered, levelLabel, practiceType }) {
+function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectOption, languageMode, isAnswered, levelLabel, practiceType, showXpBurst = false }) {
   const text = getText(question, languageMode);
 
   const getOptionState = (optionKey) => {
@@ -43,6 +43,7 @@ function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectO
                   <FaCheckCircle /> Correct answer
                 </span>
               )}
+              {isCorrect && showXpBurst && <span className="floating-xp" aria-hidden="true">+10 XP</span>}
               {isWrong && (
                 <span className="option-status your-answer">
                   <FaTimesCircle /> Your answer

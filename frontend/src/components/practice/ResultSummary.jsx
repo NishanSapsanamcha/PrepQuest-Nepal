@@ -1,10 +1,28 @@
+import { useEffect, useMemo } from "react";
 import { FaCoins, FaFire, FaStar, FaTrophy } from "react-icons/fa";
 import { getNextLevelProgress } from "../../utils/xpUtils";
+
+const soundModules = import.meta.glob("../../assets/audio/*.mp3", { eager: true, import: "default", query: "?url" });
+const sounds = Object.entries(soundModules).reduce((library, [path, url]) => {
+  const fileName = path.split("/").pop();
+  return { ...library, [fileName]: url };
+}, {});
 
 function ResultSummary({ result }) {
   const progress = getNextLevelProgress(result.newSubjectXp);
   const rewardXp = result.rewards?.xp || {};
   const rewardCoins = result.rewards?.coins || {};
+  const milestones = useMemo(() => {
+    const items = ["Practice completed"];
+    if (result.accuracy >= 80) items.push("Score 80% or higher");
+    if (result.totalQuestions === 10 && result.score === 10) items.push("Perfect score 10/10");
+    if (result.accuracy === 100 && result.totalQuestions !== 10) items.push("Perfect score");
+    if (result.levelUp?.didLevelUp) items.push(`Subject level up: Level ${result.levelUp.newLevel.level}`);
+    if (result.maxCorrectStreak === 3) items.push("3 correct answers in a row");
+    if (result.maxCorrectStreak >= 5) items.push("5 correct answers in a row");
+    return items;
+  }, [result]);
+  const isMajorMilestone = result.accuracy >= 80 || result.levelUp?.didLevelUp || result.maxCorrectStreak >= 3;
   const xpRows = [
     { label: "Correct Answer XP", amount: rewardXp.correctAnswerXp || 0, show: true },
     { label: "Completion Bonus", amount: rewardXp.completionXp || 0, show: (rewardXp.completionXp || 0) > 0 },
@@ -19,6 +37,16 @@ function ResultSummary({ result }) {
     { label: "Perfect Score Coins", amount: rewardCoins.perfectScoreCoins || 0 },
   ].filter((row) => row.amount > 0);
 
+  useEffect(() => {
+    if (result.rewardValidationFailed) return;
+    if (localStorage.getItem("prepquest_sound_muted") === "true") return;
+    const fileName = result.levelUp?.didLevelUp ? "level-up.mp3" : "complete.mp3";
+    if (!sounds[fileName]) return;
+    const audio = new Audio(sounds[fileName]);
+    audio.volume = 0.42;
+    audio.play().catch(() => {});
+  }, [result.levelUp?.didLevelUp]);
+
   if (result.rewardValidationFailed) {
     return (
       <section className="dashboard-card result-summary">
@@ -32,9 +60,16 @@ function ResultSummary({ result }) {
 
   return (
     <section className="dashboard-card result-summary">
+      <div className={`result-celebration ${isMajorMilestone ? "major" : ""}`} aria-hidden="true">
+        {Array.from({ length: 18 }, (_, index) => <span key={index} />)}
+      </div>
       <div className="result-hero-icon"><FaTrophy /></div>
       <p className="eyebrow">Practice Complete!</p>
       <h1>{result.subjectName}</h1>
+      <div className="milestone-toast" role="status" aria-live="polite">
+        <strong>{isMajorMilestone ? "Milestone reached" : "Session complete"}</strong>
+        <span>{milestones.join(" - ")}</span>
+      </div>
       <div className="result-metrics">
         <div><span>Practice Type</span><strong>{result.practiceType}</strong></div>
         <div><span>Score</span><strong>{result.score} / {result.totalQuestions}</strong></div>
