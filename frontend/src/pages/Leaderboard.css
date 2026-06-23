@@ -3,9 +3,9 @@
 	min-height: 100vh;
 	overflow: hidden;
 	background:
-		radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 30%),
-		radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 28%),
-		linear-gradient(180deg, #0b1220 0%, #111827 48%, #090d18 100%);
+		radial-gradient(circle at top right, rgba(45, 212, 191, 0.16), transparent 30%),
+		radial-gradient(circle at top left, rgba(251, 191, 36, 0.12), transparent 28%),
+		linear-gradient(180deg, #0b1220 0%, #111827 48%, #080d18 100%);
 	color: #f8fafc;
 }
 
@@ -14,7 +14,7 @@
 	inset: 0;
 	background:
 		radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.04), transparent 0 18%),
-		radial-gradient(circle at 82% 78%, rgba(96, 165, 250, 0.1), transparent 0 24%);
+		radial-gradient(circle at 82% 78%, rgba(45, 212, 191, 0.1), transparent 0 24%);
 	pointer-events: none;
 }
 
@@ -127,15 +127,15 @@
 	gap: 8px;
 	padding: 10px 14px;
 	border-radius: 999px;
-	background: linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(255, 255, 255, 0.08));
-	color: #fff7ed;
+	background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(255, 255, 255, 0.08));
+	color: #ecfeff;
 	font-size: 0.95rem;
 	font-weight: 700;
 }
 
 .hero-chip.ghost {
 	background: rgba(255, 255, 255, 0.06);
-	color: #dbeafe;
+	color: #cbd5e1;
 }
 
 .leaderboard-tabs {
@@ -197,7 +197,7 @@
 }
 
 .summary-icon.warm { background: rgba(251, 146, 60, 0.16); color: #fdba74; }
-.summary-icon.cool { background: rgba(59, 130, 246, 0.16); color: #93c5fd; }
+.summary-icon.cool { background: rgba(45, 212, 191, 0.16); color: #5eead4; }
 
 .summary-card strong {
 	display: block;
@@ -338,7 +338,7 @@
 	display: block;
 	height: 100%;
 	border-radius: inherit;
-	background: linear-gradient(90deg, #facc15, #fb7185, #38bdf8);
+	background: linear-gradient(90deg, #fbbf24, #fb7185, #2dd4bf);
 }
 
 .legend-list {

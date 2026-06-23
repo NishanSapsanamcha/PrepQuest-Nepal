@@ -14,6 +14,7 @@ import {
 	Zap
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 import "./Leaderboard.css";
 
 const periodTabs = ["Weekly", "Monthly", "Subject-wise", "Tournament"];
@@ -102,7 +103,8 @@ function Leaderboard() {
 	}, [activePeriod]);
 
 	return (
-		<main className="leaderboard-page">
+		<DashboardLayout activeKey="leaderboard">
+		<div className="leaderboard-page">
 			<div className="leaderboard-backdrop" aria-hidden="true" />
 
 			<div className="leaderboard-shell">
@@ -272,7 +274,8 @@ function Leaderboard() {
 					</div>
 				</section>
 			</div>
-		</main>
+		</div>
+		</DashboardLayout>
 	);
 }
 

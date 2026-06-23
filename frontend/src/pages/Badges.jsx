@@ -24,6 +24,7 @@ import {
 	Zap
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 import "./Badges.css";
 
 const badgeTabs = ["All", "Earned", "In Progress", "Locked", "Rare", "Legendary"];
@@ -264,7 +265,8 @@ function Badges() {
 	};
 
 	return (
-		<main className="badges-page">
+		<DashboardLayout activeKey="badges">
+		<div className="badges-page">
 			<div className="badges-backdrop" aria-hidden="true" />
 
 			<div className="badges-shell">
@@ -528,7 +530,8 @@ function Badges() {
 					</p>
 				</footer>
 			</div>
-		</main>
+		</div>
+		</DashboardLayout>
 	);
 }
 

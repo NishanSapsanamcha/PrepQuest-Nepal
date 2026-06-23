@@ -3,9 +3,9 @@
 	min-height: 100vh;
 	overflow: hidden;
 	background:
-		radial-gradient(circle at top right, rgba(249, 115, 22, 0.16), transparent 30%),
-		radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 28%),
-		linear-gradient(180deg, #10172a 0%, #111827 50%, #090d18 100%);
+		radial-gradient(circle at top right, rgba(45, 212, 191, 0.16), transparent 30%),
+		radial-gradient(circle at top left, rgba(251, 191, 36, 0.12), transparent 28%),
+		linear-gradient(180deg, #0f1727 0%, #111827 50%, #080d18 100%);
 	color: #f8fafc;
 }
 
@@ -64,8 +64,8 @@
 .join-button {
 	justify-self: start;
 	padding: 12px 18px;
-	background: linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(249, 115, 22, 0.18));
-	color: #fef3c7;
+	background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(45, 212, 191, 0.18));
+	color: #ecfeff;
 }
 
 .hero-copy {
@@ -132,15 +132,15 @@
 	gap: 8px;
 	padding: 10px 14px;
 	border-radius: 999px;
-	background: linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(255, 255, 255, 0.08));
-	color: #fff7ed;
+	background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(255, 255, 255, 0.08));
+	color: #ecfeff;
 	font-size: 0.95rem;
 	font-weight: 700;
 }
 
 .hero-chip.ghost {
 	background: rgba(255, 255, 255, 0.06);
-	color: #dbeafe;
+	color: #cbd5e1;
 }
 
 .tournament-layout {
@@ -215,7 +215,7 @@
 	border-radius: 18px;
 	border: 1px solid rgba(148, 163, 184, 0.12);
 	background: rgba(15, 23, 42, 0.45);
-	color: #dbeafe;
+	color: #cbd5e1;
 	line-height: 1.55;
 }
 
