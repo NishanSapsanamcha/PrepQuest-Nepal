@@ -64,6 +64,54 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/practice"
+        element={
+          <ProtectedRoute>
+            <PracticePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/review"
+        element={
+          <ProtectedRoute>
+            <PracticeReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/review/session/:questionId"
+        element={
+          <ProtectedRoute>
+            <ReviewSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/:subjectId"
+        element={
+          <ProtectedRoute>
+            <SubjectPracticePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/:subjectId/session"
+        element={
+          <ProtectedRoute>
+            <PracticeSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/practice/:subjectId/result"
+        element={
+          <ProtectedRoute>
+            <PracticeResultPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

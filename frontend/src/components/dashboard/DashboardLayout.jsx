@@ -28,7 +28,14 @@ const routeTargets = {
   profile: "/profile",
 };
 
-const connectedRoutes = new Set(["/dashboard", "/practice"]);
+const connectedRoutes = new Set([
+  "/dashboard",
+  "/practice",
+  "/tournament",
+  "/leaderboard",
+  "/badges",
+  "/profile",
+]);
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: FiHome },

@@ -15,6 +15,7 @@ import {
 	Zap
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import DashboardLayout from "../components/dashboard/DashboardLayout";
 import "./Tournament.css";
 
 const scoringRules = [
@@ -51,7 +52,8 @@ function Tournament() {
 	const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
 
 	return (
-		<main className="tournament-page">
+		<DashboardLayout activeKey="tournament">
+		<div className="tournament-page">
 			<div className="tournament-backdrop" aria-hidden="true" />
 
 			<div className="tournament-shell">
@@ -197,7 +199,8 @@ function Tournament() {
 					<p>No betting. No coin loss. Every participant earns rewards.</p>
 				</div>
 			</div>
-		</main>
+		</div>
+		</DashboardLayout>
 	);
 }
 
