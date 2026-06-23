@@ -19,6 +19,7 @@ import "../../pages/dashboard/DashboardPage.css";
 
 const routeTargets = {
   dashboard: "/dashboard",
+  progression: "/progression",
   practice: "/practice",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
@@ -26,7 +27,7 @@ const routeTargets = {
   profile: "/profile",
 };
 
-const connectedRoutes = new Set(["/dashboard", "/practice", "/tournament", "/leaderboard", "/badges", "/profile"]);
+const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/tournament", "/leaderboard", "/badges", "/profile"]);
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: FiHome },
