@@ -19,23 +19,15 @@ import "../../pages/dashboard/DashboardPage.css";
 
 const routeTargets = {
   dashboard: "/dashboard",
+  progression: "/progression",
   practice: "/practice",
-  "daily-quiz": "/daily-quiz",
-  "mock-tests": "/mock-tests",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
   badges: "/badges",
   profile: "/profile",
 };
 
-const connectedRoutes = new Set([
-  "/dashboard",
-  "/practice",
-  "/tournament",
-  "/leaderboard",
-  "/badges",
-  "/profile",
-]);
+const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/tournament", "/leaderboard", "/badges", "/profile"]);
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: FiHome },
@@ -73,9 +65,7 @@ function DashboardLayout({ activeKey, children }) {
     const target = routeTargets[key];
     if (target && connectedRoutes.has(target)) {
       navigate(target);
-      return;
     }
-    console.log(`${key} route is not connected yet.`);
   };
 
   const handleLogout = () => {

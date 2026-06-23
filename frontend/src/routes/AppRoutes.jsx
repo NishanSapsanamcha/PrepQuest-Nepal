@@ -4,6 +4,7 @@ import Badges from "../pages/Badges";
 import Leaderboard from "../pages/Leaderboard";
 import Tournament from "../pages/Tournament";
 import Profile from "../pages/Profile";
+import ProgressionPage from "../pages/progression/ProgressionPage";
 import SetupPage from "../pages/setup/SetupPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import LoginPage from "../pages/auth/LoginPage";
@@ -61,6 +62,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/progression"
+        element={
+          <ProtectedRoute>
+            <ProgressionPage />
           </ProtectedRoute>
         }
       />

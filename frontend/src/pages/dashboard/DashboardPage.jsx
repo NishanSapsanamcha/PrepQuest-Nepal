@@ -62,8 +62,7 @@ const languageNames = {
 };
 
 const routeTargets = {
-  "daily-quiz": "/daily-quiz",
-  "mock-tests": "/mock-tests",
+  progression: "/progression",
   practice: "/practice",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
@@ -71,7 +70,7 @@ const routeTargets = {
   profile: "/profile",
 };
 
-const existingRoutes = new Set(["/dashboard", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
+const existingRoutes = new Set(["/dashboard", "/progression", "/practice", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
 
 const subjectData = {
   "nayab-subba": [
@@ -120,11 +119,9 @@ const ranks = [
 function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const progressionRef = useRef(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem("sidebarCollapsed") === "true"
   );
-  const [showProgression, setShowProgression] = useState(false);
 
   const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
@@ -169,22 +166,11 @@ function DashboardPage() {
     const target = routeTargets[routeKey];
     if (target && existingRoutes.has(target)) {
       navigate(target);
-      return;
     }
-    console.log(`${routeKey} route is not connected yet.`);
-  };
-
-  const showProgressionSection = () => {
-    setShowProgression(true);
-    requestAnimationFrame(() => {
-      progressionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   };
 
   const handleNavClick = (key) => {
     if (key === "dashboard") { navigate("/dashboard"); return; }
-    if (key === "progression") { showProgressionSection(); return; }
-    if (key === "suggestions") { console.log("Suggestions page will be connected in the next step."); return; }
     navigateIfAvailable(key);
   };
 
@@ -328,7 +314,7 @@ function DashboardPage() {
                   <div className="progress-fill" style={{ width: `${xpProgress.percent}%` }} />
                 </div>
               </div>
-              <button className="outline-pill view-progression-btn" type="button" onClick={showProgressionSection}>
+              <button className="outline-pill view-progression-btn" type="button" onClick={() => navigate("/progression")}>
                 <Route /> View Progression
               </button>
             </section>
@@ -467,8 +453,7 @@ function DashboardPage() {
                 <section
                   className="dashboard-card progression-card progression-details"
                   id="learning-progression"
-                  hidden={!showProgression}
-                  ref={progressionRef}
+                  hidden
                 >
                   <div className="card-heading">
                     <h2 className="card-title"><Route /> Learning Progression</h2>
