@@ -4,8 +4,8 @@ import { FaDoorOpen, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import AnswerFeedback from "../../components/practice/AnswerFeedback";
 import QuestionCard from "../../components/practice/QuestionCard";
+import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { normalizeLanguageMode } from "../../utils/practiceUtils";
-import { getSoundMuted, playSound, toggleSoundMuted } from "../../utils/soundUtils";
 import {
   getUser,
   markWrongAnswerMastered,
@@ -28,7 +28,7 @@ function ReviewSessionPage() {
   const [itemData, setItemData] = useState(null);
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [feedback, setFeedback] = useState(null);
-  const [isMuted, setIsMuted] = useState(getSoundMuted);
+  const { isMuted, toggleMute, playClick, playCorrect, playWrong } = usePrepQuestSound();
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
 
   useEffect(() => {
@@ -86,20 +86,18 @@ function ReviewSessionPage() {
   const subtitleText = isWrongAnswerReview ? "Mistake Review · Question 1 of 1" : "Saved Question Review · Question 1 of 1";
 
   const handleSoundToggle = () => {
-    const next = toggleSoundMuted();
-    setIsMuted(next);
-    if (!next) playSound("click");
+    toggleMute();
   };
 
   const handleOptionSelect = (optionKey) => {
     if (feedback) return;
-    playSound("click");
+    playClick();
     setSelectedOptionKey(optionKey);
   };
 
   const handleSubmit = () => {
     if (!selectedOptionKey || feedback) return;
-    playSound("click");
+    playClick();
     const isCorrect = selectedOptionKey === question.correctOption;
 
     setFeedback({ isCorrect, answer: { selectedOptionKey, correctOption: question.correctOption, isCorrect } });
@@ -118,15 +116,18 @@ function ReviewSessionPage() {
 
     // Play correct/wrong sound after a slight delay
     setTimeout(() => {
-      playSound(isCorrect ? "correct" : "wrong");
+      if (isCorrect) playCorrect();
+      else playWrong();
     }, 100);
   };
 
   const handleBackToReview = () => {
+    playClick();
     navigate("/practice/review");
   };
 
   const handleTryAnother = () => {
+    playClick();
     setSelectedOptionKey("");
     setFeedback(null);
   };
@@ -153,7 +154,7 @@ function ReviewSessionPage() {
             className="outline-pill exit-practice-btn"
             type="button"
             onClick={() => {
-              playSound("click");
+              playClick();
               navigate("/practice/review");
             }}
           >

@@ -58,7 +58,7 @@ const practiceTypes = [
   {
     name: "Accuracy Challenge",
     detail: "Practice with a high-accuracy target",
-    description: "Accuracy rewards are coming later.",
+    description: "Train toward a stronger accuracy target.",
     level: 5,
   },
   {
@@ -188,8 +188,8 @@ function SubjectPracticePage() {
 
           <div className="reward-preview-row">
             <span className="reward-preview-pill"><FaStar /> Correct Answer: <strong>+10 XP</strong></span>
-            <span className="reward-preview-pill"><FaCheckCircle /> Completion bonuses coming later</span>
-            <span className="reward-preview-pill mixed-reward"><FaLockOpen /> Level-up rewards coming later</span>
+            <span className="reward-preview-pill"><FaCheckCircle /> Session result saved</span>
+            <span className="reward-preview-pill mixed-reward"><FaLockOpen /> Level unlocks practice modes</span>
           </div>
         </section>
 
