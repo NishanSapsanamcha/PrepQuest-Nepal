@@ -1,192 +1,139 @@
 import { useNavigate } from "react-router-dom";
-import {
-	ArrowLeft,
-	Award,
-	BadgeCheck,
-	BookOpen,
-	CalendarDays,
-	Coins,
-	Flame,
-	Globe,
-	Languages,
-	Crown,
-	Medal,
-	ShieldCheck,
-	Sparkles,
-	Star,
-	Target,
-	Trophy,
-	UserRound,
-	Zap
-} from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { FaBookOpen, FaCalendarAlt, FaCoins, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { MdTrackChanges } from "react-icons/md";
+import DashboardLayout from "../components/dashboard/DashboardLayout";
+import { mockBadges, mockCurrentUser, mockProfileActivity, mockTournamentHistory, rankThresholds } from "../data/gamificationMockData";
 import "./Profile.css";
 
-const statCards = [
-	{ label: "Badges earned", value: 6, Icon: Medal },
-	{ label: "Best subject", value: "Constitution", Icon: BookOpen },
-	{ label: "Avg accuracy", value: "84%", Icon: Target },
-	{ label: "Tournament history", value: "4 battles", Icon: Trophy }
-];
-
-const favoriteBadges = [
-	{ name: "Welcome Learner", detail: "Starter", Icon: Sparkles },
-	{ name: "Constitution Starter", detail: "Subject Mastery", Icon: BookOpen },
-	{ name: "7-Day Warrior", detail: "Streak", Icon: Flame },
-	{ name: "Accuracy Ace", detail: "Rare", Icon: Target },
-	{ name: "Mock Test Guardian", detail: "Mock Test", Icon: ShieldCheck }
-];
-
-const recentActivity = [
-	{ label: "Daily quiz completed", detail: "30 questions answered", time: "Today" },
-	{ label: "Friday tournament practice", detail: "Timed round finished", time: "Yesterday" },
-	{ label: "Mock test review", detail: "Accuracy improved to 84%", time: "2 days ago" },
-	{ label: "Badge earned", detail: "Welcome Learner unlocked", time: "3 days ago" }
-];
-
 function Profile() {
-	const navigate = useNavigate();
-	const { user } = useAuth();
+  const navigate = useNavigate();
+  const soundMuted = localStorage.getItem("prepquest_sound_muted") === "true";
+  const earnedBadges = mockBadges.filter((badge) => badge.status === "earned");
+  const showcaseBadges = [
+    ...earnedBadges,
+    mockBadges.find((badge) => badge.id === "seven_day_warrior"),
+    mockBadges.find((badge) => badge.id === "review_hero"),
+  ].filter(Boolean).slice(0, 5);
+  const rankProgressPercent = Math.round((mockCurrentUser.totalXP / mockCurrentUser.nextRankXP) * 100);
 
-	const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
-	const selectedExamKey = localStorage.getItem("selectedExam") || "nayab-subba";
-	const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
-	const examLabel = selectedExamKey === "sakha-adhikrit" ? "Sakha Adhikrit" : "Nayab Subba";
-	const languageLabel = preferredLanguage === "both" ? "Both" : preferredLanguage === "nepali" ? "Nepali" : "English";
+  return (
+    <DashboardLayout activeKey="profile">
+      <section className="dashboard-content profile-page">
+        <header className="dashboard-card profile-header-card">
+          <div className="profile-avatar">{mockCurrentUser.initials}</div>
+          <div className="profile-header-copy">
+            <p className="eyebrow">Gamified Identity</p>
+            <h1>{mockCurrentUser.name}</h1>
+            <div className="profile-chip-row">
+              <span className="chip">{mockCurrentUser.examTrack}</span>
+              <span className="chip">{mockCurrentUser.languageMode}</span>
+              <span className="chip">{mockCurrentUser.currentRank}</span>
+              <span className="chip"><FaShieldAlt /> Public leaderboard: {mockCurrentUser.publicLeaderboard ? "On" : "Off"}</span>
+            </div>
+          </div>
+          <button className="outline-pill" type="button">Edit Profile</button>
+        </header>
 
-	return (
-		<main className="profile-page">
-			<div className="profile-backdrop" aria-hidden="true" />
+        <section className="dashboard-card rank-journey-card">
+          <div className="rank-journey-top">
+            <div>
+              <p className="eyebrow">Overall Rank Journey</p>
+              <h2>Current Rank: {mockCurrentUser.currentRank}</h2>
+              <p>Account Level {mockCurrentUser.level} - {mockCurrentUser.totalXP} / {mockCurrentUser.nextRankXP} XP toward {mockCurrentUser.nextRank}.</p>
+            </div>
+            <div className="rank-xp-box">
+              <span>XP Needed</span>
+              <strong>{mockCurrentUser.xpToNextRank} XP</strong>
+            </div>
+          </div>
+          <div className="progress-bar"><div className="progress-fill" style={{ width: `${rankProgressPercent}%` }} /></div>
+          <div className="rank-path">
+            {rankThresholds.map((rank) => (
+              <span className={rank.rank === mockCurrentUser.currentRank ? "current" : ""} key={rank.rank}>{rank.rank}</span>
+            ))}
+          </div>
+        </section>
 
-			<div className="profile-shell">
-				<header className="profile-hero">
-					<button className="back-link" type="button" onClick={() => navigate("/dashboard")}>
-						<ArrowLeft /> Back to Dashboard
-					</button>
+        <section className="stats-grid">
+          <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">{mockCurrentUser.coins}</div><div className="stat-label">Coins</div><div className="stat-helper">Mock profile preview</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{mockCurrentUser.streak} Days</div><div className="stat-label">Current Streak</div><div className="stat-helper">Daily habit status</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><MdTrackChanges /></div><div><div className="stat-value">{mockCurrentUser.overallAccuracy}%</div><div className="stat-label">Overall Accuracy</div><div className="stat-helper">{mockCurrentUser.totalCorrect} correct answers</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaBookOpen /></div><div><div className="stat-value">{mockCurrentUser.totalQuestionsAttempted}</div><div className="stat-label">Questions Attempted</div><div className="stat-helper">Across mock activity</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{mockCurrentUser.badgesEarned}</div><div className="stat-label">Badges Earned</div><div className="stat-helper">Achievement showcase</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaUser /></div><div><div className="stat-value">{mockCurrentUser.subjectsPracticed}</div><div className="stat-label">Subjects Practiced</div><div className="stat-helper">Study breadth</div></div></article>
+        </section>
 
-					<div className="hero-copy">
-						<div className="hero-kicker">
-							<UserRound /> User profile
-						</div>
-						<h1>Profile Summary</h1>
-						<p>Your identity, progress, and favorite achievements in one motivating dashboard.</p>
-					</div>
+        <div className="profile-main-grid">
+          <div className="profile-left-column">
+            <section className="dashboard-card">
+              <div className="card-heading">
+                <h2 className="card-title"><FaMedal /> Badge Showcase</h2>
+                <button className="action-btn compact" type="button" onClick={() => navigate("/badges")}>View All Badges</button>
+              </div>
+              <div className="profile-badge-grid">
+                {showcaseBadges.map((badge) => (
+                  <div className="profile-badge-row" key={badge.id}>
+                    <span className="rank-badge">{badge.status === "earned" ? "✓" : `${badge.progress}/${badge.target}`}</span>
+                    <div><strong>{badge.name}</strong><span>{badge.category} - {badge.reward}</span></div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-					<div className="hero-meta">
-						<span className="hero-chip"><ShieldCheck /> {userName}</span>
-						<span className="hero-chip ghost"><BookOpen /> {examLabel}</span>
-						<span className="hero-chip ghost"><Languages /> {languageLabel}</span>
-					</div>
-				</header>
+            <section className="dashboard-card">
+              <h2 className="card-title"><FaCalendarAlt /> Recent Activity</h2>
+              <div className="profile-list">
+                {mockProfileActivity.map((item) => (
+                  <div className="profile-activity-row" key={item.id}>
+                    <span className="stat-icon small"><FaCalendarAlt /></span>
+                    <div><strong>{item.title}</strong><span>{item.detail}</span></div>
+                    <time>{item.date}</time>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
 
-				<section className="profile-layout">
-					<article className="panel identity-card">
-						<div className="avatar-badge">
-							<UserRound />
-						</div>
-						<div className="identity-copy">
-							<span className="panel-kicker">User identity</span>
-							<h2>{userName}</h2>
-							<p>Level 5 • Focused Learner • Total XP 1250 • Coins 340 • Active streak 4 days.</p>
-						</div>
+          <aside className="profile-right-column">
+            <section className="dashboard-card">
+              <h2 className="card-title"><MdTrackChanges /> Study Identity</h2>
+              <div className="detail-list">
+                <div><span>Strongest Subject</span><strong>{mockCurrentUser.strongestSubject}</strong></div>
+                <div><span>Weakest Subject</span><strong>{mockCurrentUser.weakestSubject}</strong></div>
+                <div><span>Most Practiced</span><strong>{mockCurrentUser.mostPracticedSubject}</strong></div>
+                <div><span>Recommended Next</span><strong>Practice {mockCurrentUser.weakestSubject} today</strong></div>
+              </div>
+            </section>
 
-						<div className="identity-meta">
-							<div><strong>Level 5</strong><span>Current level</span></div>
-							<div><strong>Focused Learner</strong><span>Rank title</span></div>
-							<div><strong>1,250 XP</strong><span>Total XP</span></div>
-							<div><strong>340 coins</strong><span>Coin balance</span></div>
-							<div><strong>4 days</strong><span>Active streak</span></div>
-						</div>
-					</article>
+            <section className="dashboard-card">
+              <h2 className="card-title"><FaTrophy /> Tournament History</h2>
+              <div className="profile-list">
+                {mockTournamentHistory.map((item) => (
+                  <div className="tournament-history-row" key={item.id}>
+                    <div><strong>{item.title}</strong><span>{item.date} - Rank {item.rank}/{item.participants}</span></div>
+                    <strong>{item.points} pts</strong>
+                    <span>{item.reward}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-					<article className="panel stats-card">
-						<div className="section-heading">
-							<div>
-								<span className="panel-kicker">Stats dashboard</span>
-								<h2>Performance snapshot</h2>
-							</div>
-							<Zap />
-						</div>
-
-						<div className="stats-grid">
-							{statCards.map(({ label, value, Icon }) => (
-								<div key={label} className="stats-tile">
-									<Icon />
-									<span>{label}</span>
-									<strong>{value}</strong>
-								</div>
-							))}
-						</div>
-
-						<div className="profile-progress">
-							<div className="progress-row">
-								<span>Level progress</span>
-								<strong>62%</strong>
-							</div>
-							<div className="progress-track"><span style={{ width: "62%" }} /></div>
-						</div>
-					</article>
-				</section>
-
-				<section className="profile-layout lower">
-					<article className="panel badge-showcase-card">
-						<div className="section-heading">
-							<div>
-								<span className="panel-kicker">Components showcase</span>
-								<h2>Favorite earned badges</h2>
-							</div>
-							<BadgeCheck />
-						</div>
-
-						<div className="badge-mini-grid">
-							{favoriteBadges.map((badge) => (
-								<div key={badge.name} className="badge-mini-card">
-									<badge.Icon />
-									<div>
-										<strong>{badge.name}</strong>
-										<span>{badge.detail}</span>
-									</div>
-								</div>
-							))}
-						</div>
-					</article>
-
-					<article className="panel activity-card-panel">
-						<div className="section-heading">
-							<div>
-								<span className="panel-kicker">Recent activity</span>
-								<h2>Learning timeline</h2>
-							</div>
-							<CalendarDays />
-						</div>
-
-						<div className="timeline-list">
-							{recentActivity.map((item) => (
-								<div key={item.label} className="timeline-item">
-									<div className="timeline-dot" />
-									<div>
-										<strong>{item.label}</strong>
-										<p>{item.detail}</p>
-									</div>
-									<span>{item.time}</span>
-								</div>
-							))}
-						</div>
-
-						<div className="profile-callout">
-							<Crown />
-							<p>Friday tournaments and badge progress should continue feeding this profile dashboard in future iterations.</p>
-						</div>
-					</article>
-				</section>
-
-				<footer className="profile-footer">
-					<Globe />
-					<p>Your preferences stay consistent across the app and help personalize the experience.</p>
-				</footer>
-			</div>
-		</main>
-	);
+            <section className="dashboard-card">
+              <h2 className="card-title"><FaShieldAlt /> Preferences Summary</h2>
+              <div className="detail-list">
+                <div><span>Selected Exam Track</span><strong>{mockCurrentUser.examTrack}</strong></div>
+                <div><span>Language Mode</span><strong>{mockCurrentUser.languageMode}</strong></div>
+                <div><span>Public Leaderboard</span><strong>On</strong></div>
+                <div><span>Notifications</span><strong>Future feature</strong></div>
+                <div><span>Sound Effects</span><strong>{soundMuted ? <><FaVolumeMute /> Muted</> : <><FaVolumeUp /> On</>}</strong></div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
+    </DashboardLayout>
+  );
 }
 
 export default Profile;
+
