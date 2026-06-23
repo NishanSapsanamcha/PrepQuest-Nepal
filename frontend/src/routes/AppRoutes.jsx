@@ -15,6 +15,9 @@ import ReviewSessionPage from "../pages/practice/ReviewSessionPage";
 import SubjectPracticePage from "../pages/practice/SubjectPracticePage";
 import PracticeSessionPage from "../pages/practice/PracticeSessionPage";
 import PracticeResultPage from "../pages/practice/PracticeResultPage";
+import DailyQuizPage from "../pages/daily-quiz/DailyQuizPage";
+import DailyQuizSessionPage from "../pages/daily-quiz/DailyQuizSessionPage";
+import DailyQuizResultPage from "../pages/daily-quiz/DailyQuizResultPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -118,6 +121,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PracticeResultPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/daily-quiz"
+        element={
+          <ProtectedRoute>
+            <DailyQuizPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/daily-quiz/session"
+        element={
+          <ProtectedRoute>
+            <DailyQuizSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/daily-quiz/result"
+        element={
+          <ProtectedRoute>
+            <DailyQuizResultPage />
           </ProtectedRoute>
         }
       />

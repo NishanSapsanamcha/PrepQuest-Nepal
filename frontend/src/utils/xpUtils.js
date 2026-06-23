@@ -1,10 +1,12 @@
 import { subjectLevels } from "../data/subjectLevels";
 
 const XP_TRANSACTION_KEY = "prepquest_xp_transactions";
-const VALID_XP_TYPES = new Set(["practice_correct_answer"]);
+const VALID_XP_TYPES = new Set(["practice_correct_answer", "daily_quiz", "daily_quiz_bonus"]);
 
 export const XP_REWARDS = {
   PRACTICE_CORRECT_ANSWER: 10,
+  DAILY_QUIZ_COMPLETE: 50,
+  DAILY_QUIZ_PERFECT_BONUS: 30,
 };
 
 function readJson(key, fallback) {
@@ -90,17 +92,23 @@ export function addXPTransaction(transaction) {
   const questionId = transaction?.questionId;
   const practiceSessionId = transaction?.practiceSessionId;
 
-  if (!VALID_XP_TYPES.has(type) || !Number.isFinite(amount) || amount <= 0 || !subjectId || !questionId || !practiceSessionId) {
+  if (!VALID_XP_TYPES.has(type) || !Number.isFinite(amount) || amount <= 0) {
+    return { added: false, duplicate: false, transaction: null };
+  }
+
+  if (type === "practice_correct_answer" && (!subjectId || !questionId || !practiceSessionId)) {
     return { added: false, duplicate: false, transaction: null };
   }
 
   const transactions = getXPTransactions();
-  const duplicate = transactions.some(
-    (item) =>
-      item.type === type &&
-      item.practiceSessionId === practiceSessionId &&
-      item.questionId === questionId
-  );
+  const duplicate = type === "practice_correct_answer"
+    ? transactions.some(
+        (item) =>
+          item.type === type &&
+          item.practiceSessionId === practiceSessionId &&
+          item.questionId === questionId
+      )
+    : transactions.some((item) => item.id === transaction.id || (item.type === type && item.date === transaction.date));
 
   if (duplicate) return { added: false, duplicate: true, transaction: null };
 
@@ -109,11 +117,14 @@ export function addXPTransaction(transaction) {
     id: transaction.id || `xp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     type,
     amount,
-    subjectId,
+    subjectId: subjectId || "",
     subjectName: transaction.subjectName || "",
-    questionId,
-    practiceSessionId,
-    sessionId: practiceSessionId,
+    questionId: questionId || "",
+    practiceSessionId: practiceSessionId || transaction.sessionId || "",
+    sessionId: practiceSessionId || transaction.sessionId || "",
+    date: transaction.date || "",
+    source: transaction.source || "",
+    reason: transaction.reason || "",
     createdAt,
     metadata: transaction.metadata || {},
   };
@@ -191,13 +202,11 @@ export function checkLevelUp(previousXp, newXp) {
 }
 
 function isValidXPTransaction(transaction) {
-  return (
-    transaction &&
-    VALID_XP_TYPES.has(transaction.type) &&
-    Number.isFinite(transaction.amount) &&
-    transaction.amount > 0 &&
-    Boolean(transaction.subjectId) &&
-    Boolean(transaction.questionId) &&
-    Boolean(transaction.practiceSessionId || transaction.sessionId)
-  );
+  if (!transaction || !VALID_XP_TYPES.has(transaction.type) || !Number.isFinite(transaction.amount) || transaction.amount <= 0) {
+    return false;
+  }
+  if (transaction.type === "practice_correct_answer") {
+    return Boolean(transaction.subjectId) && Boolean(transaction.questionId) && Boolean(transaction.practiceSessionId || transaction.sessionId);
+  }
+  return true;
 }

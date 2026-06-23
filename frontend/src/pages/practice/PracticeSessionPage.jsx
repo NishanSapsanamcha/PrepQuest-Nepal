@@ -4,9 +4,9 @@ import { FaBookmark, FaDoorOpen, FaVolumeMute, FaVolumeUp } from "react-icons/fa
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import AnswerFeedback from "../../components/practice/AnswerFeedback";
 import QuestionCard from "../../components/practice/QuestionCard";
+import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { getSubjectById } from "../../data/subjects";
 import { buildSubjectProgress, completePracticeSession, getSubjectQuestions, normalizeLanguageMode } from "../../utils/practiceUtils";
-import { getSoundMuted, playSound, toggleSoundMuted } from "../../utils/soundUtils";
 import {
   getSavedReviewQuestions,
   getUser,
@@ -34,7 +34,7 @@ function PracticeSessionPage() {
   const [answers, setAnswers] = useState([]);
   const [sessionEarnedXp, setSessionEarnedXp] = useState(() => getPracticeSessionXP(practiceSessionIdRef.current));
   const [savedQuestionIds, setSavedQuestionIds] = useState(() => getSavedReviewQuestions().map((item) => item.questionId));
-  const [isMuted, setIsMuted] = useState(getSoundMuted);
+  const { isMuted, toggleMute, playClick, playCorrect, playWrong, playComplete, playLevelUp } = usePrepQuestSound();
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
   const isRecommendedPractice = searchParams.get("recommended") === "1";
 
@@ -61,20 +61,18 @@ function PracticeSessionPage() {
   const isCurrentQuestionSaved = savedQuestionIds.includes(question.id);
 
   const handleSoundToggle = () => {
-    const next = toggleSoundMuted();
-    setIsMuted(next);
-    if (!next) playSound("click");
+    toggleMute();
   };
 
   const handleOptionSelect = (optionKey) => {
     if (feedback) return;
-    playSound("click");
+    playClick();
     setSelectedOptionKey(optionKey);
   };
 
   const handleSubmit = () => {
     if (!selectedOptionKey || feedback) return;
-    playSound("click");
+    playClick();
     const isCorrect = selectedOptionKey === question.correctOption;
     const answer = {
       questionId: question.id,
@@ -99,7 +97,8 @@ function PracticeSessionPage() {
     } else {
       saveWrongAnswer(question, selectedOptionKey, languageMode);
     }
-    playSound(isCorrect ? "correct" : "wrong");
+    if (isCorrect) playCorrect();
+    else playWrong();
   };
 
   const finishSession = (finalAnswers) => {
@@ -112,13 +111,14 @@ function PracticeSessionPage() {
       practiceType: "Quick Practice",
       isRecommendedPractice,
     });
-    playSound(result.levelUp?.didLevelUp ? "levelUp" : "complete");
+    if (result.levelUp?.didLevelUp) playLevelUp();
+    else playComplete();
     saveLastPracticeResult(result);
     navigate(`/practice/${subjectId}/result`);
   };
 
   const handleNext = () => {
-    playSound("click");
+    playClick();
     const currentAnswers = feedback?.answer && !answers.some((answer) => answer.questionId === feedback.answer.questionId)
       ? [...answers, feedback.answer]
       : answers;
@@ -133,7 +133,7 @@ function PracticeSessionPage() {
 
   const handleSkip = () => {
     if (feedback) return;
-    playSound("click");
+    playClick();
     const skippedAnswer = {
       questionId: question.id,
       selectedOptionKey: "SKIPPED",
@@ -148,7 +148,7 @@ function PracticeSessionPage() {
 
   const handleSaveReview = () => {
     if (!feedback?.answer || isCurrentQuestionSaved) return;
-    playSound("click");
+    playClick();
     saveReviewQuestion(question, feedback.answer.selectedOptionKey, languageMode);
     setSavedQuestionIds((current) => current.includes(question.id) ? current : [question.id, ...current]);
   };
@@ -175,7 +175,7 @@ function PracticeSessionPage() {
             className="outline-pill exit-practice-btn"
             type="button"
             onClick={() => {
-              playSound("click");
+              playClick();
               navigate(`/practice/${subjectId}`);
             }}
           >

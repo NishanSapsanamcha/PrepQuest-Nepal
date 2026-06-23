@@ -23,7 +23,6 @@ import {
   FileCheck,
   FileText,
   Flame,
-  Gift,
   Globe,
   GraduationCap,
   Languages,
@@ -46,7 +45,9 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
+import { getUser as getStoredUser } from "../../utils/storageUtils";
 import { calculateTotalXPFromTransactions, getNextLevelProgress, getXPTransactions } from "../../utils/xpUtils";
 import "./DashboardPage.css";
 
@@ -64,13 +65,14 @@ const languageNames = {
 const routeTargets = {
   progression: "/progression",
   practice: "/practice",
+  "daily-quiz": "/daily-quiz",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
   badges: "/badges",
   profile: "/profile",
 };
 
-const existingRoutes = new Set(["/dashboard", "/progression", "/practice", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
+const existingRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
 
 const subjectData = {
   "nayab-subba": [
@@ -125,8 +127,13 @@ function DashboardPage() {
 
   const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
+  const storedUser = getStoredUser();
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
   const totalXp = calculateTotalXPFromTransactions();
+  const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
+  const dailyQuizCompleted = Boolean(todayDailyQuizAttempt);
+  const missionCompletedCount = dailyQuizCompleted ? 1 : 0;
+  const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
   const xpProgress = getNextLevelProgress(totalXp);
   const currentRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level - 1)] || ranks[0];
   const nextRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level)] || "Highest rank reached";
@@ -275,15 +282,15 @@ function DashboardPage() {
               <article className="stat-card">
                 <div className="stat-icon"><Coins /></div>
                 <div>
-                  <div className="stat-value">0</div>
+                  <div className="stat-value">{(storedUser.coins || 0).toLocaleString()}</div>
                   <div className="stat-label">Coins</div>
-                  <div className="stat-helper">Coin rewards are coming later</div>
+                  <div className="stat-helper">Earned from eligible activities</div>
                 </div>
               </article>
               <article className="stat-card">
                 <div className="stat-icon"><Flame /></div>
                 <div>
-                  <div className="stat-value">4 Days</div>
+                  <div className="stat-value">{storedUser.streak || 0} Days</div>
                   <div className="stat-label">Current Streak</div>
                   <div className="stat-helper">Complete one activity today</div>
                 </div>
@@ -327,18 +334,18 @@ function DashboardPage() {
                 <section className="dashboard-card mission-card">
                   <div className="card-heading">
                     <h2 className="card-title"><Target /> Today&apos;s Mission</h2>
-                    <span className="status-chip">1/3 complete</span>
+                    <span className="status-chip">{missionCompletedCount}/3 complete</span>
                   </div>
                   <div className="mission-progress">
                     <span>Daily mission progress</span>
-                    <strong>1/3</strong>
+                    <strong>{missionCompletedCount}/3</strong>
                     <div className="progress-bar">
-                      <div className="progress-fill" style={{ width: "33%" }} />
+                      <div className="progress-fill" style={{ width: `${missionProgressPercent}%` }} />
                     </div>
                   </div>
                   <div className="mission-list">
-                    <div className="mission-item completed">
-                      <CheckCircle2 /><span>Complete 1 daily quiz</span>
+                    <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
+                      {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
                     </div>
                     <div className="mission-item">
                       <Circle /><span>Take 1 mock test</span>
@@ -347,9 +354,8 @@ function DashboardPage() {
                       <Circle /><span>Practice your weak subject</span>
                     </div>
                   </div>
-                  <div className="mission-reward"><Gift /> Mission rewards coming later</div>
-                  <button className="btn btn-full" type="button" onClick={() => navigateIfAvailable("daily-quiz")}>
-                    Start Daily Quiz
+                  <button className="btn btn-full" type="button" onClick={() => navigate(dailyQuizCompleted ? "/daily-quiz/result" : "/daily-quiz")}>
+                    {dailyQuizCompleted ? "Review Daily Quiz" : "Start Daily Quiz"}
                   </button>
                 </section>
 
@@ -512,7 +518,7 @@ function DashboardPage() {
                     <strong>2/3</strong>
                   </div>
                   <p className="card-copy">
-                    Mock test rewards are coming later.
+                    Mock tests focus on exam-style score and weak-area feedback.
                   </p>
                   <p className="muted-copy">Mock tests are not connected to XP yet.</p>
                   <button className="btn btn-full" type="button" onClick={() => navigateIfAvailable("mock-tests")}>
@@ -527,10 +533,10 @@ function DashboardPage() {
                     <span className="gold-chip">Friday 7 PM</span>
                   </div>
                   <p className="tournament-description">
-                    Compete with other Loksewa learners every Friday. Tournament rewards are coming later.
+                    Compete with other Loksewa learners every Friday in a participation-safe format.
                   </p>
                   <div className="reward-badges">
-                    <span>Rewards coming later</span>
+                    <span>Practice-focused event</span>
                   </div>
                   <p className="ethical-note">No coin betting. Everyone earns participation rewards.</p>
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("tournament")}>
@@ -564,7 +570,7 @@ function DashboardPage() {
                     <div className="progress-bar">
                       <div className="progress-fill gold-fill" style={{ width: "57%" }} />
                     </div>
-                    <span>Badge rewards coming later</span>
+                    <span>Progress milestone</span>
                   </div>
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("badges")}>
                     View Badges

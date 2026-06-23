@@ -21,13 +21,14 @@ const routeTargets = {
   dashboard: "/dashboard",
   progression: "/progression",
   practice: "/practice",
+  "daily-quiz": "/daily-quiz",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
   badges: "/badges",
   profile: "/profile",
 };
 
-const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/tournament", "/leaderboard", "/badges", "/profile"]);
+const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/tournament", "/leaderboard", "/badges", "/profile"]);
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: FiHome },
@@ -47,11 +48,12 @@ function DashboardLayout({ activeKey, children }) {
   const location = useLocation();
   const { logout } = useAuth();
   const isPracticeRoute = location.pathname.startsWith("/practice");
+  const isDailyQuizRoute = location.pathname.startsWith("/daily-quiz");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => isPracticeRoute || localStorage.getItem("sidebarCollapsed") === "true"
+    () => isPracticeRoute || isDailyQuizRoute || localStorage.getItem("sidebarCollapsed") === "true"
   );
 
-  const currentActiveKey = activeKey || (isPracticeRoute ? "practice" : "dashboard");
+  const currentActiveKey = activeKey || (isPracticeRoute ? "practice" : isDailyQuizRoute ? "daily-quiz" : "dashboard");
 
   const handleSidebarToggle = () => {
     setSidebarCollapsed((current) => {
