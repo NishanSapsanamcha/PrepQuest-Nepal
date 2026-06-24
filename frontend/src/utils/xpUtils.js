@@ -1,12 +1,22 @@
 import { subjectLevels } from "../data/subjectLevels";
 
 const XP_TRANSACTION_KEY = "prepquest_xp_transactions";
-const VALID_XP_TYPES = new Set(["practice_correct_answer", "daily_quiz", "daily_quiz_bonus"]);
+const VALID_XP_TYPES = new Set([
+  "practice_correct_answer",
+  "daily_quiz",
+  "daily_quiz_bonus",
+  "tournament_participation",
+  "tournament_rank_bonus",
+]);
 
 export const XP_REWARDS = {
   PRACTICE_CORRECT_ANSWER: 10,
   DAILY_QUIZ_COMPLETE: 50,
   DAILY_QUIZ_PERFECT_BONUS: 30,
+  TOURNAMENT_PARTICIPATION: 100,
+  TOURNAMENT_RANK_1: 500,
+  TOURNAMENT_RANK_2: 300,
+  TOURNAMENT_RANK_3: 200,
 };
 
 function readJson(key, fallback) {

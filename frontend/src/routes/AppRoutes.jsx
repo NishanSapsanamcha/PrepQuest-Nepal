@@ -18,6 +18,8 @@ import PracticeResultPage from "../pages/practice/PracticeResultPage";
 import DailyQuizPage from "../pages/daily-quiz/DailyQuizPage";
 import DailyQuizSessionPage from "../pages/daily-quiz/DailyQuizSessionPage";
 import DailyQuizResultPage from "../pages/daily-quiz/DailyQuizResultPage";
+import TournamentSessionPage from "../pages/tournament/TournamentSessionPage";
+import TournamentResultPage from "../pages/tournament/TournamentResultPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -57,6 +59,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Tournament />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournament/session"
+        element={
+          <ProtectedRoute>
+            <TournamentSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournament/result"
+        element={
+          <ProtectedRoute>
+            <TournamentResultPage />
           </ProtectedRoute>
         }
       />

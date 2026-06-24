@@ -4,7 +4,7 @@ import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { mockCurrentUser, mockLeaderboardUsers, mockSubjectLeaderboards } from "../data/gamificationMockData";
 import "./Leaderboard.css";
 
-const tabs = ["Weekly", "Monthly", "Tournament", "Subject-wise", "Exam Track"];
+const tabs = ["Weekly", "Monthly", "Tournament"];
 const exams = ["All Exams", "Nayab Subba", "Sakha Adhikrit"];
 
 function metricFor(user, activeTab) {
@@ -22,7 +22,6 @@ function TrendIcon({ trend }) {
 function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Weekly");
   const [activeExam, setActiveExam] = useState("All Exams");
-  const [activeSubject, setActiveSubject] = useState("Constitution of Nepal");
 
   const rows = useMemo(() => {
     return mockLeaderboardUsers
@@ -87,9 +86,6 @@ function Leaderboard() {
           </div>
           <div className="tab-row">
             {exams.map((exam) => <button className={`tab-pill filter${activeExam === exam ? " active" : ""}`} type="button" key={exam} onClick={() => setActiveExam(exam)}>{exam}</button>)}
-            <select className="subject-select" value={activeSubject} onChange={(event) => setActiveSubject(event.target.value)}>
-              {Object.keys(mockSubjectLeaderboards).map((subject) => <option key={subject}>{subject}</option>)}
-            </select>
           </div>
         </section>
 

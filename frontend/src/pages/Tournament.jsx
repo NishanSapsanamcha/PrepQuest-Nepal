@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaBalanceScale,
   FaCalendarAlt,
@@ -22,6 +23,7 @@ import {
   mockLeaderboardUsers,
   mockTournament,
 } from "../data/gamificationMockData";
+import { getActiveTournamentSession, getThisWeekTournamentAttempt } from "../utils/tournamentUtils";
 import "./Tournament.css";
 
 const JOINED_KEY = "prepquest_tournament_joined_preview";
@@ -50,15 +52,34 @@ function formatPreference(value, labels) {
 }
 
 function Tournament() {
+  const navigate = useNavigate();
   const rulesRef = useRef(null);
   const selectedExam = localStorage.getItem("selectedExam") || mockCurrentUser.examTrack;
   const preferredLanguage = localStorage.getItem("preferredLanguage") || mockCurrentUser.languageMode;
   const [joined, setJoined] = useState(() => localStorage.getItem(JOINED_KEY) === "true");
+  const completedAttempt = getThisWeekTournamentAttempt();
+  const hasActiveSession = Boolean(getActiveTournamentSession());
 
-  const handleJoin = () => {
-    localStorage.setItem(JOINED_KEY, "true");
-    setJoined(true);
+  const handlePrimaryAction = () => {
+    if (completedAttempt) {
+      navigate("/tournament/result");
+      return;
+    }
+    if (!joined) {
+      localStorage.setItem(JOINED_KEY, "true");
+      setJoined(true);
+      return;
+    }
+    navigate("/tournament/session");
   };
+
+  const primaryLabel = completedAttempt
+    ? "View My Result"
+    : !joined
+      ? "Join Friday Battle"
+      : hasActiveSession
+        ? "Resume Battle"
+        : "Enter Battle Arena";
 
   const handleViewRules = () => {
     rulesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -84,12 +105,16 @@ function Tournament() {
               <span className="tournament-chip safe"><FaShieldAlt /> No betting. No coin loss.</span>
             </div>
 
-            {joined && <p className="tournament-success"><FaCheckCircle /> You joined the Friday Battle preview.</p>}
+            {completedAttempt ? (
+              <p className="tournament-success"><FaCheckCircle /> You scored {completedAttempt.totalScore} pts and finished rank #{completedAttempt.rank} this week.</p>
+            ) : joined ? (
+              <p className="tournament-success"><FaCheckCircle /> You're in. Enter the battle arena when you're ready.</p>
+            ) : null}
           </div>
 
           <div className="tournament-header-actions">
-            <button className="tournament-primary-btn" type="button" onClick={handleJoin}>
-              <FaTrophy /> {joined ? "Joined" : "Join Friday Battle"}
+            <button className="tournament-primary-btn" type="button" onClick={handlePrimaryAction}>
+              <FaTrophy /> {primaryLabel}
             </button>
             <button className="tournament-secondary-btn" type="button" onClick={handleViewRules}>
               <FaListAlt /> View Rules
@@ -112,7 +137,11 @@ function Tournament() {
           </article>
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaUserCheck /></div>
-            <div><div className="stat-value">{joined ? "Joined" : "Not Joined"}</div><div className="stat-label">Your Status</div><div className="stat-helper">{joined ? "You are in the Friday preview" : "Join to enter the Friday battle"}</div></div>
+            <div>
+              <div className="stat-value">{completedAttempt ? "Battle Complete" : joined ? "Ready to Battle" : "Not Joined"}</div>
+              <div className="stat-label">Your Status</div>
+              <div className="stat-helper">{completedAttempt ? `Rank #${completedAttempt.rank} this week` : joined ? "Enter the arena to start your 20 questions" : "Join to enter the Friday battle"}</div>
+            </div>
           </article>
         </section>
 
@@ -170,9 +199,11 @@ function Tournament() {
                 <div><span>Time</span><strong>{mockTournament.time}</strong></div>
                 <div><span>Status</span><strong>{mockTournament.status}</strong></div>
               </div>
-              {joined && <p className="tournament-success compact"><FaCheckCircle /> You joined the Friday Battle preview.</p>}
-              <button className="tournament-primary-btn full" type="button" onClick={handleJoin}>
-                <FaTrophy /> {joined ? "Joined" : "Join Friday Battle"}
+              {(joined || completedAttempt) && (
+                <p className="tournament-success compact"><FaCheckCircle /> {completedAttempt ? `Rank #${completedAttempt.rank} — ${completedAttempt.totalScore} pts` : "You're in. Ready when you are."}</p>
+              )}
+              <button className="tournament-primary-btn full" type="button" onClick={handlePrimaryAction}>
+                <FaTrophy /> {primaryLabel}
               </button>
             </section>
 
@@ -192,7 +223,9 @@ function Tournament() {
                   </div>
                 ))}
               </div>
-              <div className="your-rank">Your preview rank: {joined ? "Joined - rank after battle" : "Not joined yet"}</div>
+              <div className="your-rank">
+                Your rank: {completedAttempt ? `#${completedAttempt.rank} of ${completedAttempt.totalParticipants}` : joined ? "Ranked after you finish the battle" : "Not joined yet"}
+              </div>
             </section>
 
             <section className="dashboard-card tournament-card">
@@ -208,7 +241,7 @@ function Tournament() {
                   </div>
                 ))}
               </div>
-              <p className="tournament-note"><FaCoins /> Prototype display only. Rewards are not added to XP or coin balance from this page.</p>
+              <p className="tournament-note"><FaCoins /> XP and coins are awarded automatically when you complete the Friday Battle below.</p>
             </section>
           </aside>
         </div>

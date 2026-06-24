@@ -1,35 +1,11 @@
 import { useMemo, useState } from "react";
-import { FaBook, FaCalendarAlt, FaCheck, FaClipboardList, FaCrown, FaFire, FaMedal, FaMoon, FaRedo, FaShieldAlt, FaSun, FaTrophy } from "react-icons/fa";
-import { MdOutlineRateReview, MdTrackChanges, MdTrendingUp } from "react-icons/md";
+import { FaCrown, FaFire, FaMedal, FaShieldAlt } from "react-icons/fa";
+import BadgeIcon from "../components/badges/BadgeIcon";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { mockBadges } from "../data/gamificationMockData";
 import "./Badges.css";
 
 const filters = ["All", "Earned", "Locked", "Starter", "Practice", "Daily Quiz", "Streak", "Tournament", "Accuracy", "Subject Mastery", "Rare"];
-
-const iconMap = {
-  starter: FaMedal,
-  book: FaBook,
-  calendar: FaCalendarAlt,
-  fire: FaFire,
-  clipboard: FaClipboardList,
-  target: MdTrackChanges,
-  trophy: FaTrophy,
-  medal: FaMedal,
-  refresh: FaRedo,
-  crown: FaCrown,
-  check: FaCheck,
-  review: MdOutlineRateReview,
-  sun: FaSun,
-  moon: FaMoon,
-  shield: FaShieldAlt,
-  trending: MdTrendingUp,
-};
-
-function BadgeIcon({ name }) {
-  const Icon = iconMap[name] || FaMedal;
-  return <Icon />;
-}
 
 function Badges() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -70,7 +46,7 @@ function Badges() {
         </section>
 
         <section className="dashboard-card next-badge-card">
-          <div className="badge-icon-large"><BadgeIcon name={nextBadge.icon} /></div>
+          <BadgeIcon icon={nextBadge.icon} category={nextBadge.category} rarity={nextBadge.rarity} status="next" size="lg" />
           <div>
             <p className="eyebrow">Next Badge Progress</p>
             <h2>{nextBadge.name}</h2>
@@ -94,10 +70,11 @@ function Badges() {
           <div className="badge-grid">
             {visibleBadges.map((badge) => {
               const percent = Math.min(100, Math.round((badge.progress / badge.target) * 100));
+              const cardStatus = badge.id === nextBadge.id ? "next" : badge.status;
               return (
                 <button className={`dashboard-card badge-card rarity-${badge.rarity.toLowerCase()} ${badge.status}${selectedBadgeId === badge.id ? " selected" : ""}`} type="button" key={badge.id} onClick={() => setSelectedBadgeId(badge.id)}>
                   <div className="badge-card-top">
-                    <span className="badge-icon-box"><BadgeIcon name={badge.icon} /></span>
+                    <BadgeIcon icon={badge.icon} category={badge.category} rarity={badge.rarity} status={cardStatus} size="sm" />
                     <span className="status-chip">{badge.status === "earned" ? "Earned" : "Locked"}</span>
                   </div>
                   <h3>{badge.name}</h3>
@@ -112,7 +89,13 @@ function Badges() {
           </div>
 
           <aside className="dashboard-card badge-detail-card">
-            <div className="badge-icon-large"><BadgeIcon name={selectedBadge.icon} /></div>
+            <BadgeIcon
+              icon={selectedBadge.icon}
+              category={selectedBadge.category}
+              rarity={selectedBadge.rarity}
+              status={selectedBadge.id === nextBadge.id ? "next" : selectedBadge.status}
+              size="lg"
+            />
             <h2>{selectedBadge.name}</h2>
             <p>{selectedBadge.description}</p>
             <div className="detail-list">
