@@ -266,6 +266,11 @@
   min-height: 58px;
 }
 
+.dashboard-page .tournament-leaderboard-row.current-user {
+  border-color: rgba(45, 212, 191, 0.45);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
+}
+
 .dashboard-page .tournament-leaderboard-row .leaderboard-rank {
   width: 2rem;
   height: 2rem;
@@ -318,6 +323,102 @@
 .dashboard-page .tournament-reward-row strong {
   max-width: 250px;
   line-height: 1.45;
+}
+
+/* Live battle session: per-question timer */
+.dashboard-page .question-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--teal);
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
+.dashboard-page .question-timer.low {
+  color: var(--red);
+}
+
+.dashboard-page .question-timer-bar {
+  margin-top: 0.5rem;
+  height: 6px;
+}
+
+.dashboard-page .question-timer-bar .progress-fill {
+  background: linear-gradient(90deg, var(--teal), var(--green));
+  transition: width 1s linear, background 0.3s ease;
+}
+
+.dashboard-page .question-timer-bar .timer-low-fill {
+  background: linear-gradient(90deg, var(--red), #f97316);
+}
+
+.dashboard-page .tournament-score-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--teal);
+  border: 1px solid rgba(45, 212, 191, 0.28);
+}
+
+.dashboard-page .tournament-score-badge.wrong {
+  background: rgba(251, 113, 133, 0.1);
+  color: var(--red);
+  border-color: rgba(251, 113, 133, 0.28);
+}
+
+/* Checkpoint + final leaderboard */
+.dashboard-page .checkpoint-leaderboard-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-page .checkpoint-leaderboard-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dashboard-page .checkpoint-leaderboard-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: var(--radius);
+  background: rgba(15, 23, 39, 0.72);
+  color: var(--soft);
+  font-size: 0.82rem;
+}
+
+.dashboard-page .checkpoint-leaderboard-row.current-user {
+  border-color: rgba(45, 212, 191, 0.52);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
+}
+
+.dashboard-page .checkpoint-leaderboard-row .learner-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-page .checkpoint-leaderboard-row .learner-cell svg {
+  color: var(--gold);
+}
+
+.dashboard-page .checkpoint-leaderboard-row > strong {
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .dashboard-page .checkpoint-leaderboard-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 1200px) {

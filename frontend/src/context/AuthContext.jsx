@@ -1,6 +1,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { getUser, saveUser } from "../utils/storageUtils";
 
 const STORAGE_KEY = "prepquest-auth";
+
+// The gamification profile (XP, coins, streak, etc.) lives in localStorage,
+// separate from the real authenticated account. Sync the real name/email in
+// on every login so Practice/Profile/etc. never fall back to a seeded name.
+const syncLocalProfileWithAuthUser = (authUser) => {
+	const displayName = authUser?.fullName || authUser?.name || authUser?.email;
+	if (!displayName) return;
+
+	saveUser({ ...getUser(), name: displayName, email: authUser?.email || "" });
+	localStorage.setItem("userName", displayName);
+};
 
 const AuthContext = createContext(null);
 
@@ -50,6 +62,7 @@ function AuthProvider({ children }) {
 
 		setAuthState(nextAuthState);
 		persistAuth(nextAuthState, rememberMe);
+		syncLocalProfileWithAuthUser(payload.user);
 	};
 
 	const logout = () => {

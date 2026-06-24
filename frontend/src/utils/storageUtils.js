@@ -12,7 +12,7 @@ const keys = {
 };
 
 const defaultUser = {
-  name: "Prajal Danai",
+  name: "Aspirant",
   selectedExam: "Sakha Adhikrit",
   preferredLanguage: "English",
   totalXp: 0,

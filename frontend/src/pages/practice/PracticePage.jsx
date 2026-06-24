@@ -3,7 +3,9 @@ import { FaBolt, FaBookmark, FaBullseye, FaExclamationTriangle, FaFire, FaGradua
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
+import { useAuth } from "../../context/AuthContext";
 import { examTracks } from "../../data/examTracks";
+import { getCurrentStreak } from "../../utils/dailyQuizUtils";
 import {
   buildSubjectCardData,
   getExamSubjects,
@@ -23,7 +25,10 @@ import "./PracticePage.css";
 
 function PracticePage() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const user = getUser();
+  const userName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
+  const currentStreak = getCurrentStreak();
   const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
   const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
@@ -70,7 +75,7 @@ function PracticePage() {
     <DashboardLayout activeKey="practice">
       <header className="dashboard-header practice-header">
         <div className="header-left">
-          <p className="eyebrow">Welcome back, <span>{user.name}</span></p>
+          <p className="eyebrow">Welcome back, <span>{userName}</span></p>
           <h1>Practice Mode</h1>
           <p>Choose a subject and improve your Loksewa preparation with XP, coins, feedback, and subject levels.</p>
         </div>
@@ -97,7 +102,7 @@ function PracticePage() {
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaFire /></div>
-            <div><div className="stat-value">{user.streak} Days</div><div className="stat-helper">Complete one practice today</div></div>
+            <div><div className="stat-value">{currentStreak} Days</div><div className="stat-helper">Complete a daily quiz today</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaLayerGroup /></div>

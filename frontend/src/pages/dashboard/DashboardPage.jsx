@@ -49,7 +49,7 @@ import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
 import { getUser as getStoredUser } from "../../utils/storageUtils";
-import { calculateTotalXPFromTransactions, getNextLevelProgress, getXPTransactions } from "../../utils/xpUtils";
+import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress, getXPTransactions } from "../../utils/xpUtils";
 import "./DashboardPage.css";
 
 const examNames = {
@@ -110,16 +110,6 @@ const sidebarItems = [
   { key: "profile", label: "Profile", Icon: UserRound },
 ];
 
-const ranks = [
-  "New Aspirant",
-  "Focused Learner",
-  "Kharidar Candidate",
-  "Nayab Subba Candidate",
-  "Officer Candidate",
-  "Loksewa Warrior",
-  "PrepQuest Legend",
-];
-
 function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -139,8 +129,8 @@ function DashboardPage() {
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
   const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
   const xpProgress = getNextLevelProgress(totalXp);
-  const currentRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level - 1)] || ranks[0];
-  const nextRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level)] || "Highest rank reached";
+  const rankProgress = getOverallRankProgress(totalXp);
+  const { currentRank, nextRank } = rankProgress;
   const xpTransactions = getXPTransactions();
   const subjectCards = getExamSubjects(selectedExam).map((subject) =>
     buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExam)
@@ -163,7 +153,7 @@ function DashboardPage() {
   }, [subjectCards]);
 
   const maxWeeklyXp = Math.max(1, ...weeklyXpData.map((d) => d.xp));
-  const currentRankIndex = ranks.indexOf(currentRank);
+  const currentRankIndex = rankProgress.rankIndex;
 
   const handleSidebarToggle = () => {
     setSidebarCollapsed((current) => {
@@ -294,9 +284,9 @@ function DashboardPage() {
               <article className="stat-card">
                 <div className="stat-icon"><Flame /></div>
                 <div>
-                  <div className="stat-value">{storedUser.streak || 0} Days</div>
+                  <div className="stat-value">{currentStreak} {currentStreak === 1 ? "Day" : "Days"}</div>
                   <div className="stat-label">Current Streak</div>
-                  <div className="stat-helper">Complete one activity today</div>
+                  <div className="stat-helper">{currentStreak > 0 ? "Complete a daily quiz today to keep it alive" : "Complete a daily quiz to start your streak"}</div>
                 </div>
               </article>
               <article className="stat-card">
@@ -315,14 +305,14 @@ function DashboardPage() {
                 <p className="eyebrow">Your Progress</p>
                 <h2>{currentRank}</h2>
                 <p>
-                  <strong>{totalXp.toLocaleString()} / {xpProgress.nextLevelXp.toLocaleString()} XP</strong> earned. Next Rank: <strong>{nextRank}</strong>.
+                  <strong>{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong> earned. Next Rank: <strong>{nextRank}</strong>.
                 </p>
                 <div className="preview-progress-row">
-                  <span>Current Level: {currentRank}</span>
-                  <span>{xpProgress.percent}%</span>
+                  <span>Current Rank: {currentRank}</span>
+                  <span>{rankProgress.percent}%</span>
                 </div>
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${xpProgress.percent}%` }} />
+                  <div className="progress-fill" style={{ width: `${rankProgress.percent}%` }} />
                 </div>
               </div>
               <button className="outline-pill view-progression-btn" type="button" onClick={() => navigate("/progression")}>
@@ -492,17 +482,17 @@ function DashboardPage() {
                     </div>
                   </div>
                   <div className="rank-timeline" aria-label="Rank journey">
-                    {ranks.map((rank, index) => {
+                    {rankThresholds.map((rank, index) => {
                       const state =
                         index < currentRankIndex ? "completed"
                         : index === currentRankIndex ? "current"
                         : "locked";
                       return (
-                        <div className={`rank-step ${state}`} key={rank}>
+                        <div className={`rank-step ${state}`} key={rank.rank}>
                           <span className="rank-node">
                             {state === "locked" ? <Lock /> : <Check />}
                           </span>
-                          <span className="rank-label">{rank}</span>
+                          <span className="rank-label">{rank.rank}</span>
                         </div>
                       );
                     })}
