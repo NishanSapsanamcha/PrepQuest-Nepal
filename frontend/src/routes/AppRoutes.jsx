@@ -18,8 +18,9 @@ import PracticeResultPage from "../pages/practice/PracticeResultPage";
 import DailyQuizPage from "../pages/daily-quiz/DailyQuizPage";
 import DailyQuizSessionPage from "../pages/daily-quiz/DailyQuizSessionPage";
 import DailyQuizResultPage from "../pages/daily-quiz/DailyQuizResultPage";
-import TournamentSessionPage from "../pages/tournament/TournamentSessionPage";
-import TournamentResultPage from "../pages/tournament/TournamentResultPage";
+import MockTestsPage from "../pages/mock-tests/MockTestsPage";
+import MockTestSessionPage from "../pages/mock-tests/MockTestSessionPage";
+import MockTestResultPage from "../pages/mock-tests/MockTestResultPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -163,6 +164,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DailyQuizResultPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-tests"
+        element={
+          <ProtectedRoute>
+            <MockTestsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-tests/session"
+        element={
+          <ProtectedRoute>
+            <MockTestSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-tests/result"
+        element={
+          <ProtectedRoute>
+            <MockTestResultPage />
           </ProtectedRoute>
         }
       />

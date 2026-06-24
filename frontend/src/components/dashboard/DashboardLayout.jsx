@@ -22,13 +22,14 @@ const routeTargets = {
   progression: "/progression",
   practice: "/practice",
   "daily-quiz": "/daily-quiz",
+  "mock-tests": "/mock-tests",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
   badges: "/badges",
   profile: "/profile",
 };
 
-const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/tournament", "/leaderboard", "/badges", "/profile"]);
+const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/mock-tests", "/tournament", "/leaderboard", "/badges", "/profile"]);
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard", Icon: FiHome },
@@ -49,11 +50,12 @@ function DashboardLayout({ activeKey, children }) {
   const { logout } = useAuth();
   const isPracticeRoute = location.pathname.startsWith("/practice");
   const isDailyQuizRoute = location.pathname.startsWith("/daily-quiz");
+  const isMockRoute = location.pathname.startsWith("/mock-tests");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => isPracticeRoute || isDailyQuizRoute || localStorage.getItem("sidebarCollapsed") === "true"
+    () => isPracticeRoute || isDailyQuizRoute || isMockRoute || localStorage.getItem("sidebarCollapsed") === "true"
   );
 
-  const currentActiveKey = activeKey || (isPracticeRoute ? "practice" : isDailyQuizRoute ? "daily-quiz" : "dashboard");
+  const currentActiveKey = activeKey || (isPracticeRoute ? "practice" : isDailyQuizRoute ? "daily-quiz" : isMockRoute ? "mock-tests" : "dashboard");
 
   const handleSidebarToggle = () => {
     setSidebarCollapsed((current) => {
