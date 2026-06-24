@@ -1,16 +1,78 @@
 import { useMemo, useState } from "react";
-import { FaArrowDown, FaArrowUp, FaEquals, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUserGraduate } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import {
+  FaArrowDown,
+  FaArrowUp,
+  FaEquals,
+  FaFire,
+  FaMedal,
+  FaShieldAlt,
+  FaTrophy,
+} from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-import { mockCurrentUser, mockLeaderboardUsers, mockSubjectLeaderboards } from "../data/gamificationMockData";
+import { mockCurrentUser, mockLeaderboardUsers } from "../data/gamificationMockData";
 import "./Leaderboard.css";
 
-const tabs = ["Weekly", "Monthly", "Tournament", "Subject-wise", "Exam Track"];
-const exams = ["All Exams", "Nayab Subba", "Sakha Adhikrit"];
+const rankingTypes = [
+  {
+    id: "weekly",
+    label: "Weekly",
+    description: "Ranks reset every week so every learner gets a fresh chance.",
+  },
+  {
+    id: "monthly",
+    label: "Monthly",
+    description: "Compare consistent learners across the month.",
+  },
+  {
+    id: "tournament",
+    label: "Tournament",
+    description: "Ranking based on Friday Loksewa Battle performance.",
+  },
+  {
+    id: "subject",
+    label: "Subject-wise",
+    description: "Compare learners by selected subject accuracy and XP.",
+  },
+  {
+    id: "examTrack",
+    label: "Exam Track",
+    description: "Compare learners preparing for the same exam track.",
+  },
+];
 
-function metricFor(user, activeTab) {
-  if (activeTab === "Monthly") return user.monthlyXP;
-  if (activeTab === "Tournament") return user.tournamentPoints;
+const examFilters = ["All Exams", "Nayab Subba", "Sakha Adhikrit"];
+const examTrackFilters = ["Nayab Subba", "Sakha Adhikrit"];
+const tournamentFilters = ["Latest Friday Battle", "Previous Battle"];
+const subjectFilters = [
+  "Constitution of Nepal",
+  "General Knowledge",
+  "Current Affairs",
+  "IQ",
+  "Nepali",
+  "English",
+  "Governance Basics",
+  "Public Administration Basics",
+];
+
+function metricFor(user, rankingType) {
+  if (rankingType === "monthly") return user.monthlyXP;
+  if (rankingType === "tournament") return user.tournamentPoints;
+  if (rankingType === "subject") return user.subjectXP || user.weeklyXP;
   return user.weeklyXP;
+}
+
+function metricLabel(rankingType) {
+  return rankingType === "tournament" ? "points" : "XP";
+}
+
+function subjectStatsFor(user, subject) {
+  const subjectIndex = subjectFilters.indexOf(subject);
+  const adjustment = ((user.rank + subjectIndex * 3) % 7) - 3;
+  return {
+    subjectAccuracy: Math.max(55, Math.min(98, user.accuracy + adjustment)),
+    subjectXP: Math.max(120, user.weeklyXP + adjustment * 85),
+  };
 }
 
 function TrendIcon({ trend }) {
@@ -20,133 +82,223 @@ function TrendIcon({ trend }) {
 }
 
 function Leaderboard() {
-  const [activeTab, setActiveTab] = useState("Weekly");
-  const [activeExam, setActiveExam] = useState("All Exams");
-  const [activeSubject, setActiveSubject] = useState("Constitution of Nepal");
+  const navigate = useNavigate();
+  const [selectedRankingType, setSelectedRankingType] = useState("weekly");
+  const [examFilter, setExamFilter] = useState("All Exams");
+  const [subjectExamFilter, setSubjectExamFilter] = useState("All Exams");
+  const [subjectFilter, setSubjectFilter] = useState("Constitution of Nepal");
+  const [tournamentFilter, setTournamentFilter] = useState("Latest Friday Battle");
+  const [examTrackFilter, setExamTrackFilter] = useState("Sakha Adhikrit");
+
+  const currentUser = mockLeaderboardUsers.find((user) => user.isCurrentUser) || mockLeaderboardUsers[0];
+  const podium = mockLeaderboardUsers.slice(0, 3);
+  const activeRanking = rankingTypes.find((type) => type.id === selectedRankingType);
 
   const rows = useMemo(() => {
-    return mockLeaderboardUsers
-      .filter((user) => activeExam === "All Exams" || user.examTrack === activeExam)
-      .sort((a, b) => metricFor(b, activeTab) - metricFor(a, activeTab));
-  }, [activeExam, activeTab]);
+    let nextRows = [...mockLeaderboardUsers];
 
-  const podium = mockLeaderboardUsers.slice(0, 3);
-  const currentUser = mockLeaderboardUsers.find((user) => user.isCurrentUser) || mockLeaderboardUsers[2];
+    if (selectedRankingType === "weekly" || selectedRankingType === "monthly") {
+      nextRows = nextRows.filter((user) => examFilter === "All Exams" || user.examTrack === examFilter);
+      return nextRows.sort((a, b) => a.rank - b.rank);
+    }
+
+    if (selectedRankingType === "subject") {
+      nextRows = nextRows.filter((user) => subjectExamFilter === "All Exams" || user.examTrack === subjectExamFilter);
+      return nextRows
+        .map((user) => ({
+          ...user,
+          ...subjectStatsFor(user, subjectFilter),
+        }))
+        .sort((a, b) => b.subjectAccuracy - a.subjectAccuracy || b.subjectXP - a.subjectXP);
+    }
+
+    if (selectedRankingType === "examTrack") {
+      nextRows = nextRows.filter((user) => user.examTrack === examTrackFilter);
+      return nextRows.sort((a, b) => b.weeklyXP - a.weeklyXP);
+    }
+
+    const tournamentMultiplier = tournamentFilter === "Previous Battle" ? 0.86 : 1;
+    return nextRows
+      .map((user) => ({
+        ...user,
+        tournamentPoints: Math.round(user.tournamentPoints * tournamentMultiplier),
+      }))
+      .sort((a, b) => b.tournamentPoints - a.tournamentPoints);
+  }, [examFilter, examTrackFilter, selectedRankingType, subjectExamFilter, subjectFilter, tournamentFilter]);
+
+  const handleRankingChange = (rankingType) => {
+    setSelectedRankingType(rankingType);
+  };
+
+  const renderSecondaryFilters = () => {
+    if (selectedRankingType === "weekly" || selectedRankingType === "monthly") {
+      return (
+        <div className="secondary-filter-row" aria-label="Exam filters">
+          {examFilters.map((exam) => (
+            <button className={`filter-option${examFilter === exam ? " active" : ""}`} type="button" key={exam} onClick={() => setExamFilter(exam)}>
+              {exam}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (selectedRankingType === "subject") {
+      return (
+        <div className="secondary-filter-grid">
+          <label>
+            <span>Exam Track</span>
+            <select value={subjectExamFilter} onChange={(event) => setSubjectExamFilter(event.target.value)}>
+              {examFilters.map((exam) => <option key={exam}>{exam}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Subject</span>
+            <select value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
+              {subjectFilters.map((subject) => <option key={subject}>{subject}</option>)}
+            </select>
+          </label>
+        </div>
+      );
+    }
+
+    if (selectedRankingType === "tournament") {
+      return (
+        <div className="secondary-filter-row" aria-label="Tournament filters">
+          {tournamentFilters.map((battle) => (
+            <button className={`filter-option${tournamentFilter === battle ? " active" : ""}`} type="button" key={battle} onClick={() => setTournamentFilter(battle)}>
+              {battle}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="secondary-filter-row" aria-label="Exam track filters">
+        {examTrackFilters.map((track) => (
+          <button className={`filter-option${examTrackFilter === track ? " active" : ""}`} type="button" key={track} onClick={() => setExamTrackFilter(track)}>
+            {track}
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <DashboardLayout activeKey="leaderboard">
       <section className="dashboard-content leaderboard-page">
         <header className="dashboard-header leaderboard-header">
           <div className="header-left">
-            <p className="eyebrow">Community Ranking</p>
             <h1>Leaderboard</h1>
-            <p>Compare progress across weekly XP, tournaments, subjects, and exam tracks.</p>
+            <p>Compare weekly progress, tournaments, subjects, and exam-track rankings.</p>
           </div>
           <div className="header-right">
             <div className="header-chips">
               <span className="chip"><FaFire /> Weekly Reset</span>
-              <span className="chip"><FaUserGraduate /> {mockCurrentUser.examTrack}</span>
-              <span className="chip"><FaMedal /> Rank #{mockCurrentUser.weeklyRank}</span>
               <span className="chip"><FaShieldAlt /> Privacy-safe ranking</span>
             </div>
           </div>
         </header>
 
         <section className="dashboard-card leaderboard-rank-summary">
-          <div>
-            <p className="eyebrow">Your Rank Summary</p>
-            <h2>Weekly Rank #{mockCurrentUser.weeklyRank}</h2>
-            <p>You are close to the next rank. Complete one quiz or practice your weak subject to climb higher.</p>
+          <div className="rank-main">
+            <p className="eyebrow">My Weekly Rank</p>
+            <div className="rank-number">#{mockCurrentUser.weeklyRank}</div>
+            <div>
+              <strong>{mockCurrentUser.examTrack}</strong>
+              <span>Keep practicing to move up this week.</span>
+            </div>
           </div>
           <div className="leaderboard-summary-grid">
-            <span>Weekly XP <strong>{currentUser.weeklyXP}</strong></span>
+            <span>Weekly XP <strong>{currentUser.weeklyXP.toLocaleString()} XP</strong></span>
             <span>Accuracy <strong>{currentUser.accuracy}%</strong></span>
             <span>Streak <strong>{currentUser.streak} days</strong></span>
             <span>Badges <strong>{currentUser.badges}</strong></span>
           </div>
+          <button className="btn rank-cta" type="button" onClick={() => navigate("/practice")}>
+            Practice Weak Subject
+          </button>
         </section>
 
-        <section className="leaderboard-podium-grid">
+        <section className="leaderboard-podium-grid" aria-label="Top 3 learners">
           {podium.map((user) => (
-            <article className={`dashboard-card podium-card rank-${user.rank}`} key={user.id}>
+            <article className={`podium-card rank-${user.rank}`} key={user.id}>
               <div className="podium-rank"><FaTrophy /> #{user.rank}</div>
               <div className="leader-avatar">{user.initials}</div>
-              <h2>{user.name}</h2>
-              <p>{user.examTrack}</p>
-              <div className="podium-stats">
-                <span>{user.weeklyXP} XP</span>
-                <span>{user.accuracy}% accuracy</span>
+              <div>
+                <h2>{user.name}</h2>
+                <p>{user.examTrack}</p>
               </div>
+              <strong>{user.weeklyXP.toLocaleString()} XP &middot; {user.accuracy}%</strong>
             </article>
           ))}
         </section>
 
         <section className="dashboard-card leaderboard-controls">
-          <div className="tab-row">
-            {tabs.map((tab) => <button className={`tab-pill${activeTab === tab ? " active" : ""}`} type="button" key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>)}
+          <div className="control-heading">
+            <h2>Choose Ranking Type</h2>
+            <p>{activeRanking.description}</p>
           </div>
-          <div className="tab-row">
-            {exams.map((exam) => <button className={`tab-pill filter${activeExam === exam ? " active" : ""}`} type="button" key={exam} onClick={() => setActiveExam(exam)}>{exam}</button>)}
-            <select className="subject-select" value={activeSubject} onChange={(event) => setActiveSubject(event.target.value)}>
-              {Object.keys(mockSubjectLeaderboards).map((subject) => <option key={subject}>{subject}</option>)}
-            </select>
+          <div className="ranking-tabs" role="tablist" aria-label="Ranking type">
+            {rankingTypes.map((type) => (
+              <button
+                className={`ranking-tab${selectedRankingType === type.id ? " active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={selectedRankingType === type.id}
+                key={type.id}
+                onClick={() => handleRankingChange(type.id)}
+              >
+                {type.label}
+              </button>
+            ))}
           </div>
+          {renderSecondaryFilters()}
         </section>
 
         <section className="dashboard-card leaderboard-table-card">
           <div className="card-heading">
             <h2 className="card-title"><FaMedal /> Full Leaderboard</h2>
-            <span className="status-chip">{activeTab}</span>
+            <span className="status-chip">{activeRanking.label}{selectedRankingType === "subject" ? ` - ${subjectFilter}` : ""}</span>
           </div>
-          <div className="leaderboard-table">
-            <div className="leaderboard-table-head">
-              <span>Rank</span><span>Learner</span><span>Exam Track</span><span>XP / Points</span><span>Accuracy</span><span>Streak</span><span>Badges</span><span>Trend</span>
-            </div>
-            {rows.map((user, index) => (
-              <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
-                <span className="rank-badge">{index + 1}</span>
-                <span className="learner-cell"><span className="mini-avatar">{user.initials}</span><strong>{user.name}</strong></span>
-                <span>{user.examTrack}</span>
-                <strong>{metricFor(user, activeTab).toLocaleString()}</strong>
-                <span>{user.accuracy}%</span>
-                <span>{user.streak} days</span>
-                <span>{user.badges}</span>
-                <span className={`trend ${user.trend}`}><TrendIcon trend={user.trend} /></span>
+
+          {rows.length > 0 ? (
+            <div className="leaderboard-table">
+              <div className="leaderboard-table-head">
+                <span>Rank</span><span>Learner</span><span>Exam Track</span><span>XP / Points</span><span>Accuracy</span><span>Streak</span><span>Badges</span><span>Trend</span>
               </div>
-            ))}
-          </div>
+              {rows.map((user, index) => {
+                const visibleRank = selectedRankingType === "weekly" || selectedRankingType === "monthly" ? user.rank : index + 1;
+                return (
+                  <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
+                    <span className={`rank-badge rank-${visibleRank <= 3 ? visibleRank : "default"}`}>#{visibleRank}</span>
+                    <span className="learner-cell">
+                      <span className="mini-avatar">{user.initials}</span>
+                      <span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span>
+                    </span>
+                    <span>{user.examTrack}</span>
+                    <strong>{metricFor(user, selectedRankingType).toLocaleString()} {metricLabel(selectedRankingType)}</strong>
+                    <span>{selectedRankingType === "subject" ? user.subjectAccuracy : user.accuracy}%</span>
+                    <span>{user.streak} days</span>
+                    <span>{user.badges}</span>
+                    <span className={`trend ${user.trend}`}><TrendIcon trend={user.trend} /></span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="leaderboard-empty-state">
+              <p>No ranking data yet for this filter.</p>
+              <button className="btn" type="button" onClick={() => navigate("/practice")}>Start Practice</button>
+            </div>
+          )}
         </section>
 
-        <section className="subject-leaderboard-grid">
-          {Object.entries(mockSubjectLeaderboards).map(([subject, leaders]) => (
-            <article className="dashboard-card subject-board-card" key={subject}>
-              <h2 className="card-title">{subject}</h2>
-              {leaders.map((leader) => (
-                <div className="subject-board-row" key={leader.rank}>
-                  <span className="rank-badge">{leader.rank}</span>
-                  <strong>{leader.name}</strong>
-                  <span>{leader.score}%</span>
-                  <span>{leader.solved} solved</span>
-                </div>
-              ))}
-            </article>
-          ))}
-        </section>
-
-        <section className="dashboard-card ranking-rules-card">
-          <h2 className="card-title"><FaShieldAlt /> How Ranking Works</h2>
-          <div className="rules-grid">
-            <span>Weekly leaderboard resets every Monday.</span>
-            <span>Tournament leaderboard is based on Friday Battle points.</span>
-            <span>Subject leaderboard is based on accuracy and solved questions.</span>
-            <span>All-time leaderboard is not the main focus because new users need a fair chance.</span>
-            <span>Hide from public leaderboard option can be added later.</span>
-          </div>
-        </section>
+        <p className="privacy-note">Leaderboard uses display names only. Users can hide from public ranking in future settings.</p>
       </section>
     </DashboardLayout>
   );
 }
 
 export default Leaderboard;
-

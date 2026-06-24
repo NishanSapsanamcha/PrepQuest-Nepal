@@ -1,7 +1,7 @@
 export const mockCurrentUser = {
-  id: "user_prajal",
-  name: "Prajal Danai",
-  initials: "PD",
+  id: "user_misan",
+  name: "Misan Rijal",
+  initials: "MR",
   examTrack: "Sakha Adhikrit",
   languageMode: "Nepali",
   totalXP: 120,
@@ -16,7 +16,7 @@ export const mockCurrentUser = {
   overallAccuracy: 72,
   totalQuestionsAttempted: 86,
   totalCorrect: 62,
-  badgesEarned: 5,
+  badgesEarned: 12,
   subjectsPracticed: 6,
   strongestSubject: "General Knowledge",
   weakestSubject: "Constitution of Nepal",
@@ -84,12 +84,16 @@ export const mockTournament = {
 export const mockLeaderboardUsers = [
   { id: "u1", rank: 1, name: "Aayush", initials: "AA", examTrack: "Nayab Subba", weeklyXP: 2450, monthlyXP: 8400, tournamentPoints: 920, accuracy: 91, streak: 12, badges: 18, rankTitle: "Nayab Subba Candidate", trend: "up" },
   { id: "u2", rank: 2, name: "Suman Adhikari", initials: "SA", examTrack: "Nayab Subba", weeklyXP: 2180, monthlyXP: 7600, tournamentPoints: 880, accuracy: 88, streak: 9, badges: 15, rankTitle: "Focused Learner", trend: "same" },
-  { id: "u3", rank: 3, name: "Prajal Danai", initials: "PD", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 6900, tournamentPoints: 820, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
+  { id: "u3", rank: 3, name: "Prajal Danai", initials: "PD", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 6900, tournamentPoints: 820, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up" },
   { id: "u4", rank: 4, name: "Nisha", initials: "NS", examTrack: "Sakha Adhikrit", weeklyXP: 1810, monthlyXP: 6100, tournamentPoints: 760, accuracy: 82, streak: 7, badges: 10, rankTitle: "Focused Learner", trend: "down" },
   { id: "u5", rank: 5, name: "Ramesh", initials: "RK", examTrack: "Nayab Subba", weeklyXP: 1650, monthlyXP: 5400, tournamentPoints: 710, accuracy: 79, streak: 6, badges: 9, rankTitle: "Focused Learner", trend: "up" },
   { id: "u6", rank: 6, name: "Anita", initials: "AT", examTrack: "Sakha Adhikrit", weeklyXP: 1510, monthlyXP: 5000, tournamentPoints: 690, accuracy: 77, streak: 5, badges: 8, rankTitle: "New Aspirant", trend: "same" },
   { id: "u7", rank: 7, name: "Bikash", initials: "BK", examTrack: "Nayab Subba", weeklyXP: 1390, monthlyXP: 4700, tournamentPoints: 640, accuracy: 75, streak: 3, badges: 7, rankTitle: "New Aspirant", trend: "down" },
   { id: "u8", rank: 8, name: "Kritika", initials: "KT", examTrack: "Sakha Adhikrit", weeklyXP: 1280, monthlyXP: 4200, tournamentPoints: 610, accuracy: 73, streak: 8, badges: 6, rankTitle: "New Aspirant", trend: "up" },
+  { id: "u9", rank: 9, name: "Deepak Thapa", initials: "DT", examTrack: "Nayab Subba", weeklyXP: 1190, monthlyXP: 3980, tournamentPoints: 570, accuracy: 72, streak: 5, badges: 6, rankTitle: "New Aspirant", trend: "same" },
+  { id: "u10", rank: 10, name: "Sarita Karki", initials: "SK", examTrack: "Sakha Adhikrit", weeklyXP: 1110, monthlyXP: 3700, tournamentPoints: 540, accuracy: 70, streak: 4, badges: 5, rankTitle: "New Aspirant", trend: "up" },
+  { id: "u11", rank: 11, name: "Bishal Rai", initials: "BR", examTrack: "Nayab Subba", weeklyXP: 1030, monthlyXP: 3400, tournamentPoints: 500, accuracy: 69, streak: 2, badges: 4, rankTitle: "New Aspirant", trend: "down" },
+  { id: "user_misan", rank: 12, name: "Misan Rijal", initials: "MR", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 3120, tournamentPoints: 460, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
 ];
 
 export const mockSubjectLeaderboards = {
