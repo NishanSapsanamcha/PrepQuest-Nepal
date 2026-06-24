@@ -1,4 +1,5 @@
 import { examNameToId, examTracks } from "../data/examTracks";
+import { mockTestQuestions } from "../data/mockTestQuestions";
 import { practiceQuestions } from "../data/practiceQuestions";
 import { getSubjectById, subjects } from "../data/subjects";
 import {
@@ -107,8 +108,9 @@ export function getExamSubjects(exam) {
 }
 
 export function getValidatedQuestions() {
-  validateQuestionBank(practiceQuestions);
-  return practiceQuestions.filter(isQuestionValid);
+  const questionBank = [...practiceQuestions, ...mockTestQuestions];
+  validateQuestionBank(questionBank);
+  return questionBank.filter(isQuestionValid);
 }
 
 const subjectAliases = {

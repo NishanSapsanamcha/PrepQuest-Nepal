@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
+import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
 import { getUser as getStoredUser } from "../../utils/storageUtils";
 import { calculateTotalXPFromTransactions, getNextLevelProgress, getXPTransactions } from "../../utils/xpUtils";
@@ -66,13 +67,14 @@ const routeTargets = {
   progression: "/progression",
   practice: "/practice",
   "daily-quiz": "/daily-quiz",
+  "mock-tests": "/mock-tests",
   tournament: "/tournament",
   leaderboard: "/leaderboard",
   badges: "/badges",
   profile: "/profile",
 };
 
-const existingRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
+const existingRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/mock-tests", "/badges", "/leaderboard", "/tournament", "/profile", "/login", "/signup", "/forgot-password", "/setup"]);
 
 const subjectData = {
   "nayab-subba": [
@@ -132,7 +134,9 @@ function DashboardPage() {
   const totalXp = calculateTotalXPFromTransactions();
   const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
   const dailyQuizCompleted = Boolean(todayDailyQuizAttempt);
-  const missionCompletedCount = dailyQuizCompleted ? 1 : 0;
+  const mockStats = getMockDashboardStats();
+  const mockCompletedToday = hasCompletedMockToday();
+  const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
   const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
   const xpProgress = getNextLevelProgress(totalXp);
   const currentRank = ranks[Math.min(ranks.length - 1, xpProgress.currentLevel.level - 1)] || ranks[0];
@@ -298,7 +302,7 @@ function DashboardPage() {
               <article className="stat-card">
                 <div className="stat-icon"><FileCheck /></div>
                 <div>
-                  <div className="stat-value">2/3</div>
+                  <div className="stat-value">{mockStats.freeMocksLeft}/3</div>
                   <div className="stat-label">Free Mocks Left</div>
                   <div className="stat-helper">Resets daily</div>
                 </div>
@@ -347,8 +351,8 @@ function DashboardPage() {
                     <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
                       {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
                     </div>
-                    <div className="mission-item">
-                      <Circle /><span>Take 1 mock test</span>
+                    <div className={`mission-item${mockCompletedToday ? " completed" : ""}`}>
+                      {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>Take 1 mock test</span>
                     </div>
                     <div className="mission-item">
                       <Circle /><span>Practice your weak subject</span>
@@ -515,14 +519,13 @@ function DashboardPage() {
                   <h2 className="card-title"><FileCheck /> Mock Tests Today</h2>
                   <div className="mock-progress">
                     <span>Free mocks remaining</span>
-                    <strong>2/3</strong>
+                    <strong>{mockStats.freeMocksLeft}/3</strong>
                   </div>
                   <p className="card-copy">
                     Mock tests focus on exam-style score and weak-area feedback.
                   </p>
-                  <p className="muted-copy">Mock tests are not connected to XP yet.</p>
                   <button className="btn btn-full" type="button" onClick={() => navigateIfAvailable("mock-tests")}>
-                    Start Free Mock
+                    {mockStats.freeMocksLeft > 0 ? "Start Free Mock" : "Use 100 Coins"}
                   </button>
                 </section>
 

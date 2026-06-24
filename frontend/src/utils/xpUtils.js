@@ -1,12 +1,20 @@
 import { subjectLevels } from "../data/subjectLevels";
 
 const XP_TRANSACTION_KEY = "prepquest_xp_transactions";
-const VALID_XP_TYPES = new Set(["practice_correct_answer", "daily_quiz", "daily_quiz_bonus"]);
+const VALID_XP_TYPES = new Set([
+  "practice_correct_answer",
+  "daily_quiz",
+  "daily_quiz_bonus",
+  "mock_test_complete",
+  "mock_test_score_bonus",
+]);
 
 export const XP_REWARDS = {
   PRACTICE_CORRECT_ANSWER: 10,
   DAILY_QUIZ_COMPLETE: 50,
   DAILY_QUIZ_PERFECT_BONUS: 30,
+  MOCK_TEST_COMPLETE: 100,
+  MOCK_TEST_SCORE_BONUS: 50,
 };
 
 function readJson(key, fallback) {
@@ -108,7 +116,9 @@ export function addXPTransaction(transaction) {
           item.practiceSessionId === practiceSessionId &&
           item.questionId === questionId
       )
-    : transactions.some((item) => item.id === transaction.id || (item.type === type && item.date === transaction.date));
+    : type.startsWith("mock_test_")
+      ? transactions.some((item) => item.id === transaction.id || (item.type === type && item.mockAttemptId === transaction.mockAttemptId))
+      : transactions.some((item) => item.id === transaction.id || (item.type === type && item.date === transaction.date));
 
   if (duplicate) return { added: false, duplicate: true, transaction: null };
 
@@ -125,6 +135,7 @@ export function addXPTransaction(transaction) {
     date: transaction.date || "",
     source: transaction.source || "",
     reason: transaction.reason || "",
+    mockAttemptId: transaction.mockAttemptId || "",
     createdAt,
     metadata: transaction.metadata || {},
   };
