@@ -21,7 +21,7 @@ export const mockCurrentUser = {
   strongestSubject: "General Knowledge",
   weakestSubject: "Constitution of Nepal",
   mostPracticedSubject: "General Ability / IQ",
-  weeklyRank: 12,
+  weeklyRank: 2,
   tournamentRank: null,
   publicLeaderboard: true,
 };
@@ -93,7 +93,7 @@ export const mockLeaderboardUsers = [
   { id: "u9", rank: 9, name: "Deepak Thapa", initials: "DT", examTrack: "Nayab Subba", weeklyXP: 1190, monthlyXP: 3980, tournamentPoints: 570, accuracy: 72, streak: 5, badges: 6, rankTitle: "New Aspirant", trend: "same" },
   { id: "u10", rank: 10, name: "Sarita Karki", initials: "SK", examTrack: "Sakha Adhikrit", weeklyXP: 1110, monthlyXP: 3700, tournamentPoints: 540, accuracy: 70, streak: 4, badges: 5, rankTitle: "New Aspirant", trend: "up" },
   { id: "u11", rank: 11, name: "Bishal Rai", initials: "BR", examTrack: "Nayab Subba", weeklyXP: 1030, monthlyXP: 3400, tournamentPoints: 500, accuracy: 69, streak: 2, badges: 4, rankTitle: "New Aspirant", trend: "down" },
-  { id: "user_misan", rank: 12, name: "Misan Rijal", initials: "MR", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 3120, tournamentPoints: 460, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
+  { id: "user_misan", rank: 12, name: "Misan Rijal", initials: "MR", examTrack: "Sakha Adhikrit", weeklyXP: 1800, monthlyXP: 6100, tournamentPoints: 730, accuracy: 82, streak: 6, badges: 10, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
 ];
 
 export const mockSubjectLeaderboards = {

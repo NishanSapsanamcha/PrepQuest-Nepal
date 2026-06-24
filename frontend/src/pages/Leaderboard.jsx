@@ -10,7 +10,9 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import { examTracks } from "../data/examTracks";
 import { mockCurrentUser, mockLeaderboardUsers } from "../data/gamificationMockData";
+import { getUser } from "../utils/storageUtils";
 import "./Leaderboard.css";
 
 const rankingTypes = [
@@ -41,7 +43,6 @@ const rankingTypes = [
   },
 ];
 
-const examFilters = ["All Exams", "Nayab Subba", "Sakha Adhikrit"];
 const examTrackFilters = ["Nayab Subba", "Sakha Adhikrit"];
 const tournamentFilters = ["Latest Friday Battle", "Previous Battle"];
 const subjectFilters = [
@@ -66,6 +67,35 @@ function metricLabel(rankingType) {
   return rankingType === "tournament" ? "points" : "XP";
 }
 
+function normalizeExamTrack(value) {
+  if (!value) return "Sakha Adhikrit";
+  if (examTracks[value]?.name) return examTracks[value].name;
+
+  const normalized = String(value).trim().toLowerCase();
+  const match = Object.values(examTracks).find((track) => track.name.toLowerCase() === normalized || track.id === normalized);
+  return match?.name || value;
+}
+
+function getSelectedExamTrack() {
+  const user = getUser();
+  const storedPreferences = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("prepquest_user_preferences") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  return normalizeExamTrack(
+    localStorage.getItem("selectedExam")
+      || localStorage.getItem("prepquest_selected_exam")
+      || storedPreferences.selectedExam
+      || user.selectedExam
+      || user.examTrack
+      || mockCurrentUser.examTrack
+  );
+}
+
 function subjectStatsFor(user, subject) {
   const subjectIndex = subjectFilters.indexOf(subject);
   const adjustment = ((user.rank + subjectIndex * 3) % 7) - 3;
@@ -73,6 +103,15 @@ function subjectStatsFor(user, subject) {
     subjectAccuracy: Math.max(55, Math.min(98, user.accuracy + adjustment)),
     subjectXP: Math.max(120, user.weeklyXP + adjustment * 85),
   };
+}
+
+function buildRankedUsers(users, rankingType) {
+  return [...users]
+    .sort((a, b) => metricFor(b, rankingType) - metricFor(a, rankingType) || a.name.localeCompare(b.name))
+    .map((user, index) => ({
+      ...user,
+      rank: index + 1,
+    }));
 }
 
 function TrendIcon({ trend }) {
@@ -83,48 +122,51 @@ function TrendIcon({ trend }) {
 
 function Leaderboard() {
   const navigate = useNavigate();
+  const selectedExam = useMemo(() => getSelectedExamTrack(), []);
   const [selectedRankingType, setSelectedRankingType] = useState("weekly");
-  const [examFilter, setExamFilter] = useState("All Exams");
-  const [subjectExamFilter, setSubjectExamFilter] = useState("All Exams");
   const [subjectFilter, setSubjectFilter] = useState("Constitution of Nepal");
   const [tournamentFilter, setTournamentFilter] = useState("Latest Friday Battle");
-  const [examTrackFilter, setExamTrackFilter] = useState("Sakha Adhikrit");
+  const [examTrackFilter, setExamTrackFilter] = useState(selectedExam);
 
-  const currentUser = mockLeaderboardUsers.find((user) => user.isCurrentUser) || mockLeaderboardUsers[0];
-  const podium = mockLeaderboardUsers.slice(0, 3);
+  const examFilteredUsers = useMemo(
+    () => mockLeaderboardUsers.filter((user) => user.examTrack === selectedExam),
+    [selectedExam]
+  );
+  const weeklyRankedUsers = useMemo(() => buildRankedUsers(examFilteredUsers, "weekly"), [examFilteredUsers]);
+  const currentUser = weeklyRankedUsers.find((user) => user.isCurrentUser);
   const activeRanking = rankingTypes.find((type) => type.id === selectedRankingType);
 
   const rows = useMemo(() => {
-    let nextRows = [...mockLeaderboardUsers];
+    let nextRows = [...examFilteredUsers];
 
     if (selectedRankingType === "weekly" || selectedRankingType === "monthly") {
-      nextRows = nextRows.filter((user) => examFilter === "All Exams" || user.examTrack === examFilter);
-      return nextRows.sort((a, b) => a.rank - b.rank);
+      return buildRankedUsers(nextRows, selectedRankingType);
     }
 
     if (selectedRankingType === "subject") {
-      nextRows = nextRows.filter((user) => subjectExamFilter === "All Exams" || user.examTrack === subjectExamFilter);
-      return nextRows
+      const usersWithSubjectProgress = nextRows
         .map((user) => ({
           ...user,
           ...subjectStatsFor(user, subjectFilter),
-        }))
-        .sort((a, b) => b.subjectAccuracy - a.subjectAccuracy || b.subjectXP - a.subjectXP);
+        }));
+      return buildRankedUsers(usersWithSubjectProgress, "subject");
     }
 
     if (selectedRankingType === "examTrack") {
-      nextRows = nextRows.filter((user) => user.examTrack === examTrackFilter);
-      return nextRows.sort((a, b) => b.weeklyXP - a.weeklyXP);
+      nextRows = mockLeaderboardUsers.filter((user) => user.examTrack === examTrackFilter);
+      return buildRankedUsers(nextRows, "weekly");
     }
 
     const tournamentMultiplier = tournamentFilter === "Previous Battle" ? 0.86 : 1;
-    return nextRows
+    const tournamentUsers = nextRows
       .map((user) => ({
         ...user,
         tournamentPoints: Math.round(user.tournamentPoints * tournamentMultiplier),
-      }))
-      .sort((a, b) => b.tournamentPoints - a.tournamentPoints);
-  }, [examFilter, examTrackFilter, selectedRankingType, subjectExamFilter, subjectFilter, tournamentFilter]);
+      }));
+    return buildRankedUsers(tournamentUsers, "tournament");
+  }, [examFilteredUsers, examTrackFilter, selectedRankingType, subjectFilter, tournamentFilter]);
+
+  const podium = rows.slice(0, 3);
 
   const handleRankingChange = (rankingType) => {
     setSelectedRankingType(rankingType);
@@ -133,12 +175,9 @@ function Leaderboard() {
   const renderSecondaryFilters = () => {
     if (selectedRankingType === "weekly" || selectedRankingType === "monthly") {
       return (
-        <div className="secondary-filter-row" aria-label="Exam filters">
-          {examFilters.map((exam) => (
-            <button className={`filter-option${examFilter === exam ? " active" : ""}`} type="button" key={exam} onClick={() => setExamFilter(exam)}>
-              {exam}
-            </button>
-          ))}
+        <div className="scope-filter">
+          <span>{selectedExam} Ranking</span>
+          <p>Showing rankings for {selectedExam} aspirants only.</p>
         </div>
       );
     }
@@ -148,8 +187,8 @@ function Leaderboard() {
         <div className="secondary-filter-grid">
           <label>
             <span>Exam Track</span>
-            <select value={subjectExamFilter} onChange={(event) => setSubjectExamFilter(event.target.value)}>
-              {examFilters.map((exam) => <option key={exam}>{exam}</option>)}
+            <select value={selectedExam} disabled>
+              <option>{selectedExam}</option>
             </select>
           </label>
           <label>
@@ -196,6 +235,7 @@ function Leaderboard() {
           <div className="header-right">
             <div className="header-chips">
               <span className="chip"><FaFire /> Weekly Reset</span>
+              <span className="chip"><FaMedal /> {selectedExam} only</span>
               <span className="chip"><FaShieldAlt /> Privacy-safe ranking</span>
             </div>
           </div>
@@ -204,17 +244,17 @@ function Leaderboard() {
         <section className="dashboard-card leaderboard-rank-summary">
           <div className="rank-main">
             <p className="eyebrow">My Weekly Rank</p>
-            <div className="rank-number">#{mockCurrentUser.weeklyRank}</div>
+            <div className="rank-number">{currentUser ? `#${currentUser.rank}` : "-"}</div>
             <div>
-              <strong>{mockCurrentUser.examTrack}</strong>
-              <span>Keep practicing to move up this week.</span>
+              <strong>{selectedExam}</strong>
+              <span>Showing rankings for {selectedExam} aspirants only.</span>
             </div>
           </div>
           <div className="leaderboard-summary-grid">
-            <span>Weekly XP <strong>{currentUser.weeklyXP.toLocaleString()} XP</strong></span>
-            <span>Accuracy <strong>{currentUser.accuracy}%</strong></span>
-            <span>Streak <strong>{currentUser.streak} days</strong></span>
-            <span>Badges <strong>{currentUser.badges}</strong></span>
+            <span>Weekly XP <strong>{currentUser ? currentUser.weeklyXP.toLocaleString() : 0} XP</strong></span>
+            <span>Accuracy <strong>{currentUser ? currentUser.accuracy : 0}%</strong></span>
+            <span>Streak <strong>{currentUser ? currentUser.streak : 0} days</strong></span>
+            <span>Badges <strong>{currentUser ? currentUser.badges : 0}</strong></span>
           </div>
           <button className="btn rank-cta" type="button" onClick={() => navigate("/practice")}>
             Practice Weak Subject
@@ -230,7 +270,9 @@ function Leaderboard() {
                 <h2>{user.name}</h2>
                 <p>{user.examTrack}</p>
               </div>
-              <strong>{user.weeklyXP.toLocaleString()} XP &middot; {user.accuracy}%</strong>
+              <strong>
+                {metricFor(user, selectedRankingType).toLocaleString()} {metricLabel(selectedRankingType)} &middot; {selectedRankingType === "subject" ? user.subjectAccuracy : user.accuracy}%
+              </strong>
             </article>
           ))}
         </section>
@@ -260,7 +302,7 @@ function Leaderboard() {
         <section className="dashboard-card leaderboard-table-card">
           <div className="card-heading">
             <h2 className="card-title"><FaMedal /> Full Leaderboard</h2>
-            <span className="status-chip">{activeRanking.label}{selectedRankingType === "subject" ? ` - ${subjectFilter}` : ""}</span>
+            <span className="status-chip">{selectedExam}{selectedRankingType === "subject" ? ` - ${subjectFilter}` : ` - ${activeRanking.label}`}</span>
           </div>
 
           {rows.length > 0 ? (
@@ -268,11 +310,10 @@ function Leaderboard() {
               <div className="leaderboard-table-head">
                 <span>Rank</span><span>Learner</span><span>Exam Track</span><span>XP / Points</span><span>Accuracy</span><span>Streak</span><span>Badges</span><span>Trend</span>
               </div>
-              {rows.map((user, index) => {
-                const visibleRank = selectedRankingType === "weekly" || selectedRankingType === "monthly" ? user.rank : index + 1;
+              {rows.map((user) => {
                 return (
                   <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
-                    <span className={`rank-badge rank-${visibleRank <= 3 ? visibleRank : "default"}`}>#{visibleRank}</span>
+                    <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
                     <span className="learner-cell">
                       <span className="mini-avatar">{user.initials}</span>
                       <span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span>
@@ -289,13 +330,13 @@ function Leaderboard() {
             </div>
           ) : (
             <div className="leaderboard-empty-state">
-              <p>No ranking data yet for this filter.</p>
+              <p>No ranking data yet for {selectedExam}. Start practicing to appear on this leaderboard.</p>
               <button className="btn" type="button" onClick={() => navigate("/practice")}>Start Practice</button>
             </div>
           )}
         </section>
 
-        <p className="privacy-note">Leaderboard uses display names only. Users can hide from public ranking in future settings.</p>
+        <p className="privacy-note">Leaderboard shows only learners from your selected exam track. Display names are used for privacy-safe ranking.</p>
       </section>
     </DashboardLayout>
   );

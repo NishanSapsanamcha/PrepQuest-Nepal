@@ -255,6 +255,31 @@
   gap: 0.55rem;
 }
 
+.dashboard-page .scope-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: var(--radius);
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.dashboard-page .scope-filter span {
+  color: var(--teal);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.dashboard-page .scope-filter p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
 .dashboard-page .filter-option,
 .dashboard-page .secondary-filter-grid select {
   min-height: 38px;
@@ -292,6 +317,11 @@
 
 .dashboard-page .secondary-filter-grid select {
   width: 100%;
+}
+
+.dashboard-page .secondary-filter-grid select:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .dashboard-page .leaderboard-table-card {
@@ -459,6 +489,15 @@
   .dashboard-page .filter-option {
     justify-content: center;
     text-align: center;
+  }
+
+  .dashboard-page .scope-filter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-page .scope-filter p {
+    text-align: left;
   }
 }
 
