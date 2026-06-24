@@ -174,12 +174,7 @@ function Leaderboard() {
 
   const renderSecondaryFilters = () => {
     if (selectedRankingType === "weekly" || selectedRankingType === "monthly") {
-      return (
-        <div className="scope-filter">
-          <span>{selectedExam} Ranking</span>
-          <p>Showing rankings for {selectedExam} aspirants only.</p>
-        </div>
-      );
+      return null;
     }
 
     if (selectedRankingType === "subject") {
