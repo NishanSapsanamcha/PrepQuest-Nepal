@@ -22,7 +22,7 @@ export const mockCurrentUser = {
   weakestSubject: "Constitution of Nepal",
   mostPracticedSubject: "General Ability / IQ",
   weeklyRank: 2,
-  tournamentRank: null,
+  tournamentRank: 2,
   publicLeaderboard: true,
 };
 
@@ -81,19 +81,30 @@ export const mockTournament = {
   ],
 };
 
+const subjectStats = (baseXp, accuracy, solved) => ({
+  "Constitution of Nepal": { xp: baseXp, accuracy, questionsSolved: solved },
+  "General Knowledge": { xp: Math.round(baseXp * 0.9), accuracy: Math.max(60, accuracy - 2), questionsSolved: Math.round(solved * 0.92) },
+  "Current Affairs": { xp: Math.round(baseXp * 0.78), accuracy: Math.max(60, accuracy - 4), questionsSolved: Math.round(solved * 0.8) },
+  "IQ / Mental Ability": { xp: Math.round(baseXp * 0.74), accuracy: Math.max(60, accuracy - 5), questionsSolved: Math.round(solved * 0.76) },
+  Nepali: { xp: Math.round(baseXp * 0.68), accuracy: Math.max(60, accuracy - 6), questionsSolved: Math.round(solved * 0.7) },
+  English: { xp: Math.round(baseXp * 0.66), accuracy: Math.max(60, accuracy - 7), questionsSolved: Math.round(solved * 0.68) },
+  "Governance Basics": { xp: Math.round(baseXp * 0.82), accuracy: Math.max(60, accuracy - 3), questionsSolved: Math.round(solved * 0.84) },
+  "Public Administration Basics": { xp: Math.round(baseXp * 0.72), accuracy: Math.max(60, accuracy - 5), questionsSolved: Math.round(solved * 0.74) },
+});
+
 export const mockLeaderboardUsers = [
-  { id: "u1", rank: 1, name: "Aayush", initials: "AA", examTrack: "Nayab Subba", weeklyXP: 2450, monthlyXP: 8400, tournamentPoints: 920, accuracy: 91, streak: 12, badges: 18, rankTitle: "Nayab Subba Candidate", trend: "up" },
-  { id: "u2", rank: 2, name: "Suman Adhikari", initials: "SA", examTrack: "Nayab Subba", weeklyXP: 2180, monthlyXP: 7600, tournamentPoints: 880, accuracy: 88, streak: 9, badges: 15, rankTitle: "Focused Learner", trend: "same" },
-  { id: "u3", rank: 3, name: "Prajal Danai", initials: "PD", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 6900, tournamentPoints: 820, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up" },
-  { id: "u4", rank: 4, name: "Nisha", initials: "NS", examTrack: "Sakha Adhikrit", weeklyXP: 1810, monthlyXP: 6100, tournamentPoints: 760, accuracy: 82, streak: 7, badges: 10, rankTitle: "Focused Learner", trend: "down" },
-  { id: "u5", rank: 5, name: "Ramesh", initials: "RK", examTrack: "Nayab Subba", weeklyXP: 1650, monthlyXP: 5400, tournamentPoints: 710, accuracy: 79, streak: 6, badges: 9, rankTitle: "Focused Learner", trend: "up" },
-  { id: "u6", rank: 6, name: "Anita", initials: "AT", examTrack: "Sakha Adhikrit", weeklyXP: 1510, monthlyXP: 5000, tournamentPoints: 690, accuracy: 77, streak: 5, badges: 8, rankTitle: "New Aspirant", trend: "same" },
-  { id: "u7", rank: 7, name: "Bikash", initials: "BK", examTrack: "Nayab Subba", weeklyXP: 1390, monthlyXP: 4700, tournamentPoints: 640, accuracy: 75, streak: 3, badges: 7, rankTitle: "New Aspirant", trend: "down" },
-  { id: "u8", rank: 8, name: "Kritika", initials: "KT", examTrack: "Sakha Adhikrit", weeklyXP: 1280, monthlyXP: 4200, tournamentPoints: 610, accuracy: 73, streak: 8, badges: 6, rankTitle: "New Aspirant", trend: "up" },
-  { id: "u9", rank: 9, name: "Deepak Thapa", initials: "DT", examTrack: "Nayab Subba", weeklyXP: 1190, monthlyXP: 3980, tournamentPoints: 570, accuracy: 72, streak: 5, badges: 6, rankTitle: "New Aspirant", trend: "same" },
-  { id: "u10", rank: 10, name: "Sarita Karki", initials: "SK", examTrack: "Sakha Adhikrit", weeklyXP: 1110, monthlyXP: 3700, tournamentPoints: 540, accuracy: 70, streak: 4, badges: 5, rankTitle: "New Aspirant", trend: "up" },
-  { id: "u11", rank: 11, name: "Bishal Rai", initials: "BR", examTrack: "Nayab Subba", weeklyXP: 1030, monthlyXP: 3400, tournamentPoints: 500, accuracy: 69, streak: 2, badges: 4, rankTitle: "New Aspirant", trend: "down" },
-  { id: "user_misan", rank: 12, name: "Misan Rijal", initials: "MR", examTrack: "Sakha Adhikrit", weeklyXP: 1800, monthlyXP: 6100, tournamentPoints: 730, accuracy: 82, streak: 6, badges: 10, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
+  { id: "u1", rank: 1, name: "Aayush", initials: "AA", examTrack: "Nayab Subba", weeklyXP: 2450, monthlyXP: 8500, lifetimeXP: 22100, examXP: 2450, tournamentPoints: 6350, tournamentAccuracy: 91, speedBonus: 310, reward: "500 coins + 500 XP", accuracy: 91, streak: 12, longestStreak: 18, badges: 18, tournamentWins: 3, rankTitle: "Nayab Subba Candidate", trend: "up", subjectStats: subjectStats(1360, 91, 170) },
+  { id: "u2", rank: 2, name: "Suman Adhikari", initials: "SA", examTrack: "Nayab Subba", weeklyXP: 2180, monthlyXP: 7400, lifetimeXP: 19800, examXP: 2180, tournamentPoints: 5940, tournamentAccuracy: 88, speedBonus: 280, reward: "300 coins + 300 XP", accuracy: 88, streak: 9, longestStreak: 14, badges: 15, tournamentWins: 2, rankTitle: "Focused Learner", trend: "same", subjectStats: subjectStats(1220, 88, 152) },
+  { id: "u3", rank: 3, name: "Prajal Danai", initials: "PD", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 6800, lifetimeXP: 17600, examXP: 1970, tournamentPoints: 6900, tournamentAccuracy: 84, speedBonus: 300, reward: "500 coins + 500 XP", accuracy: 84, streak: 4, longestStreak: 11, badges: 12, tournamentWins: 2, rankTitle: "New Aspirant", trend: "up", subjectStats: subjectStats(1200, 84, 140) },
+  { id: "user_misan", rank: 4, name: "Misan Rijal", initials: "MR", examTrack: "Sakha Adhikrit", weeklyXP: 1800, monthlyXP: 6100, lifetimeXP: 15800, examXP: 1800, tournamentPoints: 6100, tournamentAccuracy: 82, speedBonus: 240, reward: "300 coins + 300 XP", accuracy: 82, streak: 6, longestStreak: 13, badges: 10, tournamentWins: 1, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true, subjectStats: subjectStats(1120, 82, 132) },
+  { id: "u4", rank: 5, name: "Nisha", initials: "NS", examTrack: "Sakha Adhikrit", weeklyXP: 1810, monthlyXP: 5950, lifetimeXP: 14900, examXP: 1810, tournamentPoints: 5950, tournamentAccuracy: 80, speedBonus: 210, reward: "150 coins + 200 XP", accuracy: 80, streak: 7, longestStreak: 10, badges: 10, tournamentWins: 0, rankTitle: "Focused Learner", trend: "down", subjectStats: subjectStats(1060, 80, 126) },
+  { id: "u5", rank: 6, name: "Ramesh", initials: "RK", examTrack: "Nayab Subba", weeklyXP: 1650, monthlyXP: 5400, lifetimeXP: 14200, examXP: 1650, tournamentPoints: 5120, tournamentAccuracy: 79, speedBonus: 190, reward: "150 coins + 200 XP", accuracy: 79, streak: 6, longestStreak: 9, badges: 9, tournamentWins: 1, rankTitle: "Focused Learner", trend: "up", subjectStats: subjectStats(980, 79, 116) },
+  { id: "u6", rank: 7, name: "Anita", initials: "AT", examTrack: "Sakha Adhikrit", weeklyXP: 1510, monthlyXP: 5000, lifetimeXP: 11800, examXP: 1510, tournamentPoints: 4200, tournamentAccuracy: 77, speedBonus: 165, reward: "50 coins + 100 XP", accuracy: 77, streak: 5, longestStreak: 8, badges: 8, tournamentWins: 0, rankTitle: "New Aspirant", trend: "same", subjectStats: subjectStats(880, 77, 100) },
+  { id: "u7", rank: 8, name: "Bikash", initials: "BK", examTrack: "Nayab Subba", weeklyXP: 1390, monthlyXP: 4700, lifetimeXP: 10600, examXP: 1390, tournamentPoints: 3860, tournamentAccuracy: 75, speedBonus: 145, reward: "50 coins + 100 XP", accuracy: 75, streak: 3, longestStreak: 7, badges: 7, tournamentWins: 0, rankTitle: "New Aspirant", trend: "down", subjectStats: subjectStats(820, 75, 94) },
+  { id: "u8", rank: 9, name: "Kritika", initials: "KT", examTrack: "Sakha Adhikrit", weeklyXP: 1280, monthlyXP: 4200, lifetimeXP: 9800, examXP: 1280, tournamentPoints: 3600, tournamentAccuracy: 73, speedBonus: 130, reward: "50 coins + 100 XP", accuracy: 73, streak: 8, longestStreak: 8, badges: 6, tournamentWins: 0, rankTitle: "New Aspirant", trend: "up", subjectStats: subjectStats(760, 73, 88) },
+  { id: "u9", rank: 10, name: "Deepak Thapa", initials: "DT", examTrack: "Nayab Subba", weeklyXP: 1190, monthlyXP: 3980, lifetimeXP: 8900, examXP: 1190, tournamentPoints: 3200, tournamentAccuracy: 72, speedBonus: 120, reward: "50 coins + 100 XP", accuracy: 72, streak: 5, longestStreak: 6, badges: 6, tournamentWins: 0, rankTitle: "New Aspirant", trend: "same", subjectStats: subjectStats(700, 72, 82) },
+  { id: "u10", rank: 11, name: "Sarita Karki", initials: "SK", examTrack: "Sakha Adhikrit", weeklyXP: 1110, monthlyXP: 3700, lifetimeXP: 7600, examXP: 1110, tournamentPoints: 2980, tournamentAccuracy: 70, speedBonus: 100, reward: "50 coins + 100 XP", accuracy: 70, streak: 4, longestStreak: 5, badges: 5, tournamentWins: 0, rankTitle: "New Aspirant", trend: "up", subjectStats: subjectStats(640, 70, 76) },
+  { id: "u11", rank: 12, name: "Bishal Rai", initials: "BR", examTrack: "Nayab Subba", weeklyXP: 1030, monthlyXP: 3400, lifetimeXP: 6900, examXP: 1030, tournamentPoints: 2650, tournamentAccuracy: 69, speedBonus: 90, reward: "50 coins + 100 XP", accuracy: 69, streak: 2, longestStreak: 4, badges: 4, tournamentWins: 0, rankTitle: "New Aspirant", trend: "down", subjectStats: subjectStats(600, 69, 70) },
 ];
 
 export const mockSubjectLeaderboards = {
