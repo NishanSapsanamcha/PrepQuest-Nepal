@@ -65,6 +65,30 @@ export function hasCompletedDailyQuizToday(date = getLocalDateKey()) {
   return Boolean(getTodayDailyQuizAttempt(date));
 }
 
+// Counts consecutive calendar days (ending today or yesterday) that have a
+// completed daily quiz attempt, so the streak shown in the UI reflects real
+// activity instead of a static placeholder.
+export function calculateCurrentStreak(attemptDates = [], today = new Date()) {
+  const dates = new Set(attemptDates);
+  if (!dates.size) return 0;
+
+  const cursor = new Date(today);
+  if (!dates.has(getLocalDateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  let streak = 0;
+  while (dates.has(getLocalDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+export function getCurrentStreak() {
+  return calculateCurrentStreak(getDailyQuizAttempts().map((attempt) => attempt.date));
+}
+
 export function getActiveDailyQuizSession() {
   return readJson(ACTIVE_KEY, null);
 }

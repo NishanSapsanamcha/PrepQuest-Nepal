@@ -64,6 +64,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/tournament/session"
+        element={
+          <ProtectedRoute>
+            <TournamentSessionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournament/result"
+        element={
+          <ProtectedRoute>
+            <TournamentResultPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
