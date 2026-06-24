@@ -1,14 +1,34 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getUser, saveUser } from "../utils/storageUtils";
+import {
+	getActiveAccountId,
+	getUser,
+	resetLocalGamificationData,
+	saveUser,
+	setActiveAccountId,
+} from "../utils/storageUtils";
 
 const STORAGE_KEY = "prepquest-auth";
 
-// The gamification profile (XP, coins, streak, etc.) lives in localStorage,
-// separate from the real authenticated account. Sync the real name/email in
-// on every login so Practice/Profile/etc. never fall back to a seeded name.
+// The gamification profile (XP, coins, streak, tournament/daily-quiz
+// history, etc.) lives in localStorage, separate from the real authenticated
+// account. On every login: if this browser's local data belongs to a
+// DIFFERENT account than the one logging in, wipe it first so one person's
+// progress never leaks into another account's session. Then sync the real
+// name/email in so Practice/Profile/etc. never fall back to a seeded name.
 const syncLocalProfileWithAuthUser = (authUser) => {
 	const displayName = authUser?.fullName || authUser?.name || authUser?.email;
 	if (!displayName) return;
+
+	const accountId = authUser?.id || authUser?.email || displayName;
+	const previousAccountId = getActiveAccountId();
+	// previousAccountId is null on a browser that predates this account-scoping
+	// fix (or has never recorded an owner) - treat that as untrusted leftover
+	// data too, not just a known-different account, so a stale session can
+	// never carry over silently.
+	if (previousAccountId !== accountId) {
+		resetLocalGamificationData();
+	}
+	setActiveAccountId(accountId);
 
 	saveUser({ ...getUser(), name: displayName, email: authUser?.email || "" });
 	localStorage.setItem("userName", displayName);

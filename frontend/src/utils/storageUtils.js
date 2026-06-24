@@ -9,7 +9,36 @@ const keys = {
   xpTransactions: "prepquest_xp_transactions",
   coinTransactions: "prepquest_coin_transactions",
   rewardedSessions: "prepquest_rewarded_sessions",
+  activeAccountId: "prepquest_active_account_id",
 };
+
+// Every localStorage key that holds progress/identity data tied to one
+// account. Wiped whenever a different account logs in on this browser so
+// one person's XP/coins/streak/tournament history can never leak into the
+// next account's session.
+const PER_ACCOUNT_KEYS = [
+  keys.user,
+  keys.subjectProgress,
+  keys.practiceHistory,
+  keys.reviewQuestions,
+  keys.savedReviewQuestions,
+  keys.wrongAnswerReview,
+  keys.lastPracticeResult,
+  keys.xpTransactions,
+  keys.coinTransactions,
+  keys.rewardedSessions,
+  "prepquest_daily_quiz_attempts",
+  "prepquest_daily_quiz_active",
+  "prepquest_daily_quiz_latest_result",
+  "prepquest_tournament_attempts",
+  "prepquest_tournament_active",
+  "prepquest_tournament_latest_result",
+  "prepquest_tournament_joined_preview",
+  "selectedExam",
+  "preferredLanguage",
+  "onboardingCompleted",
+  "userName",
+];
 
 const defaultUser = {
   name: "Aspirant",
@@ -90,6 +119,18 @@ export function getUser() {
 
 export function saveUser(user) {
   writeJson(keys.user, normalizeUser(user));
+}
+
+export function getActiveAccountId() {
+  return localStorage.getItem(keys.activeAccountId);
+}
+
+export function setActiveAccountId(accountId) {
+  if (accountId) localStorage.setItem(keys.activeAccountId, accountId);
+}
+
+export function resetLocalGamificationData() {
+  PER_ACCOUNT_KEYS.forEach((key) => localStorage.removeItem(key));
 }
 
 export function getSubjectProgress() {
