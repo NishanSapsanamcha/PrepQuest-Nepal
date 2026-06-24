@@ -1,5 +1,5 @@
 import { examTracks } from "../data/examTracks";
-import { mockCurrentUser, mockLeaderboardUsers } from "../data/gamificationMockData";
+import { mockLeaderboardUsers } from "../data/gamificationMockData";
 import { getCoinTransactions, getUser, saveCoinTransactions, saveUser } from "./storageUtils";
 import { getValidatedQuestions, normalizeExamId, normalizeLanguageMode } from "./practiceUtils";
 import { addXPTransaction, calculateAccuracy, calculateTotalXPFromTransactions, XP_REWARDS } from "./xpUtils";
@@ -139,11 +139,12 @@ export function computeQuestionScore({ isCorrect, timeRemainingSeconds }) {
 
 export function getMergedLeaderboard(liveScore) {
   const others = mockLeaderboardUsers.filter((user) => !user.isCurrentUser);
+  const examId = normalizeExamId(localStorage.getItem("selectedExam"));
   const you = {
     id: "you",
     name: "You",
     initials: "YOU",
-    examTrack: mockCurrentUser.examTrack,
+    examTrack: examTracks[examId]?.name || "Sakha Adhikrit",
     tournamentPoints: liveScore,
     isCurrentUser: true,
   };

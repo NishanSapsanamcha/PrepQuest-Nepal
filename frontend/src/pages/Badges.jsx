@@ -39,7 +39,7 @@ function Badges() {
         </header>
 
         <section className="stats-grid">
-          <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{earned.length}</div><div className="stat-label">Earned Badges</div><div className="stat-helper">Mock badge showcase</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{earned.length}</div><div className="stat-label">Earned Badges</div><div className="stat-helper">Your achievement showcase</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaShieldAlt /></div><div><div className="stat-value">{locked.length}</div><div className="stat-label">Locked Badges</div><div className="stat-helper">Visible unlock goals</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">7-Day Warrior</div><div className="stat-label">Next Badge</div><div className="stat-helper">Keep your streak alive</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaCrown /></div><div><div className="stat-value">{mockBadges.filter((badge) => ["Rare", "Epic", "Legendary", "Mythic"].includes(badge.rarity)).length}</div><div className="stat-label">Rare Badges Available</div><div className="stat-helper">Premium achievement paths</div></div></article>

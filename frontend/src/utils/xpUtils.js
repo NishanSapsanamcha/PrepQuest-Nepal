@@ -1,4 +1,5 @@
 import { subjectLevels } from "../data/subjectLevels";
+import { rankThresholds } from "../data/gamificationMockData";
 
 const XP_TRANSACTION_KEY = "prepquest_xp_transactions";
 const VALID_XP_TYPES = new Set([
@@ -85,6 +86,31 @@ export function getNextSubjectLevelProgress(subjectXP = 0) {
 
 export function getNextLevelProgress(xp = 0) {
   return getNextSubjectLevelProgress(xp);
+}
+
+// Account-wide rank (New Aspirant -> PrepQuest Legend), distinct from the
+// per-subject "Level" above. Single source of truth for rank name/progress
+// so Dashboard and Profile never drift out of sync with each other.
+export function getOverallRankProgress(totalXp = 0) {
+  let currentIndex = 0;
+  rankThresholds.forEach((rank, index) => {
+    if (totalXp >= rank.xp) currentIndex = index;
+  });
+
+  const current = rankThresholds[currentIndex];
+  const next = rankThresholds[currentIndex + 1] || null;
+  const span = next ? next.xp - current.xp : 0;
+  const percent = next ? Math.min(100, Math.max(0, Math.round(((totalXp - current.xp) / span) * 100))) : 100;
+
+  return {
+    rankIndex: currentIndex,
+    currentRank: current.rank,
+    nextRank: next ? next.rank : "Highest rank reached",
+    currentRankXp: current.xp,
+    nextRankXp: next ? next.xp : current.xp,
+    xpToNextRank: next ? Math.max(0, next.xp - totalXp) : 0,
+    percent,
+  };
 }
 
 export function getXPTransactions() {

@@ -1,30 +1,3 @@
-export const mockCurrentUser = {
-  id: "user_prajal",
-  name: "Prajal Danai",
-  initials: "PD",
-  examTrack: "Sakha Adhikrit",
-  languageMode: "Nepali",
-  totalXP: 120,
-  coins: 410,
-  streak: 4,
-  freeMocksLeft: 2,
-  level: 1,
-  currentRank: "New Aspirant",
-  nextRank: "Focused Learner",
-  nextRankXP: 500,
-  xpToNextRank: 380,
-  overallAccuracy: 72,
-  totalQuestionsAttempted: 86,
-  totalCorrect: 62,
-  badgesEarned: 5,
-  subjectsPracticed: 6,
-  strongestSubject: "General Knowledge",
-  weakestSubject: "Constitution of Nepal",
-  mostPracticedSubject: "General Ability / IQ",
-  weeklyRank: 12,
-  tournamentRank: null,
-  publicLeaderboard: true,
-};
 
 export const rankThresholds = [
   { rank: "New Aspirant", xp: 0 },
@@ -84,7 +57,7 @@ export const mockTournament = {
 export const mockLeaderboardUsers = [
   { id: "u1", rank: 1, name: "Aayush", initials: "AA", examTrack: "Nayab Subba", weeklyXP: 2450, monthlyXP: 8400, tournamentPoints: 920, accuracy: 91, streak: 12, badges: 18, rankTitle: "Nayab Subba Candidate", trend: "up" },
   { id: "u2", rank: 2, name: "Suman Adhikari", initials: "SA", examTrack: "Nayab Subba", weeklyXP: 2180, monthlyXP: 7600, tournamentPoints: 880, accuracy: 88, streak: 9, badges: 15, rankTitle: "Focused Learner", trend: "same" },
-  { id: "u3", rank: 3, name: "Prajal Danai", initials: "PD", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 6900, tournamentPoints: 820, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
+  { id: "u3", rank: 3, name: "You", initials: "ME", examTrack: "Sakha Adhikrit", weeklyXP: 1970, monthlyXP: 6900, tournamentPoints: 820, accuracy: 84, streak: 4, badges: 12, rankTitle: "New Aspirant", trend: "up", isCurrentUser: true },
   { id: "u4", rank: 4, name: "Nisha", initials: "NS", examTrack: "Sakha Adhikrit", weeklyXP: 1810, monthlyXP: 6100, tournamentPoints: 760, accuracy: 82, streak: 7, badges: 10, rankTitle: "Focused Learner", trend: "down" },
   { id: "u5", rank: 5, name: "Ramesh", initials: "RK", examTrack: "Nayab Subba", weeklyXP: 1650, monthlyXP: 5400, tournamentPoints: 710, accuracy: 79, streak: 6, badges: 9, rankTitle: "Focused Learner", trend: "up" },
   { id: "u6", rank: 6, name: "Anita", initials: "AT", examTrack: "Sakha Adhikrit", weeklyXP: 1510, monthlyXP: 5000, tournamentPoints: 690, accuracy: 77, streak: 5, badges: 8, rankTitle: "New Aspirant", trend: "same" },
@@ -96,15 +69,15 @@ export const mockSubjectLeaderboards = {
   "Constitution of Nepal": [
     { rank: 1, name: "Suman Adhikari", score: 94, solved: 180 },
     { rank: 2, name: "Aayush", score: 91, solved: 165 },
-    { rank: 3, name: "Prajal Danai", score: 82, solved: 98 },
+    { rank: 3, name: "You", score: 82, solved: 98, isCurrentUser: true },
   ],
   "General Knowledge": [
     { rank: 1, name: "Aayush", score: 96, solved: 210 },
     { rank: 2, name: "Nisha", score: 89, solved: 155 },
-    { rank: 3, name: "Prajal Danai", score: 86, solved: 120 },
+    { rank: 3, name: "You", score: 86, solved: 120, isCurrentUser: true },
   ],
   "General Ability / IQ": [
-    { rank: 1, name: "Prajal Danai", score: 88, solved: 140 },
+    { rank: 1, name: "You", score: 88, solved: 140, isCurrentUser: true },
     { rank: 2, name: "Ramesh", score: 84, solved: 112 },
     { rank: 3, name: "Anita", score: 81, solved: 100 },
   ],

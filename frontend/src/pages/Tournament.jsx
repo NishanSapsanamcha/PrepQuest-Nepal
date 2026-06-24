@@ -18,8 +18,8 @@ import {
   FaUsers,
 } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import { useAuth } from "../context/AuthContext";
 import {
-  mockCurrentUser,
   mockLeaderboardUsers,
   mockTournament,
 } from "../data/gamificationMockData";
@@ -39,13 +39,6 @@ const languageLabels = {
   both: "Both",
 };
 
-const previewLeaderboard = mockLeaderboardUsers.slice(0, 5).map((user) => ({
-  rank: user.rank,
-  name: user.name,
-  exam: user.examTrack,
-  points: user.tournamentPoints,
-}));
-
 function formatPreference(value, labels) {
   const normalized = String(value || "").trim().toLowerCase();
   return labels[normalized] || value || "Not selected";
@@ -54,11 +47,20 @@ function formatPreference(value, labels) {
 function Tournament() {
   const navigate = useNavigate();
   const rulesRef = useRef(null);
-  const selectedExam = localStorage.getItem("selectedExam") || mockCurrentUser.examTrack;
-  const preferredLanguage = localStorage.getItem("preferredLanguage") || mockCurrentUser.languageMode;
+  const { user: authUser } = useAuth();
+  const userName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
+  const selectedExam = localStorage.getItem("selectedExam") || "sakha-adhikrit";
+  const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
   const [joined, setJoined] = useState(() => localStorage.getItem(JOINED_KEY) === "true");
   const completedAttempt = getThisWeekTournamentAttempt();
   const hasActiveSession = Boolean(getActiveTournamentSession());
+  const previewLeaderboard = mockLeaderboardUsers.slice(0, 5).map((user) => ({
+    rank: user.rank,
+    name: user.isCurrentUser ? userName : user.name,
+    exam: user.isCurrentUser ? formatPreference(selectedExam, examLabels) : user.examTrack,
+    points: user.tournamentPoints,
+    isCurrentUser: user.isCurrentUser,
+  }));
 
   const handlePrimaryAction = () => {
     if (completedAttempt) {
@@ -133,7 +135,7 @@ function Tournament() {
           </article>
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaUsers /></div>
-            <div><div className="stat-value">{mockTournament.participants}</div><div className="stat-label">Participants</div><div className="stat-helper">Mock registered learners</div></div>
+            <div><div className="stat-value">{mockTournament.participants}</div><div className="stat-label">Participants</div><div className="stat-helper">Loksewa learners joining this week</div></div>
           </article>
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaUserCheck /></div>
@@ -209,11 +211,11 @@ function Tournament() {
 
             <section className="dashboard-card tournament-card">
               <div className="tournament-card-header">
-                <h2 className="card-title"><FaMedal /> Mock Leaderboard Preview</h2>
+                <h2 className="card-title"><FaMedal /> Tournament Leaderboard Preview</h2>
               </div>
               <div className="tournament-leaderboard-list">
                 {previewLeaderboard.map((row) => (
-                  <div className="tournament-leaderboard-row" key={row.rank}>
+                  <div className={`tournament-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.rank}>
                     <span className={`leaderboard-rank rank-${row.rank}`}>{row.rank}</span>
                     <div>
                       <strong>{row.name}</strong>

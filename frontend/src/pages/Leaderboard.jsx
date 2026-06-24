@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { FaArrowDown, FaArrowUp, FaEquals, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUserGraduate } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-import { mockCurrentUser, mockLeaderboardUsers, mockSubjectLeaderboards } from "../data/gamificationMockData";
+import { useAuth } from "../context/AuthContext";
+import { examTracks } from "../data/examTracks";
+import { mockLeaderboardUsers, mockSubjectLeaderboards } from "../data/gamificationMockData";
+import { normalizeExamId } from "../utils/practiceUtils";
 import "./Leaderboard.css";
 
 const tabs = ["Weekly", "Monthly", "Tournament"];
@@ -19,18 +22,37 @@ function TrendIcon({ trend }) {
   return <FaEquals />;
 }
 
+function getInitials(name) {
+  return name.trim().split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "ME";
+}
+
 function Leaderboard() {
+  const { user: authUser } = useAuth();
   const [activeTab, setActiveTab] = useState("Weekly");
   const [activeExam, setActiveExam] = useState("All Exams");
 
+  const realName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
+  const selectedExamId = normalizeExamId(localStorage.getItem("selectedExam"));
+  const selectedExamLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
+
+  const leaderboardUsers = useMemo(
+    () =>
+      mockLeaderboardUsers.map((entry) =>
+        entry.isCurrentUser
+          ? { ...entry, name: realName, initials: getInitials(realName), examTrack: selectedExamLabel }
+          : entry
+      ),
+    [realName, selectedExamLabel]
+  );
+
   const rows = useMemo(() => {
-    return mockLeaderboardUsers
+    return leaderboardUsers
       .filter((user) => activeExam === "All Exams" || user.examTrack === activeExam)
       .sort((a, b) => metricFor(b, activeTab) - metricFor(a, activeTab));
-  }, [activeExam, activeTab]);
+  }, [leaderboardUsers, activeExam, activeTab]);
 
-  const podium = mockLeaderboardUsers.slice(0, 3);
-  const currentUser = mockLeaderboardUsers.find((user) => user.isCurrentUser) || mockLeaderboardUsers[2];
+  const podium = leaderboardUsers.slice(0, 3);
+  const currentUser = leaderboardUsers.find((user) => user.isCurrentUser) || leaderboardUsers[2];
 
   return (
     <DashboardLayout activeKey="leaderboard">
@@ -44,8 +66,8 @@ function Leaderboard() {
           <div className="header-right">
             <div className="header-chips">
               <span className="chip"><FaFire /> Weekly Reset</span>
-              <span className="chip"><FaUserGraduate /> {mockCurrentUser.examTrack}</span>
-              <span className="chip"><FaMedal /> Rank #{mockCurrentUser.weeklyRank}</span>
+              <span className="chip"><FaUserGraduate /> {selectedExamLabel}</span>
+              <span className="chip"><FaMedal /> Rank #{currentUser.rank}</span>
               <span className="chip"><FaShieldAlt /> Privacy-safe ranking</span>
             </div>
           </div>
@@ -54,7 +76,7 @@ function Leaderboard() {
         <section className="dashboard-card leaderboard-rank-summary">
           <div>
             <p className="eyebrow">Your Rank Summary</p>
-            <h2>Weekly Rank #{mockCurrentUser.weeklyRank}</h2>
+            <h2>Weekly Rank #{currentUser.rank}</h2>
             <p>You are close to the next rank. Complete one quiz or practice your weak subject to climb higher.</p>
           </div>
           <div className="leaderboard-summary-grid">
@@ -118,7 +140,7 @@ function Leaderboard() {
             <article className="dashboard-card subject-board-card" key={subject}>
               <h2 className="card-title">{subject}</h2>
               {leaders.map((leader) => (
-                <div className="subject-board-row" key={leader.rank}>
+                <div className={`subject-board-row${leader.isCurrentUser ? " current-user" : ""}`} key={leader.rank}>
                   <span className="rank-badge">{leader.rank}</span>
                   <strong>{leader.name}</strong>
                   <span>{leader.score}%</span>

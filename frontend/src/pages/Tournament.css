@@ -266,6 +266,11 @@
   min-height: 58px;
 }
 
+.dashboard-page .tournament-leaderboard-row.current-user {
+  border-color: rgba(45, 212, 191, 0.45);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
+}
+
 .dashboard-page .tournament-leaderboard-row .leaderboard-rank {
   width: 2rem;
   height: 2rem;
