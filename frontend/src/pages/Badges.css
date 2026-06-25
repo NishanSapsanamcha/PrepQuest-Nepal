@@ -41,145 +41,8 @@
   line-height: 1.5;
 }
 
-/* Badge emblem: premium icon container shared by the catalog grid, the
-   next-badge promo, and the detail panel. Rarity sets the accent ring
-   and corner detail; status controls glow intensity. */
-.dashboard-page .badge-emblem {
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background:
-    linear-gradient(160deg, rgba(45, 212, 191, 0.16), rgba(15, 23, 39, 0.94));
-  border: 1px solid rgba(45, 212, 191, 0.26);
-  box-shadow: inset 0 0 10px rgba(45, 212, 191, 0.1);
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.dashboard-page .badge-emblem.size-lg {
-  width: 4rem;
-  height: 4rem;
-  font-size: 1.7rem;
-  border-radius: 18px;
-}
-
-.dashboard-page .badge-emblem.size-sm {
-  width: 2.6rem;
-  height: 2.6rem;
-  font-size: 1.15rem;
-}
-
-.dashboard-page .badge-emblem-glow {
-  position: absolute;
-  inset: -35%;
-  z-index: 0;
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.34), transparent 62%);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.dashboard-page .badge-emblem-icon {
-  position: relative;
-  z-index: 1;
-  color: var(--teal);
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
-}
-
-.dashboard-page .badge-emblem-corner {
-  position: absolute;
-  z-index: 2;
-  top: 5px;
-  right: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 6px 1px rgba(45, 212, 191, 0.7);
-}
-
-/* Rarity accents */
-.dashboard-page .badge-emblem.rarity-rare {
-  border-color: rgba(56, 189, 248, 0.34);
-}
-.dashboard-page .badge-emblem.rarity-rare .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.3), transparent 62%);
-}
-.dashboard-page .badge-emblem.rarity-rare .badge-emblem-corner {
-  background: #38bdf8;
-  box-shadow: 0 0 6px 1px rgba(56, 189, 248, 0.7);
-}
-
-.dashboard-page .badge-emblem.rarity-epic {
-  border-color: rgba(168, 85, 247, 0.34);
-}
-.dashboard-page .badge-emblem.rarity-epic .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.3), transparent 62%);
-}
-.dashboard-page .badge-emblem.rarity-epic .badge-emblem-corner {
-  background: #a855f7;
-  box-shadow: 0 0 6px 1px rgba(168, 85, 247, 0.7);
-}
-
-.dashboard-page .badge-emblem.rarity-legendary {
-  border-color: rgba(251, 191, 36, 0.4);
-}
-.dashboard-page .badge-emblem.rarity-legendary .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.32), transparent 62%);
-}
-.dashboard-page .badge-emblem.rarity-legendary .badge-emblem-corner {
-  background: var(--gold);
-  box-shadow: 0 0 6px 1px rgba(251, 191, 36, 0.7);
-}
-
-.dashboard-page .badge-emblem.rarity-mythic {
-  border-color: rgba(45, 212, 191, 0.42);
-  background:
-    linear-gradient(160deg, rgba(45, 212, 191, 0.2), rgba(168, 85, 247, 0.14), rgba(15, 23, 39, 0.94));
-}
-.dashboard-page .badge-emblem.rarity-mythic .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.3), rgba(168, 85, 247, 0.22) 55%, transparent 80%);
-  opacity: 0.65;
-}
-.dashboard-page .badge-emblem.rarity-mythic .badge-emblem-corner {
-  background: linear-gradient(135deg, var(--teal), #a855f7);
-  box-shadow: 0 0 7px 1px rgba(45, 212, 191, 0.5);
-}
-
-/* Status modifiers */
-.dashboard-page .badge-emblem.status-earned {
-  border-color: rgba(45, 212, 191, 0.68);
-  box-shadow: inset 0 0 14px rgba(45, 212, 191, 0.24), 0 0 16px rgba(45, 212, 191, 0.22);
-}
-.dashboard-page .badge-emblem.status-earned .badge-emblem-icon {
-  color: #5eead4;
-}
-.dashboard-page .badge-emblem.status-earned .badge-emblem-glow {
-  opacity: 0.7;
-}
-
-.dashboard-page .badge-emblem.status-next {
-  border-color: rgba(45, 212, 191, 0.5);
-  box-shadow: inset 0 0 12px rgba(45, 212, 191, 0.2), 0 0 12px rgba(45, 212, 191, 0.16);
-}
-.dashboard-page .badge-emblem.status-next .badge-emblem-glow {
-  opacity: 0.62;
-}
-
-.dashboard-page .badge-emblem.status-locked {
-  filter: saturate(0.82);
-}
-.dashboard-page .badge-emblem.status-locked .badge-emblem-icon {
-  color: var(--soft);
-}
-.dashboard-page .badge-emblem.status-locked .badge-emblem-glow {
-  opacity: 0.26;
-}
-.dashboard-page .badge-emblem.status-locked .badge-emblem-corner {
-  opacity: 0.65;
-}
+/* The gem-style badge emblem now lives in the reusable BadgeIcon component
+   (see components/badges/BadgeIcon.css). */
 
 .dashboard-page .badge-progress-row,
 .dashboard-page .badge-meta-row {
@@ -255,15 +118,48 @@
   font-weight: 800;
 }
 
-.dashboard-page .rarity-common { border-color: rgba(45, 212, 191, 0.18); }
-.dashboard-page .rarity-rare { border-color: rgba(56, 189, 248, 0.24); }
-.dashboard-page .rarity-epic { border-color: rgba(168, 85, 247, 0.24); }
-.dashboard-page .rarity-legendary { border-color: rgba(251, 191, 36, 0.28); }
-.dashboard-page .rarity-mythic {
-  border-color: rgba(45, 212, 191, 0.32);
+.dashboard-page .badge-card.rarity-common { border-color: rgba(45, 212, 191, 0.18); }
+.dashboard-page .badge-card.rarity-rare { border-color: rgba(56, 189, 248, 0.24); }
+.dashboard-page .badge-card.rarity-epic { border-color: rgba(168, 85, 247, 0.24); }
+.dashboard-page .badge-card.rarity-legendary { border-color: rgba(251, 191, 36, 0.28); }
+
+/* Mythic badges stand out: warm coral glow + a wider span on roomy grids. */
+.dashboard-page .badge-card.rarity-mythic {
+  border-color: rgba(255, 122, 89, 0.42);
   background:
-    linear-gradient(135deg, rgba(45, 212, 191, 0.08), rgba(168, 85, 247, 0.06)),
-    #141d31;
+    linear-gradient(135deg, rgba(255, 122, 89, 0.12), rgba(255, 90, 95, 0.06)),
+    #16101a;
+  box-shadow: 0 0 0 1px rgba(255, 122, 89, 0.18), 0 0 22px rgba(255, 90, 95, 0.16);
+}
+
+@media (min-width: 900px) {
+  .dashboard-page .badge-grid .badge-card.rarity-mythic {
+    grid-column: span 2;
+  }
+}
+
+/* Rarity label pill — colours mirror the BadgeIcon RARITY_THEME ring. */
+.dashboard-page .rarity-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.dashboard-page .rarity-pill.rarity-common { color: #2dd4bf; }
+.dashboard-page .rarity-pill.rarity-rare { color: #38bdf8; }
+.dashboard-page .rarity-pill.rarity-epic { color: #c084fc; }
+.dashboard-page .rarity-pill.rarity-legendary { color: #fbbf24; }
+.dashboard-page .rarity-pill.rarity-mythic { color: #ff7a59; }
+
+.dashboard-page .preview-unlock-btn {
+  margin-top: 0.2rem;
+  width: 100%;
+  justify-content: center;
 }
 
 .dashboard-page .badge-detail-card {

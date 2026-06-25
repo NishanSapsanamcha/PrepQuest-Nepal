@@ -138,7 +138,7 @@
 }
 
 .dashboard-page .profile-badge-row {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .dashboard-page .profile-activity-row {

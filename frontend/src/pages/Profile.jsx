@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { FaBookOpen, FaCalendarAlt, FaCoins, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { MdTrackChanges } from "react-icons/md";
+import BadgeIcon from "../components/badges/BadgeIcon";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
@@ -146,12 +147,20 @@ function Profile() {
                 <button className="action-btn compact" type="button" onClick={() => navigate("/badges")}>View All Badges</button>
               </div>
               <div className="profile-badge-grid">
-                {showcaseBadges.map((badge) => (
-                  <div className="profile-badge-row" key={badge.id}>
-                    <span className="rank-badge">{badge.status === "earned" ? "✓" : `${badge.progress}/${badge.target}`}</span>
-                    <div><strong>{badge.name}</strong><span>{badge.category} - {badge.reward}</span></div>
-                  </div>
-                ))}
+                {showcaseBadges.map((badge) => {
+                  const isEarned = badge.status === "earned";
+                  const isMasked = badge.isSecret && !isEarned;
+                  return (
+                    <div className="profile-badge-row" key={badge.id}>
+                      <BadgeIcon shape={badge.shape} iconKind={badge.iconKind} rarity={badge.rarity} size="sm" locked={!isEarned} earned={isEarned} isSecret={badge.isSecret} />
+                      <div>
+                        <strong>{isMasked ? "???" : badge.name}</strong>
+                        <span>{isMasked ? "Keep playing to discover this badge." : `${badge.category} - ${badge.reward}`}</span>
+                      </div>
+                      <span className="rank-badge">{isEarned ? "✓" : `${badge.progress}/${badge.target}`}</span>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 

@@ -4,6 +4,8 @@ import Tournament from "./Tournament.js";
 import TournamentAnswer from "./TournamentAnswer.js";
 import TournamentRegistration from "./TournamentRegistration.js";
 import TournamentResult from "./TournamentResult.js";
+import Badge from "./Badge.js";
+import UserBadge from "./UserBadge.js";
 
 Tournament.hasMany(TournamentRegistration, { foreignKey: "tournamentId", sourceKey: "id", as: "registrations" });
 TournamentRegistration.belongsTo(Tournament, { foreignKey: "tournamentId", targetKey: "id", as: "tournament" });
@@ -23,13 +25,21 @@ TournamentAnswer.belongsTo(User, { foreignKey: "userId", as: "user" });
 User.hasMany(TournamentResult, { foreignKey: "userId", as: "tournamentResults" });
 TournamentResult.belongsTo(User, { foreignKey: "userId", as: "user" });
 
+Badge.hasMany(UserBadge, { foreignKey: "badgeId", sourceKey: "id", as: "userBadges" });
+UserBadge.belongsTo(Badge, { foreignKey: "badgeId", targetKey: "id", as: "badge" });
+
+User.hasMany(UserBadge, { foreignKey: "userId", as: "badges" });
+UserBadge.belongsTo(User, { foreignKey: "userId", as: "user" });
+
 const models = {
 	User,
 	Tournament,
 	TournamentAnswer,
 	TournamentRegistration,
-	TournamentResult
+	TournamentResult,
+	Badge,
+	UserBadge
 };
 
-export { sequelize, User, Tournament, TournamentAnswer, TournamentRegistration, TournamentResult };
+export { sequelize, User, Tournament, TournamentAnswer, TournamentRegistration, TournamentResult, Badge, UserBadge };
 export default models;
