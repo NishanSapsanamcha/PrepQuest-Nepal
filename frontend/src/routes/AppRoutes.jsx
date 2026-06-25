@@ -3,6 +3,8 @@ import Dashboard from "../pages/Dashboard";
 import Badges from "../pages/Badges";
 import Leaderboard from "../pages/Leaderboard";
 import Tournament from "../pages/Tournament";
+import TournamentSessionPage from "../pages/tournament/TournamentSessionPage";
+import TournamentResultPage from "../pages/tournament/TournamentResultPage";
 import Profile from "../pages/Profile";
 import ProgressionPage from "../pages/progression/ProgressionPage";
 import SetupPage from "../pages/setup/SetupPage";
