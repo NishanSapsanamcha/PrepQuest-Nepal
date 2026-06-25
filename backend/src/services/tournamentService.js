@@ -5,24 +5,29 @@ import {
 	Tournament,
 	TournamentAnswer,
 	TournamentRegistration,
-	TournamentResult
+	TournamentResult,
+	User
 } from "../models/index.js";
 
 const QUESTION_COUNT = 20;
 const ANSWER_SECONDS = 15;
 const REVEAL_SECONDS = 3;
 const CHECKPOINT_SECONDS = 15;
-const QUESTION_BLOCK_SECONDS = ANSWER_SECONDS + REVEAL_SECONDS;
 const CHECKPOINTS = new Set([5, 10, 15]);
-const DEMO_SLOT_MS = 3 * 60 * 1000;
-const DEMO_REGISTRATION_SECONDS = 45;
-const DEMO_STARTING_SOON_SECONDS = 15;
+const DEMO_REGISTRATION_SECONDS = 180;
 const EXAM_LABELS = {
 	"nayab-subba": "Nayab Subba",
 	"sakha-adhikrit": "Sakha Adhikrit"
 };
 const VALID_LANGUAGES = new Set(["english", "nepali", "both"]);
 const VALID_OPTIONS = new Set(["A", "B", "C", "D"]);
+const DEMO_PARTICIPANTS = [
+	{ id: "11111111-1111-4111-8111-111111111111", name: "Suman Adhikari", email: "demo.suman@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
+	{ id: "22222222-2222-4222-8222-222222222222", name: "Aayush Sharma", email: "demo.aayush@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
+	{ id: "33333333-3333-4333-8333-333333333333", name: "Ramesh Thapa", email: "demo.ramesh@prepquest.local", selectedExam: "nayab-subba", preferredLanguage: "nepali" },
+	{ id: "44444444-4444-4444-8444-444444444444", name: "Nisha Karki", email: "demo.nisha@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
+	{ id: "55555555-5555-4555-8555-555555555555", name: "Prabin Gurung", email: "demo.prabin@prepquest.local", selectedExam: "nayab-subba", preferredLanguage: "nepali" }
+];
 
 const rewardForRank = (rank) => {
 	if (rank === 1) return { rewardCoins: 500, rewardXp: 500, badgeEarned: "Gold Champion Badge" };
@@ -80,25 +85,6 @@ function getQuestionMap() {
 	return new Map([...practiceQuestions, ...mockTestQuestions].filter(isValidQuestion).map((question) => [question.id, question]));
 }
 
-function getNextFridayAt7(now = new Date()) {
-	const next = new Date(now);
-	next.setHours(19, 0, 0, 0);
-	const day = next.getDay();
-	const daysUntilFriday = (5 - day + 7) % 7;
-	next.setDate(next.getDate() + daysUntilFriday);
-	if (next <= now) next.setDate(next.getDate() + 7);
-	return next;
-}
-
-function getOfficialId(startAt) {
-	const date = startAt.toISOString().slice(0, 10);
-	return `official-friday-${date}`;
-}
-
-function getDemoSlotStart(now = new Date()) {
-	return new Date(Math.floor(now.getTime() / DEMO_SLOT_MS) * DEMO_SLOT_MS);
-}
-
 function buildTimeline(startAt) {
 	const segments = [];
 	let cursor = startAt.getTime();
@@ -120,11 +106,9 @@ function computeLivePhase(tournament, now = new Date()) {
 	const startAt = new Date(tournament.startAt);
 	const nowMs = now.getTime();
 	const registrationStartAt = new Date(tournament.registrationStartAt).getTime();
-	const startingSoonAt = startAt.getTime() - DEMO_STARTING_SOON_SECONDS * 1000;
 
 	if (nowMs < registrationStartAt) return { status: "registration_open", phase: "registration", secondsToStart: Math.ceil((startAt - now) / 1000) };
-	if (nowMs < startingSoonAt) return { status: "registration_open", phase: "registration", secondsToStart: Math.ceil((startAt - now) / 1000) };
-	if (nowMs < startAt.getTime()) return { status: "starting_soon", phase: "starting_soon", secondsToStart: Math.ceil((startAt - now) / 1000) };
+	if (nowMs < startAt.getTime()) return { status: "registration_open", phase: "registration", secondsToStart: Math.ceil((startAt - now) / 1000) };
 
 	const { segments } = buildTimeline(startAt);
 	const active = segments.find((segment) => nowMs >= segment.startedAt && nowMs < (segment.revealEndsAt || segment.endsAt));
@@ -156,38 +140,73 @@ async function ensureTournament(data) {
 	if (existing) return existing;
 	const questions = selectQuestions(data.examTrack, data.id);
 	const { endAt } = buildTimeline(data.startAt);
-	return Tournament.create({
+	const tournament = await Tournament.create({
 		...data,
 		endAt,
 		questionIds: questions.map((question) => question.id)
 	});
+	await seedDemoParticipants(tournament);
+	return tournament;
 }
 
-async function ensureCurrentTournaments(now = new Date()) {
-	const officialStartAt = getNextFridayAt7(now);
-	const official = await ensureTournament({
-		id: getOfficialId(officialStartAt),
-		title: "Friday Loksewa Battle",
-		examTrack: "mixed",
-		type: "official",
-		status: "registration_open",
-		registrationStartAt: new Date(officialStartAt.getTime() - 6 * 24 * 60 * 60 * 1000),
-		startAt: officialStartAt
+async function seedDemoParticipants(tournament) {
+	await Promise.all(DEMO_PARTICIPANTS.map(async (participant, index) => {
+		const [user] = await User.findOrCreate({
+			where: { id: participant.id },
+			defaults: {
+				id: participant.id,
+				fullName: participant.name,
+				email: participant.email,
+				password: "DemoUser123!",
+				role: "student",
+				securityQuestion: "Demo participant?",
+				securityAnswer: "yes"
+			}
+		});
+
+		await TournamentRegistration.findOrCreate({
+			where: { tournamentId: tournament.id, userId: user.id },
+			defaults: {
+				tournamentId: tournament.id,
+				userId: user.id,
+				displayName: participant.name,
+				selectedExam: participant.selectedExam,
+				preferredLanguage: participant.preferredLanguage,
+				registeredAt: new Date(new Date(tournament.registrationStartAt).getTime() + (index + 1) * 1000),
+				status: "registered"
+			}
+		});
+	}));
+}
+
+async function ensureCurrentTournament(now = new Date()) {
+	const active = await Tournament.findOne({
+		where: {
+			title: "Friday Live Tournament",
+			status: { [Op.in]: ["registration_open", "live", "checkpoint", "finished"] }
+		},
+		order: [["registrationStartAt", "DESC"]]
 	});
 
-	const slotStart = getDemoSlotStart(now);
-	const demoStartAt = new Date(slotStart.getTime() + (DEMO_REGISTRATION_SECONDS + DEMO_STARTING_SOON_SECONDS) * 1000);
-	const demo = await ensureTournament({
-		id: `demo-${slotStart.toISOString()}`,
-		title: "Quick Demo Battle",
+	if (active) {
+		const { phase } = await refreshTournamentStatus(active, now);
+		if (phase.status !== "results_published") {
+			await seedDemoParticipants(active);
+			return active;
+		}
+	}
+
+	const registrationStartAt = now;
+	const startAt = new Date(now.getTime() + DEMO_REGISTRATION_SECONDS * 1000);
+	return ensureTournament({
+		id: `friday-live-${registrationStartAt.toISOString().replaceAll(":", "-")}`,
+		title: "Friday Live Tournament",
 		examTrack: "mixed",
 		type: "demo",
 		status: "registration_open",
-		registrationStartAt: slotStart,
-		startAt: demoStartAt
+		registrationStartAt,
+		startAt
 	});
-
-	return { official, demo };
 }
 
 async function refreshTournamentStatus(tournament, now = new Date()) {
@@ -200,6 +219,7 @@ async function refreshTournamentStatus(tournament, now = new Date()) {
 	if (tournament.status !== updates.status || tournament.currentQuestionIndex !== updates.currentQuestionIndex) {
 		await tournament.update(updates);
 	}
+	await syncDemoParticipantAnswers(tournament, phase);
 	return { tournament, phase };
 }
 
@@ -253,14 +273,78 @@ async function getRegistrationCount(tournamentId) {
 async function getTournamentOrThrow(tournamentId) {
 	const tournament = await Tournament.findByPk(tournamentId);
 	if (!tournament) {
-		const current = await ensureCurrentTournaments();
-		if (current.demo.id === tournamentId) return current.demo;
-		if (current.official.id === tournamentId) return current.official;
+		const current = await ensureCurrentTournament();
+		if (current.id === tournamentId) return current;
 		const error = new Error("Tournament not found");
 		error.statusCode = 404;
 		throw error;
 	}
 	return tournament;
+}
+
+function getAnsweredQuestionLimit(phase) {
+	if (phase.phase === "registration") return 0;
+	if (phase.phase === "checkpoint") return phase.afterQuestion || 0;
+	if (phase.phase === "reveal") return (phase.questionIndex || 0) + 1;
+	if (phase.phase === "question") return phase.questionIndex || 0;
+	if (phase.phase === "finished") return QUESTION_COUNT;
+	return 0;
+}
+
+function getDemoAnswerProfile(participantIndex, questionIndex) {
+	const timeLeft = Math.max(1, 14 - ((participantIndex * 2 + questionIndex * 3) % 11));
+	const isCorrect = ((questionIndex + participantIndex) % 5) !== 0;
+	return { timeLeft, isCorrect };
+}
+
+async function syncDemoParticipantAnswers(tournament, phase) {
+	const limit = getAnsweredQuestionLimit(phase);
+	if (limit <= 0) return;
+
+	const questionMap = getQuestionMap();
+	await Promise.all(DEMO_PARTICIPANTS.map(async (participant, participantIndex) => {
+		const registration = await getRegistration(tournament.id, participant.id);
+		if (!registration) return;
+
+		for (let questionIndex = 0; questionIndex < limit; questionIndex += 1) {
+			const questionId = tournament.questionIds?.[questionIndex];
+			const question = questionMap.get(questionId);
+			if (!question) continue;
+
+			const existing = await TournamentAnswer.findOne({
+				where: { tournamentId: tournament.id, userId: participant.id, questionIndex }
+			});
+			if (existing) continue;
+
+			const profile = getDemoAnswerProfile(participantIndex, questionIndex);
+			const selectedOptionKey = profile.isCorrect
+				? question.correctOption
+				: ["A", "B", "C", "D"].find((key) => key !== question.correctOption);
+			const timeTaken = ANSWER_SECONDS - profile.timeLeft;
+			const pointsEarned = profile.isCorrect ? 100 + Math.round((profile.timeLeft / ANSWER_SECONDS) * 50) : 0;
+
+			await TournamentAnswer.create({
+				tournamentId: tournament.id,
+				userId: participant.id,
+				questionId,
+				questionIndex,
+				selectedOptionKey,
+				isCorrect: profile.isCorrect,
+				timeLeft: profile.timeLeft,
+				timeTaken,
+				pointsEarned,
+				answeredAt: new Date(new Date(tournament.startAt).getTime() + questionIndex * (ANSWER_SECONDS + REVEAL_SECONDS) * 1000 + timeTaken * 1000)
+			});
+
+			await registration.increment({
+				score: pointsEarned,
+				correctAnswers: profile.isCorrect ? 1 : 0,
+				wrongAnswers: profile.isCorrect ? 0 : 1,
+				totalAnswered: 1,
+				totalTimeTaken: timeTaken
+			});
+		}
+	}));
 }
 
 async function getLeaderboard(tournamentId, currentUserId = null) {
@@ -529,20 +613,12 @@ async function getResults(tournamentId, userId) {
 }
 
 async function getCurrent(userId = null) {
-	const { official, demo } = await ensureCurrentTournaments();
-	const [officialRegistration, demoRegistration] = await Promise.all([
-		getRegistration(official.id, userId),
-		getRegistration(demo.id, userId)
-	]);
-	const [officialCount, demoCount] = await Promise.all([
-		getRegistrationCount(official.id),
-		getRegistrationCount(demo.id)
-	]);
-	const officialPhase = (await refreshTournamentStatus(official)).phase;
-	const demoPhase = (await refreshTournamentStatus(demo)).phase;
+	const tournament = await ensureCurrentTournament();
+	const registration = await getRegistration(tournament.id, userId);
+	const count = await getRegistrationCount(tournament.id);
+	const phase = (await refreshTournamentStatus(tournament)).phase;
 	return {
-		official: publicTournament(official, officialPhase, officialCount, officialRegistration),
-		demo: publicTournament(demo, demoPhase, demoCount, demoRegistration)
+		tournament: publicTournament(tournament, phase, count, registration)
 	};
 }
 
@@ -559,7 +635,7 @@ export {
 	CHECKPOINT_SECONDS,
 	QUESTION_COUNT,
 	buildLiveState,
-	ensureCurrentTournaments,
+	ensureCurrentTournament,
 	findRecentTournamentForResults,
 	getCurrent,
 	getLeaderboard,

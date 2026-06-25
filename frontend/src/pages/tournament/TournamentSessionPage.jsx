@@ -26,7 +26,7 @@ function TournamentSessionPage() {
       let tournamentId = requestedId;
       if (!tournamentId) {
         const current = await getCurrentTournaments();
-        tournamentId = current.demo?.id || current.official?.id;
+        tournamentId = current.tournament?.id;
       }
       if (!tournamentId) {
         navigate("/tournament", { replace: true });
@@ -126,7 +126,7 @@ function TournamentSessionPage() {
       <section className="dashboard-content practice-session-content tournament-session-content">
         {error && <p className="tournament-error"><FaExclamationTriangle /> {error}</p>}
 
-        {phase?.phase === "starting_soon" || tournament?.status === "registration_open" ? (
+        {tournament?.status === "registration_open" ? (
           <section className="dashboard-card checkpoint-leaderboard-card">
             <div className="card-heading">
               <h2 className="card-title"><FaRegClock /> Battle Starting Soon</h2>

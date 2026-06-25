@@ -55,6 +55,13 @@ function TournamentResultPage() {
   const totalParticipants = data?.leaderboard?.length || 0;
   const totalQuestions = data?.tournament?.questionCount || 20;
   const accuracy = result ? Math.round((result.correctAnswers / totalQuestions) * 100) : 0;
+  const languageMode = data?.tournament?.registration?.preferredLanguage || "english";
+
+  const formatReward = (row) => {
+    if (!row.result) return "Pending";
+    const reward = `${row.result.rewardCoins} coins + ${row.result.rewardXp} XP`;
+    return row.result.badgeEarned ? `${reward} + ${row.result.badgeEarned}` : reward;
+  };
 
   const handleReviewAnswers = () => {
     playClick();
@@ -120,7 +127,7 @@ function TournamentResultPage() {
                     <span>#{rank}</span>
                     <h3>{row.displayName}</h3>
                     <strong>{row.score} pts</strong>
-                    <p>{row.correctAnswers} correct · {row.result?.rewardCoins || 0} coins · {row.result?.rewardXp || 0} XP</p>
+                    <p>{row.correctAnswers} correct - {formatReward(row)}</p>
                   </article>
                 );
               })}
@@ -170,19 +177,43 @@ function TournamentResultPage() {
             <h2 className="card-title" id="final-leaderboard-title"><FaTrophy /> Full Leaderboard</h2>
             <span className="status-chip">{totalParticipants} participants</span>
           </div>
-          <div className="checkpoint-leaderboard-list">
-            {data.leaderboard.length ? data.leaderboard.map((row) => (
-              <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.userId}>
-                <span className="rank-badge">{row.rank}</span>
-                <span className="learner-cell">
-                  {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
-                  <strong>{row.displayName}</strong>
-                </span>
-                <span>{row.correctAnswers} correct · {row.unanswered} unanswered</span>
-                <strong>{row.score} pts</strong>
-              </div>
-            )) : <p className="empty-state">No users registered yet.</p>}
-          </div>
+          {data.leaderboard.length ? (
+            <div className="final-leaderboard-table-wrap">
+              <table className="final-leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Score</th>
+                    <th>Correct</th>
+                    <th>Wrong</th>
+                    <th>Unanswered</th>
+                    <th>Time Taken</th>
+                    <th>Reward</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.leaderboard.map((row) => (
+                    <tr className={row.isCurrentUser ? "current-user" : ""} key={row.userId}>
+                      <td>#{row.rank}</td>
+                      <td>
+                        <span className="table-name-cell">
+                          {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
+                          <strong>{row.displayName}</strong>
+                        </span>
+                      </td>
+                      <td>{row.score}</td>
+                      <td>{row.correctAnswers}</td>
+                      <td>{row.wrongAnswers}</td>
+                      <td>{row.unanswered}</td>
+                      <td>{Math.round(row.totalTimeTaken || 0)}s</td>
+                      <td>{formatReward(row)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : <p className="empty-state">No users registered yet.</p>}
         </section>
 
         {data.answers.length > 0 && (
@@ -197,7 +228,7 @@ function TournamentResultPage() {
                   <div className="daily-review-top">
                     <span className="review-number">Q{index + 1}</span>
                     <div>
-                      <h3>{getText(answer, data.tournament.registration?.preferredLanguage || "english").question}</h3>
+                      <h3>{getText(answer, languageMode).question}</h3>
                       <div className="daily-chip-row">
                         <span className="question-pill">{answer.subject}</span>
                         <span className="question-pill">{answer.topic}</span>
@@ -209,12 +240,12 @@ function TournamentResultPage() {
                     </strong>
                   </div>
                   <div className="review-answer-grid">
-                    <div><span>Your answer</span><strong>{getOptionLabel(answer, answer.selectedOptionKey, "english")}</strong></div>
-                    <div><span>Correct answer</span><strong>{getOptionLabel(answer, answer.correctOption, "english")}</strong></div>
+                    <div><span>Your answer</span><strong>{getOptionLabel(answer, answer.selectedOptionKey, languageMode)}</strong></div>
+                    <div><span>Correct answer</span><strong>{getOptionLabel(answer, answer.correctOption, languageMode)}</strong></div>
                   </div>
                   <div className="review-explanation">
                     <span>Explanation</span>
-                    <p>{getText(answer, "english").explanation}</p>
+                    <p>{getText(answer, languageMode).explanation}</p>
                   </div>
                 </article>
               ))}

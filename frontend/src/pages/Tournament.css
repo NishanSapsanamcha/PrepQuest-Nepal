@@ -529,6 +529,54 @@
   line-height: 1.45;
 }
 
+.dashboard-page .final-leaderboard-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dashboard-page .final-leaderboard-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  color: var(--soft);
+  font-size: 0.82rem;
+}
+
+.dashboard-page .final-leaderboard-table th,
+.dashboard-page .final-leaderboard-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.dashboard-page .final-leaderboard-table th {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dashboard-page .final-leaderboard-table tbody tr {
+  background: rgba(15, 23, 39, 0.48);
+}
+
+.dashboard-page .final-leaderboard-table tbody tr.current-user {
+  background: rgba(45, 212, 191, 0.1);
+  outline: 1px solid rgba(45, 212, 191, 0.32);
+}
+
+.dashboard-page .table-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 150px;
+}
+
+.dashboard-page .table-name-cell svg {
+  color: var(--gold);
+}
+
 @media (max-width: 640px) {
   .dashboard-page .checkpoint-leaderboard-row {
     grid-template-columns: auto minmax(0, 1fr);
