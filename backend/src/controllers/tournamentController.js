@@ -8,6 +8,7 @@ import {
 	getRegistrationCount,
 	getResults,
 	getTournamentOrThrow,
+	markUserReady,
 	refreshTournamentStatus,
 	registerUser,
 	submitAnswer
@@ -54,6 +55,11 @@ const answer = asyncHandler(async (req, res) => {
 	res.status(201).json({ success: true, answer: lockedAnswer });
 });
 
+const ready = asyncHandler(async (req, res) => {
+	const registration = await markUserReady(req.params.id, req.user.id);
+	res.json({ success: true, message: "You're ready. Question 1 starts on server time.", registration });
+});
+
 const leaderboard = asyncHandler(async (req, res) => {
 	const rows = await getLeaderboard(req.params.id, req.user.id);
 	res.json({ success: true, leaderboard: rows });
@@ -82,6 +88,7 @@ export {
 	leaderboard,
 	liveState,
 	myRegistration,
+	ready,
 	register,
 	registrationCount,
 	results,

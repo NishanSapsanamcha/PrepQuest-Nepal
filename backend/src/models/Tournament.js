@@ -23,7 +23,7 @@ Tournament.init(
 			allowNull: false
 		},
 		status: {
-			type: DataTypes.ENUM("registration_open", "live", "checkpoint", "finished", "results_published"),
+			type: DataTypes.ENUM("registration_open", "ready_room", "live", "reveal", "checkpoint", "finished", "results_published"),
 			allowNull: false,
 			defaultValue: "registration_open"
 		},

@@ -60,6 +60,8 @@ function getAction(tournament) {
   if (!tournament) return { label: "Unavailable", disabled: true, kind: "disabled" };
   if (tournament.status === "registration_open" && !registered) return { label: "Join Tournament", disabled: false, kind: "join" };
   if (tournament.status === "registration_open" && registered) return { label: "Registered", disabled: true, kind: "registered" };
+  if (tournament.status === "ready_room" && registered) return { label: "Enter Battle / I'm Ready", disabled: false, kind: "enter" };
+  if (tournament.status === "ready_room" && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
   if ((tournament.status === "live" || tournament.status === "checkpoint") && registered) return { label: "Enter Battle", disabled: false, kind: "enter" };
   if ((tournament.status === "live" || tournament.status === "checkpoint") && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
   if (tournament.status === "finished" || tournament.status === "results_published") return { label: "View Results", disabled: false, kind: "results" };
@@ -192,7 +194,7 @@ function Tournament() {
               <div className="tournament-detail-list">
                 <div><span>Status</span><strong>{String(tournament?.status || "loading").replaceAll("_", " ")}</strong></div>
                 <div><span>Countdown</span><strong>{formatCountdown(tournament?.secondsToStart || 0)}</strong></div>
-                <div><span>Questions</span><strong>{tournament?.questionCount || 20} questions · {tournament?.timePerQuestion || 15}s each</strong></div>
+                <div><span>Questions</span><strong>{tournament?.questionCount || 20} mixed questions, {tournament?.timePerQuestion || 15}s each</strong></div>
                 <div><span>Ranking</span><strong>After questions 5, 10, and 15</strong></div>
               </div>
 
@@ -213,13 +215,25 @@ function Tournament() {
                 <span className="status-chip">Fair scoring</span>
               </div>
               <div className="tournament-format-grid">
-                <div className="tournament-format-item"><FaCheckCircle /> 20 validated Loksewa questions</div>
+                <div className="tournament-format-item"><FaCheckCircle /> 20 mixed Loksewa questions</div>
                 <div className="tournament-format-item"><FaCheckCircle /> 15 seconds per question</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Correct answer gives 100 plus speed bonus</div>
+                <div className="tournament-format-item"><FaCheckCircle /> Correct answer gives +100 points</div>
+                <div className="tournament-format-item"><FaCheckCircle /> Faster correct answers earn +0 to +50 speed bonus</div>
+                <div className="tournament-format-item"><FaCheckCircle /> Maximum per question: 150 points</div>
                 <div className="tournament-format-item"><FaCheckCircle /> Wrong or unanswered gives 0 points</div>
+                <div className="tournament-format-item"><FaCheckCircle /> Answer locks after submit and cannot be changed</div>
+                <div className="tournament-format-item"><FaCheckCircle /> Correct/wrong reveals only after timer closes</div>
                 <div className="tournament-format-item"><FaCheckCircle /> Checkpoints after questions 5, 10, and 15</div>
                 <div className="tournament-format-item"><FaCheckCircle /> Missed questions count as unanswered</div>
+                <div className="tournament-format-item"><FaShieldAlt /> No betting. Users never lose coins.</div>
               </div>
+              <div className="scoring-highlight-grid" aria-label="Tournament scoring examples">
+                <div><span>Correct Answer</span><strong>+100 points</strong></div>
+                <div><span>Speed Bonus</span><strong>+0 to +50</strong></div>
+                <div><span>Max Per Question</span><strong>150 points</strong></div>
+                <div><span>Wrong / Unanswered</span><strong>0 points</strong></div>
+              </div>
+              <p className="tournament-note">Choose carefully - once submitted, your answer cannot be changed. Correct with 15s left = 150 points; with 8s left = about 127; with 1s left = about 103.</p>
             </section>
           </div>
 

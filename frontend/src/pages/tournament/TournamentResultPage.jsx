@@ -9,6 +9,7 @@ import {
   FaHome,
   FaListAlt,
   FaMedal,
+  FaRegClock,
   FaStar,
   FaTimesCircle,
   FaTrophy,
@@ -66,6 +67,11 @@ function TournamentResultPage() {
   const handleReviewAnswers = () => {
     playClick();
     document.getElementById("tournament-review")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleFullLeaderboard = () => {
+    playClick();
+    document.getElementById("final-leaderboard-title")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleDashboard = () => {
@@ -150,12 +156,16 @@ function TournamentResultPage() {
                   Rank #{result.finalRank} of {totalParticipants}. Rewards: +{result.rewardXp} XP,
                   +{result.rewardCoins} coins{result.badgeEarned ? `, ${result.badgeEarned}` : ""}.
                 </p>
+                <p>Rewards have been saved once and will not duplicate on refresh.</p>
                 <div className="daily-action-row">
                   <button className="btn" type="button" onClick={handleReviewAnswers}>
                     <FaListAlt /> Review Answers
                   </button>
                   <button className="btn btn-secondary" type="button" onClick={handleDashboard}>
                     <FaHome /> Go to Dashboard
+                  </button>
+                  <button className="btn btn-secondary" type="button" onClick={handleFullLeaderboard}>
+                    <FaTrophy /> View Full Leaderboard
                   </button>
                 </div>
               </div>
@@ -165,9 +175,12 @@ function TournamentResultPage() {
               <article className="stat-card"><div className="stat-icon"><FaTrophy /></div><div><div className="stat-value">#{result.finalRank}</div><div className="stat-helper">Final rank</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaBullseye /></div><div><div className="stat-value">{accuracy}%</div><div className="stat-helper">Accuracy</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaCheckCircle /></div><div><div className="stat-value">{result.correctAnswers}</div><div className="stat-helper">Correct answers</div></div></article>
-              <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers}/{result.unanswered}</div><div className="stat-helper">Wrong / unanswered</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers}</div><div className="stat-helper">Wrong answers</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaRegClock /></div><div><div className="stat-value">{result.unanswered}</div><div className="stat-helper">Unanswered</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers + result.unanswered}</div><div className="stat-helper">Total missed</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.rewardXp} XP</div><div className="stat-helper">XP earned</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.rewardCoins}</div><div className="stat-helper">Coins earned</div></div></article>
+              {result.badgeEarned && <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{result.badgeEarned}</div><div className="stat-helper">Badge earned</div></div></article>}
             </section>
           </>
         )}

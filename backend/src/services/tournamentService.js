@@ -11,6 +11,7 @@ import {
 
 const QUESTION_COUNT = 20;
 const ANSWER_SECONDS = 15;
+const READY_SECONDS = 10;
 const REVEAL_SECONDS = 3;
 const CHECKPOINT_SECONDS = 15;
 const CHECKPOINTS = new Set([5, 10, 15]);
@@ -75,10 +76,26 @@ function deterministicShuffle(items, seed) {
 }
 
 function selectQuestions(examTrack, seed) {
-	return deterministicShuffle(
+	const validQuestions = deterministicShuffle(
 		[...practiceQuestions, ...mockTestQuestions].filter((question) => isValidQuestion(question) && questionMatchesExam(question, examTrack)),
 		seed
-	).slice(0, QUESTION_COUNT);
+	);
+	const bySubject = new Map();
+	validQuestions.forEach((question) => {
+		const key = question.subjectId || question.subject || "mixed";
+		bySubject.set(key, [...(bySubject.get(key) || []), question]);
+	});
+
+	const mixed = [];
+	const subjectQueues = [...bySubject.values()];
+	while (mixed.length < QUESTION_COUNT && subjectQueues.some((queue) => queue.length > 0)) {
+		subjectQueues.forEach((queue) => {
+			if (mixed.length < QUESTION_COUNT && queue.length) {
+				mixed.push(queue.shift());
+			}
+		});
+	}
+	return mixed;
 }
 
 function getQuestionMap() {
@@ -87,7 +104,7 @@ function getQuestionMap() {
 
 function buildTimeline(startAt) {
 	const segments = [];
-	let cursor = startAt.getTime();
+	let cursor = startAt.getTime() + READY_SECONDS * 1000;
 	for (let index = 0; index < QUESTION_COUNT; index += 1) {
 		const startedAt = cursor;
 		const answerEndsAt = startedAt + ANSWER_SECONDS * 1000;
@@ -104,11 +121,20 @@ function buildTimeline(startAt) {
 
 function computeLivePhase(tournament, now = new Date()) {
 	const startAt = new Date(tournament.startAt);
+	const firstQuestionAt = new Date(startAt.getTime() + READY_SECONDS * 1000);
 	const nowMs = now.getTime();
 	const registrationStartAt = new Date(tournament.registrationStartAt).getTime();
 
 	if (nowMs < registrationStartAt) return { status: "registration_open", phase: "registration", secondsToStart: Math.ceil((startAt - now) / 1000) };
 	if (nowMs < startAt.getTime()) return { status: "registration_open", phase: "registration", secondsToStart: Math.ceil((startAt - now) / 1000) };
+	if (nowMs < firstQuestionAt.getTime()) {
+		return {
+			status: "ready_room",
+			phase: "ready_room",
+			readyCountdownSeconds: Math.max(0, Math.ceil((firstQuestionAt - now) / 1000)),
+			questionStartsAt: firstQuestionAt
+		};
+	}
 
 	const { segments } = buildTimeline(startAt);
 	const active = segments.find((segment) => nowMs >= segment.startedAt && nowMs < (segment.revealEndsAt || segment.endsAt));
@@ -125,7 +151,7 @@ function computeLivePhase(tournament, now = new Date()) {
 
 	const answerOpen = nowMs < active.answerEndsAt;
 	return {
-		status: "live",
+		status: answerOpen ? "live" : "reveal",
 		phase: answerOpen ? "question" : "reveal",
 		questionIndex: active.questionIndex,
 		questionStartedAt: new Date(active.startedAt),
@@ -183,7 +209,7 @@ async function ensureCurrentTournament(now = new Date()) {
 	const active = await Tournament.findOne({
 		where: {
 			title: "Friday Live Tournament",
-			status: { [Op.in]: ["registration_open", "live", "checkpoint", "finished"] }
+			status: { [Op.in]: ["registration_open", "ready_room", "live", "reveal", "checkpoint", "finished"] }
 		},
 		order: [["registrationStartAt", "DESC"]]
 	});
@@ -212,11 +238,12 @@ async function ensureCurrentTournament(now = new Date()) {
 async function refreshTournamentStatus(tournament, now = new Date()) {
 	const phase = computeLivePhase(tournament, now);
 	const updates = { status: phase.status };
-	if (Number.isInteger(phase.questionIndex)) {
+	const hasQuestionIndex = Number.isInteger(phase.questionIndex);
+	if (hasQuestionIndex) {
 		updates.currentQuestionIndex = phase.questionIndex;
 		updates.currentQuestionStartedAt = phase.questionStartedAt || tournament.currentQuestionStartedAt;
 	}
-	if (tournament.status !== updates.status || tournament.currentQuestionIndex !== updates.currentQuestionIndex) {
+	if (tournament.status !== updates.status || (hasQuestionIndex && tournament.currentQuestionIndex !== updates.currentQuestionIndex)) {
 		await tournament.update(updates);
 	}
 	await syncDemoParticipantAnswers(tournament, phase);
@@ -235,6 +262,8 @@ function publicTournament(tournament, phase, registrationCount = 0, registration
 		startAt: tournament.startAt,
 		endAt: tournament.endAt,
 		secondsToStart: phase.secondsToStart || 0,
+		readyCountdownSeconds: phase.readyCountdownSeconds || 0,
+		questionStartsAt: phase.questionStartsAt || null,
 		registrationCount,
 		questionCount: QUESTION_COUNT,
 		timePerQuestion: ANSWER_SECONDS,
@@ -242,7 +271,10 @@ function publicTournament(tournament, phase, registrationCount = 0, registration
 	};
 }
 
-function serializeRegistration(registration) {
+function serializeRegistration(registration, answeredQuestionLimit = null) {
+	const unanswered = answeredQuestionLimit === null
+		? registration.unanswered
+		: Math.max(registration.unanswered || 0, Math.max(0, answeredQuestionLimit - registration.totalAnswered));
 	return {
 		id: registration.id,
 		tournamentId: registration.tournamentId,
@@ -252,10 +284,11 @@ function serializeRegistration(registration) {
 		preferredLanguage: registration.preferredLanguage,
 		registeredAt: registration.registeredAt,
 		status: registration.status,
+		readyStatus: registration.readyStatus,
 		score: registration.score,
 		correctAnswers: registration.correctAnswers,
 		wrongAnswers: registration.wrongAnswers,
-		unanswered: registration.unanswered,
+		unanswered,
 		totalAnswered: registration.totalAnswered,
 		totalTimeTaken: registration.totalTimeTaken
 	};
@@ -292,9 +325,13 @@ function getAnsweredQuestionLimit(phase) {
 }
 
 function getDemoAnswerProfile(participantIndex, questionIndex) {
-	const timeLeft = Math.max(1, 14 - ((participantIndex * 2 + questionIndex * 3) % 11));
-	const isCorrect = ((questionIndex + participantIndex) % 5) !== 0;
-	return { timeLeft, isCorrect };
+	const unanswered = ((questionIndex * 7 + participantIndex * 5) % 17) === 0;
+	const accuracyBuckets = [0.62, 0.78, 0.58, 0.86, 0.7];
+	const correctnessRoll = ((questionIndex * 13 + participantIndex * 19) % 100) / 100;
+	const isCorrect = !unanswered && correctnessRoll < accuracyBuckets[participantIndex % accuracyBuckets.length];
+	const timeTaken = 2 + ((participantIndex * 3 + questionIndex * 5) % 13);
+	const timeLeft = Math.max(1, ANSWER_SECONDS - timeTaken);
+	return { timeLeft, isCorrect, unanswered };
 }
 
 async function syncDemoParticipantAnswers(tournament, phase) {
@@ -317,6 +354,7 @@ async function syncDemoParticipantAnswers(tournament, phase) {
 			if (existing) continue;
 
 			const profile = getDemoAnswerProfile(participantIndex, questionIndex);
+			if (profile.unanswered) continue;
 			const selectedOptionKey = profile.isCorrect
 				? question.correctOption
 				: ["A", "B", "C", "D"].find((key) => key !== question.correctOption);
@@ -347,27 +385,31 @@ async function syncDemoParticipantAnswers(tournament, phase) {
 	}));
 }
 
-async function getLeaderboard(tournamentId, currentUserId = null) {
+async function getLeaderboard(tournamentId, currentUserId = null, answeredQuestionLimit = QUESTION_COUNT) {
 	const registrations = await TournamentRegistration.findAll({ where: { tournamentId } });
 	const rows = registrations
-		.map((registration) => ({
-			userId: registration.userId,
-			displayName: registration.displayName,
-			selectedExam: registration.selectedExam,
-			preferredLanguage: registration.preferredLanguage,
-			registeredAt: registration.registeredAt,
-			score: registration.score,
-			correctAnswers: registration.correctAnswers,
-			wrongAnswers: registration.wrongAnswers,
-			unanswered: registration.unanswered,
-			totalAnswered: registration.totalAnswered,
-			totalTimeTaken: registration.totalTimeTaken,
-			isCurrentUser: registration.userId === currentUserId
-		}))
+		.map((registration) => {
+			const liveUnanswered = Math.max(registration.unanswered || 0, Math.max(0, answeredQuestionLimit - registration.totalAnswered));
+			return {
+				userId: registration.userId,
+				displayName: registration.displayName,
+				selectedExam: registration.selectedExam,
+				preferredLanguage: registration.preferredLanguage,
+				registeredAt: registration.registeredAt,
+				score: registration.score,
+				correctAnswers: registration.correctAnswers,
+				wrongAnswers: registration.wrongAnswers,
+				unanswered: liveUnanswered,
+				totalAnswered: registration.totalAnswered,
+				totalTimeTaken: registration.totalTimeTaken,
+				isCurrentUser: registration.userId === currentUserId
+			};
+		})
 		.sort((a, b) => {
 			if (b.score !== a.score) return b.score - a.score;
 			if (b.correctAnswers !== a.correctAnswers) return b.correctAnswers - a.correctAnswers;
 			if (a.totalTimeTaken !== b.totalTimeTaken) return a.totalTimeTaken - b.totalTimeTaken;
+			if (a.unanswered !== b.unanswered) return a.unanswered - b.unanswered;
 			return new Date(a.registeredAt) - new Date(b.registeredAt);
 		})
 		.map((row, index) => ({ ...row, rank: index + 1 }));
@@ -404,15 +446,19 @@ async function buildLiveState(tournamentId, userId) {
 	const userAnswer = Number.isInteger(phase.questionIndex)
 		? await TournamentAnswer.findOne({ where: { tournamentId: tournament.id, userId, questionIndex: phase.questionIndex } })
 		: null;
-	const leaderboard = await getLeaderboard(tournament.id, userId);
+	const answeredQuestionLimit = getAnsweredQuestionLimit(phase);
+	const leaderboard = await getLeaderboard(tournament.id, userId, answeredQuestionLimit);
+	const serializedRegistration = registration ? serializeRegistration(registration, answeredQuestionLimit) : null;
+	const tournamentPayload = publicTournament(tournament, phase, await getRegistrationCount(tournament.id), registration);
+	tournamentPayload.registration = serializedRegistration;
 
 	if (phase.status === "results_published") {
 		await publishResults(tournament.id);
 	}
 
 	return {
-		tournament: publicTournament(tournament, phase, await getRegistrationCount(tournament.id), registration),
-		registration: registration ? serializeRegistration(registration) : null,
+		tournament: tournamentPayload,
+		registration: serializedRegistration,
 		phase,
 		question: publicQuestion(currentQuestion, phase.phase === "reveal"),
 		answer: userAnswer ? {
@@ -421,7 +467,7 @@ async function buildLiveState(tournamentId, userId) {
 			pointsEarned: phase.phase === "reveal" ? userAnswer.pointsEarned : null,
 			locked: true
 		} : null,
-		leaderboard: leaderboard.slice(0, phase.phase === "checkpoint" ? 5 : 10),
+		leaderboard,
 		currentUserRank: leaderboard.find((row) => row.userId === userId) || null
 	};
 }
@@ -469,6 +515,24 @@ async function registerUser(tournamentId, user, payload) {
 	});
 
 	return { registration, alreadyRegistered: false };
+}
+
+async function markUserReady(tournamentId, userId) {
+	const tournament = await getTournamentOrThrow(tournamentId);
+	const { phase } = await refreshTournamentStatus(tournament);
+	const registration = await getRegistration(tournament.id, userId);
+	if (!registration) {
+		const error = new Error("You must register before entering the ready room");
+		error.statusCode = 403;
+		throw error;
+	}
+	if (!["ready_room", "live", "reveal", "checkpoint"].includes(phase.status)) {
+		const error = new Error("Ready room is not open yet");
+		error.statusCode = 409;
+		throw error;
+	}
+	await registration.update({ readyStatus: true });
+	return registration;
 }
 
 async function submitAnswer(tournamentId, userId, selectedOptionKey) {
@@ -547,7 +611,7 @@ async function publishResults(tournamentId) {
 		where: { tournamentId },
 		order: [["registeredAt", "ASC"]]
 	});
-	const leaderboard = await getLeaderboard(tournamentId);
+	const leaderboard = await getLeaderboard(tournamentId, null, QUESTION_COUNT);
 
 	await Promise.all(registrations.map(async (registration) => {
 		const rankRow = leaderboard.find((row) => row.userId === registration.userId);
@@ -584,7 +648,7 @@ async function getResults(tournamentId, userId) {
 	if (phase.status === "results_published") {
 		await publishResults(tournamentId);
 	}
-	const leaderboard = await getLeaderboard(tournamentId, userId);
+	const leaderboard = await getLeaderboard(tournamentId, userId, QUESTION_COUNT);
 	const results = await TournamentResult.findAll({ where: { tournamentId } });
 	const resultMap = new Map(results.map((result) => [result.userId, result]));
 	const answers = await TournamentAnswer.findAll({ where: { tournamentId, userId }, order: [["questionIndex", "ASC"]] });
@@ -643,6 +707,7 @@ export {
 	getRegistrationCount,
 	getResults,
 	getTournamentOrThrow,
+	markUserReady,
 	publicTournament,
 	refreshTournamentStatus,
 	registerUser,

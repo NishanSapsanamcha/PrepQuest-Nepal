@@ -40,6 +40,11 @@ TournamentRegistration.init(
 			allowNull: false,
 			defaultValue: "registered"
 		},
+		readyStatus: {
+			type: DataTypes.BOOLEAN,
+			allowNull: false,
+			defaultValue: false
+		},
 		score: {
 			type: DataTypes.INTEGER,
 			allowNull: false,

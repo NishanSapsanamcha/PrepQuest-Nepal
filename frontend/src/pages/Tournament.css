@@ -177,6 +177,34 @@
   margin-top: 0.85rem;
 }
 
+.dashboard-page .scoring-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.dashboard-page .scoring-highlight-grid div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: var(--radius);
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.dashboard-page .scoring-highlight-grid span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.dashboard-page .scoring-highlight-grid strong {
+  color: var(--teal);
+  font-size: 0.9rem;
+}
+
 .dashboard-page .demo-chip {
   border-color: rgba(45, 212, 191, 0.26);
   background: rgba(45, 212, 191, 0.1);
@@ -410,15 +438,90 @@
   border-color: rgba(251, 113, 133, 0.28);
 }
 
+.dashboard-page .ready-room-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.dashboard-page .ready-countdown {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(45, 212, 191, 0.24);
+  border-radius: var(--radius);
+  background: rgba(45, 212, 191, 0.08);
+  text-align: center;
+}
+
+.dashboard-page .ready-countdown span {
+  color: var(--teal);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dashboard-page .ready-countdown strong {
+  color: var(--text);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  line-height: 0.95;
+}
+
+.dashboard-page .ready-countdown p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.dashboard-page .lock-warning {
+  margin: 0 0 0.85rem;
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 /* Checkpoint + final leaderboard */
 .dashboard-page .checkpoint-leaderboard-card {
   display: grid;
   gap: 1rem;
 }
 
+.dashboard-page .major-checkpoint-card {
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.dashboard-page .checkpoint-countdown-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  border-radius: var(--radius);
+  background: rgba(45, 212, 191, 0.09);
+  text-align: center;
+}
+
+.dashboard-page .checkpoint-countdown-card span {
+  color: var(--soft);
+  font-weight: 850;
+}
+
+.dashboard-page .checkpoint-countdown-card strong {
+  color: var(--teal);
+  font-size: clamp(2.8rem, 7vw, 5rem);
+  line-height: 1;
+}
+
 .dashboard-page .checkpoint-leaderboard-list {
   display: grid;
   gap: 0.55rem;
+}
+
+.dashboard-page .scrollable-ranking {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 0.2rem;
 }
 
 .dashboard-page .checkpoint-leaderboard-row {
@@ -447,6 +550,18 @@
 
 .dashboard-page .checkpoint-leaderboard-row .learner-cell svg {
   color: var(--gold);
+}
+
+.dashboard-page .checkpoint-leaderboard-row .rank-1 {
+  color: var(--gold);
+}
+
+.dashboard-page .checkpoint-leaderboard-row .rank-2 {
+  color: #e2e8f0;
+}
+
+.dashboard-page .checkpoint-leaderboard-row .rank-3 {
+  color: #fdba74;
 }
 
 .dashboard-page .checkpoint-leaderboard-row > strong {
@@ -600,7 +715,8 @@
 
 @media (max-width: 760px) {
   .dashboard-page .tournament-stats-grid,
-  .dashboard-page .tournament-format-grid {
+  .dashboard-page .tournament-format-grid,
+  .dashboard-page .scoring-highlight-grid {
     grid-template-columns: 1fr;
   }
 

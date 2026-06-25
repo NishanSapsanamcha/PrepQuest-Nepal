@@ -10,6 +10,11 @@ export const registerForTournament = async (tournamentId, payload) => {
 	return data;
 };
 
+export const markTournamentReady = async (tournamentId) => {
+	const { data } = await api.post(`/tournaments/${tournamentId}/ready`);
+	return data;
+};
+
 export const getTournamentLiveState = async (tournamentId) => {
 	const { data } = await api.get(`/tournaments/${tournamentId}/live-state`);
 	return data;

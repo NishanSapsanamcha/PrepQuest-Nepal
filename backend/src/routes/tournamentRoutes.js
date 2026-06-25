@@ -5,6 +5,7 @@ import {
 	leaderboard,
 	liveState,
 	myRegistration,
+	ready,
 	register,
 	registrationCount,
 	results,
@@ -17,6 +18,7 @@ const router = express.Router();
 router.get("/current", protect, current);
 router.get("/:id/status", protect, status);
 router.post("/:id/register", protect, register);
+router.post("/:id/ready", protect, ready);
 router.get("/:id/registration/me", protect, myRegistration);
 router.get("/:id/registrations/count", protect, registrationCount);
 router.get("/:id/live-state", protect, liveState);
