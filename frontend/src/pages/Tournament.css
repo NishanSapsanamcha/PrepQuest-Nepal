@@ -132,6 +132,14 @@
   width: 100%;
 }
 
+.dashboard-page .tournament-primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  filter: grayscale(0.2);
+  transform: none;
+  box-shadow: none;
+}
+
 .dashboard-page .tournament-success {
   margin-top: 0.1rem !important;
   border-color: rgba(34, 197, 94, 0.26);
@@ -139,9 +147,40 @@
   color: #bbf7d0 !important;
 }
 
+.dashboard-page .tournament-error,
+.dashboard-page .empty-state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid rgba(251, 113, 133, 0.22);
+  border-radius: var(--radius);
+  background: rgba(251, 113, 133, 0.08);
+  color: #fecdd3;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.dashboard-page .empty-state {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 39, 0.72);
+  color: var(--muted);
+}
+
 .dashboard-page .tournament-success.compact {
   margin: 0 !important;
   font-size: 0.76rem;
+}
+
+.dashboard-page .compact-row {
+  margin-top: 0.85rem;
+}
+
+.dashboard-page .demo-chip {
+  border-color: rgba(45, 212, 191, 0.26);
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--teal);
 }
 
 .dashboard-page .tournament-stats-grid {
@@ -415,6 +454,81 @@
   white-space: nowrap;
 }
 
+.dashboard-page .final-podium-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-page .podium-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.12fr) minmax(0, 0.92fr);
+  align-items: end;
+  gap: 1rem;
+}
+
+.dashboard-page .podium-place {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  min-height: 190px;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: var(--radius);
+  background: rgba(15, 23, 39, 0.82);
+  text-align: center;
+}
+
+.dashboard-page .podium-1 {
+  min-height: 235px;
+  border-color: rgba(251, 191, 36, 0.42);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.18), rgba(15, 23, 39, 0.86));
+}
+
+.dashboard-page .podium-2 {
+  border-color: rgba(226, 232, 240, 0.28);
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.12), rgba(15, 23, 39, 0.86));
+}
+
+.dashboard-page .podium-3 {
+  border-color: rgba(251, 146, 60, 0.32);
+  background: linear-gradient(180deg, rgba(251, 146, 60, 0.13), rgba(15, 23, 39, 0.86));
+}
+
+.dashboard-page .podium-medal {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--gold);
+  font-size: 1.35rem;
+}
+
+.dashboard-page .podium-place span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.dashboard-page .podium-place h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.dashboard-page .podium-place strong {
+  color: var(--teal);
+  font-size: 1rem;
+}
+
+.dashboard-page .podium-place p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 @media (max-width: 640px) {
   .dashboard-page .checkpoint-leaderboard-row {
     grid-template-columns: auto minmax(0, 1fr);
@@ -459,6 +573,15 @@
   .dashboard-page .tournament-reward-row strong,
   .dashboard-page .tournament-detail-list strong {
     text-align: left;
+  }
+
+  .dashboard-page .podium-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .podium-place,
+  .dashboard-page .podium-1 {
+    min-height: 180px;
   }
 }
 

@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaBullseye,
@@ -16,32 +16,45 @@ import {
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { getOptionLabel, getText } from "../../utils/practiceUtils";
-import { getLatestTournamentResult, getThisWeekTournamentAttempt } from "../../utils/tournamentUtils";
+import { getTournamentResults } from "../../services/tournamentService";
 import "../Tournament.css";
 
 function TournamentResultPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const tournamentId = searchParams.get("id");
   const { playClick, playComplete } = usePrepQuestSound();
   const completionSoundCheckedRef = useRef(false);
-  const result = getLatestTournamentResult() || getThisWeekTournamentAttempt();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!result) navigate("/tournament", { replace: true });
-  }, [navigate, result]);
+    if (!tournamentId) {
+      navigate("/tournament", { replace: true });
+      return;
+    }
+    getTournamentResults(tournamentId)
+      .then((result) => {
+        setData(result);
+        setError("");
+      })
+      .catch((err) => setError(err.response?.data?.message || "Results will appear after the tournament finishes."));
+  }, [navigate, tournamentId]);
 
   useEffect(() => {
-    if (!result || completionSoundCheckedRef.current) return;
+    if (!data || completionSoundCheckedRef.current) return;
     completionSoundCheckedRef.current = true;
-    if (location.state?.resultId !== result.id) return;
-
-    const playedKey = `prepquest_tournament_completion_sound_${result.id}`;
+    const playedKey = `prepquest_tournament_completion_sound_${tournamentId}`;
     if (sessionStorage.getItem(playedKey) === "true") return;
     sessionStorage.setItem(playedKey, "true");
     playComplete();
-  }, [location.state?.resultId, playComplete, result]);
+  }, [data, playComplete, tournamentId]);
 
-  if (!result) return null;
+  const result = data?.currentUserResult;
+  const currentUser = data?.currentUser;
+  const totalParticipants = data?.leaderboard?.length || 0;
+  const totalQuestions = data?.tournament?.questionCount || 20;
+  const accuracy = result ? Math.round((result.correctAnswers / totalQuestions) * 100) : 0;
 
   const handleReviewAnswers = () => {
     playClick();
@@ -58,16 +71,29 @@ function TournamentResultPage() {
     navigate("/tournament");
   };
 
-  const rankIcon = result.rank === 1 ? <FaCrown /> : result.rank <= 3 ? <FaMedal /> : <FaTrophy />;
+  if (error && !data) {
+    return (
+      <DashboardLayout activeKey="tournament">
+        <section className="dashboard-content tournament-page">
+          <section className="dashboard-card tournament-card">
+            <p className="empty-state">{error}</p>
+            <button className="tournament-primary-btn" type="button" onClick={handleTournamentHome}>Back to Tournament</button>
+          </section>
+        </section>
+      </DashboardLayout>
+    );
+  }
+
+  if (!data) return null;
 
   return (
     <DashboardLayout activeKey="tournament">
       <header className="dashboard-header daily-quiz-header">
         <div className="header-left">
           <p className="eyebrow">Result</p>
-          <h1>Friday Battle Complete!</h1>
+          <h1>Final Tournament Results</h1>
           <p>
-            You finished rank #{result.rank} of {result.totalParticipants} with {result.accuracy}% accuracy.
+            {currentUser ? `You finished rank #${currentUser.rank} of ${totalParticipants} with ${accuracy}% accuracy.` : "Results will appear after the tournament finishes."}
           </p>
         </div>
         <div className="header-right">
@@ -78,91 +104,123 @@ function TournamentResultPage() {
       </header>
 
       <section className="dashboard-content daily-result-content">
-        <section className="dashboard-card daily-result-hero">
-          <div className="result-score-ring">
-            <span>{result.totalScore}</span>
-            <strong>/ {result.maxScore}</strong>
+        <section className="dashboard-card final-podium-card">
+          <div className="card-heading">
+            <h2 className="card-title"><FaTrophy /> Podium Winners</h2>
+            <span className="status-chip">{totalParticipants} participants</span>
           </div>
-          <div className="result-hero-copy">
-            <h2>Friday Battle Complete!</h2>
-            <p>
-              Score {result.totalScore} / {result.maxScore} &middot; Rank #{result.rank} of {result.totalParticipants}
-              {result.rankLabel ? ` (${result.rankLabel})` : ""}.
-            </p>
-            <div className="daily-action-row">
-              <button className="btn" type="button" onClick={handleReviewAnswers}>
-                <FaListAlt /> Review Answers
-              </button>
-              <button className="btn btn-secondary" type="button" onClick={handleDashboard}>
-                <FaHome /> Go to Dashboard
-              </button>
+          {data.podium.length ? (
+            <div className="podium-layout">
+              {[2, 1, 3].map((rank) => {
+                const row = data.podium.find((item) => item.rank === rank);
+                if (!row) return null;
+                return (
+                  <article className={`podium-place podium-${rank}`} key={row.userId}>
+                    <div className="podium-medal">{rank === 1 ? <FaCrown /> : <FaMedal />}</div>
+                    <span>#{rank}</span>
+                    <h3>{row.displayName}</h3>
+                    <strong>{row.score} pts</strong>
+                    <p>{row.correctAnswers} correct · {row.result?.rewardCoins || 0} coins · {row.result?.rewardXp || 0} XP</p>
+                  </article>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <p className="empty-state">Results will appear after the tournament finishes.</p>
+          )}
         </section>
 
-        <section className="daily-result-grid" aria-label="Tournament result summary">
-          <article className="stat-card"><div className="stat-icon">{rankIcon}</div><div><div className="stat-value">#{result.rank}</div><div className="stat-helper">Final rank</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaBullseye /></div><div><div className="stat-value">{result.accuracy}%</div><div className="stat-helper">Accuracy</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaCheckCircle /></div><div><div className="stat-value">{result.correctAnswers}</div><div className="stat-helper">Correct answers</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers}</div><div className="stat-helper">Wrong answers</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.xpEarned} XP</div><div className="stat-helper">XP earned</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.coinsEarned}</div><div className="stat-helper">Coins earned</div></div></article>
-        </section>
+        {result && (
+          <>
+            <section className="dashboard-card daily-result-hero">
+              <div className="result-score-ring">
+                <span>{result.finalScore}</span>
+                <strong>pts</strong>
+              </div>
+              <div className="result-hero-copy">
+                <h2>Your Battle Result</h2>
+                <p>
+                  Rank #{result.finalRank} of {totalParticipants}. Rewards: +{result.rewardXp} XP,
+                  +{result.rewardCoins} coins{result.badgeEarned ? `, ${result.badgeEarned}` : ""}.
+                </p>
+                <div className="daily-action-row">
+                  <button className="btn" type="button" onClick={handleReviewAnswers}>
+                    <FaListAlt /> Review Answers
+                  </button>
+                  <button className="btn btn-secondary" type="button" onClick={handleDashboard}>
+                    <FaHome /> Go to Dashboard
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className="daily-result-grid" aria-label="Tournament result summary">
+              <article className="stat-card"><div className="stat-icon"><FaTrophy /></div><div><div className="stat-value">#{result.finalRank}</div><div className="stat-helper">Final rank</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaBullseye /></div><div><div className="stat-value">{accuracy}%</div><div className="stat-helper">Accuracy</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaCheckCircle /></div><div><div className="stat-value">{result.correctAnswers}</div><div className="stat-helper">Correct answers</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers}/{result.unanswered}</div><div className="stat-helper">Wrong / unanswered</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.rewardXp} XP</div><div className="stat-helper">XP earned</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.rewardCoins}</div><div className="stat-helper">Coins earned</div></div></article>
+            </section>
+          </>
+        )}
 
         <section className="dashboard-card board-panel" aria-labelledby="final-leaderboard-title">
           <div className="card-heading">
-            <h2 className="card-title" id="final-leaderboard-title"><FaTrophy /> Final Leaderboard</h2>
-            <span className="status-chip">{result.totalParticipants} participants</span>
+            <h2 className="card-title" id="final-leaderboard-title"><FaTrophy /> Full Leaderboard</h2>
+            <span className="status-chip">{totalParticipants} participants</span>
           </div>
           <div className="checkpoint-leaderboard-list">
-            {result.leaderboard.map((row, index) => (
-              <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.id}>
-                <span className="rank-badge">{index + 1}</span>
+            {data.leaderboard.length ? data.leaderboard.map((row) => (
+              <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.userId}>
+                <span className="rank-badge">{row.rank}</span>
                 <span className="learner-cell">
-                  {index === 0 ? <FaCrown /> : index < 3 ? <FaMedal /> : null}
-                  <strong>{row.name}</strong>
+                  {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
+                  <strong>{row.displayName}</strong>
                 </span>
-                <span>{row.examTrack}</span>
-                <strong>{row.tournamentPoints} pts</strong>
+                <span>{row.correctAnswers} correct · {row.unanswered} unanswered</span>
+                <strong>{row.score} pts</strong>
               </div>
-            ))}
+            )) : <p className="empty-state">No users registered yet.</p>}
           </div>
         </section>
 
-        <section className="dashboard-card daily-review-card" id="tournament-review">
-          <div className="card-heading">
-            <h2 className="card-title"><FaListAlt /> Review Answers</h2>
-            <span className="status-chip">{result.answers.length} Questions</span>
-          </div>
-          <div className="daily-review-list">
-            {result.answers.map((answer, index) => (
-              <article className={`daily-review-item ${answer.isCorrect ? "correct" : "wrong"}`} key={answer.questionId}>
-                <div className="daily-review-top">
-                  <span className="review-number">Q{index + 1}</span>
-                  <div>
-                    <h3>{getText(answer, result.preferredLanguage).question}</h3>
-                    <div className="daily-chip-row">
-                      <span className="question-pill">{answer.subject}</span>
-                      <span className="question-pill">{answer.topic}</span>
-                      <span className="question-pill difficulty">{answer.difficulty}</span>
+        {data.answers.length > 0 && (
+          <section className="dashboard-card daily-review-card" id="tournament-review">
+            <div className="card-heading">
+              <h2 className="card-title"><FaListAlt /> Review Answers</h2>
+              <span className="status-chip">{data.answers.length} answered</span>
+            </div>
+            <div className="daily-review-list">
+              {data.answers.map((answer, index) => (
+                <article className={`daily-review-item ${answer.isCorrect ? "correct" : "wrong"}`} key={`${answer.questionId}-${index}`}>
+                  <div className="daily-review-top">
+                    <span className="review-number">Q{index + 1}</span>
+                    <div>
+                      <h3>{getText(answer, data.tournament.registration?.preferredLanguage || "english").question}</h3>
+                      <div className="daily-chip-row">
+                        <span className="question-pill">{answer.subject}</span>
+                        <span className="question-pill">{answer.topic}</span>
+                        <span className="question-pill difficulty">{answer.difficulty}</span>
+                      </div>
                     </div>
+                    <strong className={answer.isCorrect ? "correct-label" : "wrong-label"}>
+                      {answer.isCorrect ? `+${answer.pointsEarned} pts` : "+0 pts"}
+                    </strong>
                   </div>
-                  <strong className={answer.isCorrect ? "correct-label" : "wrong-label"}>
-                    {answer.isCorrect ? `+${answer.score} pts` : "+0 pts"}
-                  </strong>
-                </div>
-                <div className="review-answer-grid">
-                  <div><span>Your answer</span><strong>{getOptionLabel(answer, answer.selectedOptionKey, result.preferredLanguage)}</strong></div>
-                  <div><span>Correct answer</span><strong>{getOptionLabel(answer, answer.correctOption, result.preferredLanguage)}</strong></div>
-                </div>
-                <div className="review-explanation">
-                  <span>Explanation</span>
-                  <p>{getText(answer, result.preferredLanguage).explanation}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+                  <div className="review-answer-grid">
+                    <div><span>Your answer</span><strong>{getOptionLabel(answer, answer.selectedOptionKey, "english")}</strong></div>
+                    <div><span>Correct answer</span><strong>{getOptionLabel(answer, answer.correctOption, "english")}</strong></div>
+                  </div>
+                  <div className="review-explanation">
+                    <span>Explanation</span>
+                    <p>{getText(answer, "english").explanation}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </section>
     </DashboardLayout>
   );

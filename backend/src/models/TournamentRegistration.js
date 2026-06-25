@@ -1,9 +1,9 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-class TournamentResult extends Model {}
+class TournamentRegistration extends Model {}
 
-TournamentResult.init(
+TournamentRegistration.init(
 	{
 		id: {
 			type: DataTypes.UUID,
@@ -18,14 +18,32 @@ TournamentResult.init(
 			type: DataTypes.UUID,
 			allowNull: false
 		},
-		finalScore: {
+		displayName: {
+			type: DataTypes.STRING(160),
+			allowNull: false
+		},
+		selectedExam: {
+			type: DataTypes.STRING(80),
+			allowNull: false
+		},
+		preferredLanguage: {
+			type: DataTypes.STRING(40),
+			allowNull: false
+		},
+		registeredAt: {
+			type: DataTypes.DATE,
+			allowNull: false,
+			defaultValue: DataTypes.NOW
+		},
+		status: {
+			type: DataTypes.ENUM("registered", "completed"),
+			allowNull: false,
+			defaultValue: "registered"
+		},
+		score: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
 			defaultValue: 0
-		},
-		finalRank: {
-			type: DataTypes.INTEGER,
-			allowNull: false
 		},
 		correctAnswers: {
 			type: DataTypes.INTEGER,
@@ -42,35 +60,21 @@ TournamentResult.init(
 			allowNull: false,
 			defaultValue: 0
 		},
+		totalAnswered: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			defaultValue: 0
+		},
 		totalTimeTaken: {
 			type: DataTypes.FLOAT,
 			allowNull: false,
 			defaultValue: 0
-		},
-		rewardXp: {
-			type: DataTypes.INTEGER,
-			allowNull: false,
-			defaultValue: 0
-		},
-		rewardCoins: {
-			type: DataTypes.INTEGER,
-			allowNull: false,
-			defaultValue: 0
-		},
-		badgeEarned: {
-			type: DataTypes.STRING(120),
-			allowNull: true
-		},
-		rewardsApplied: {
-			type: DataTypes.BOOLEAN,
-			allowNull: false,
-			defaultValue: false
 		}
 	},
 	{
 		sequelize,
-		modelName: "TournamentResult",
-		tableName: "tournament_results",
+		modelName: "TournamentRegistration",
+		tableName: "tournament_registrations",
 		timestamps: true,
 		underscored: true,
 		indexes: [
@@ -82,4 +86,4 @@ TournamentResult.init(
 	}
 );
 
-export default TournamentResult;
+export default TournamentRegistration;
