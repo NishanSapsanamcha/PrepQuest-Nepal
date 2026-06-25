@@ -74,6 +74,11 @@ TournamentRegistration.init(
 			type: DataTypes.FLOAT,
 			allowNull: false,
 			defaultValue: 0
+		},
+		speedBonusTotal: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			defaultValue: 0
 		}
 	},
 	{

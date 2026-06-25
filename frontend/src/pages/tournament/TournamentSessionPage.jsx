@@ -9,6 +9,8 @@ import {
   FaRegClock,
   FaShieldAlt,
   FaTrophy,
+  FaUserCheck,
+  FaUsers,
   FaVolumeMute,
   FaVolumeUp,
 } from "react-icons/fa";
@@ -33,6 +35,7 @@ function TournamentSessionPage() {
   const { isMuted, toggleMute, playClick, playCorrect, playWrong, playLevelUp } = usePrepQuestSound();
   const lastRevealSoundRef = useRef("");
   const lastCheckpointSoundRef = useRef("");
+  const autoLockRef = useRef("");
   const [state, setState] = useState(null);
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -124,15 +127,18 @@ function TournamentSessionPage() {
     }
   };
 
-  const handleSubmit = async (optionKey) => {
+  const handleSubmit = async () => {
     if (!tournament || locked || submitting || phase?.phase !== "question") return;
-    setSelectedOptionKey(optionKey);
+    if (!selectedOptionKey) {
+      setError("Choose an answer before locking it.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     setNotice("");
     playClick();
     try {
-      const data = await submitTournamentAnswer(tournament.id, optionKey);
+      const data = await submitTournamentAnswer(tournament.id, selectedOptionKey);
       setNotice(data.answer?.message || "Answer locked. Waiting for reveal.");
       await loadState();
     } catch (err) {
@@ -141,6 +147,16 @@ function TournamentSessionPage() {
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (!tournament || locked || submitting || phase?.phase !== "question" || !question?.id || !selectedOptionKey) return;
+    if ((phase.timeLeft || 0) > 0) return;
+    const key = `${tournament.id}-${question.id}-${selectedOptionKey}`;
+    if (autoLockRef.current === key) return;
+    autoLockRef.current = key;
+    handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locked, phase?.phase, phase?.timeLeft, question?.id, selectedOptionKey, submitting, tournament?.id]);
 
   const handleExit = () => {
     playClick();
@@ -169,7 +185,6 @@ function TournamentSessionPage() {
         <div className="header-left">
           <p className="eyebrow subject-pill">Friday Live Tournament</p>
           <h1>Live Battle</h1>
-          <p>{phase?.phase === "ready_room" ? "Ready room" : `Question ${Math.max(1, questionNumber)} of ${tournament?.questionCount || 20}`}</p>
         </div>
         <div className="header-right">
           <button
@@ -196,18 +211,40 @@ function TournamentSessionPage() {
             <div className="ready-countdown">
               <span>Get Ready for Friday Live Tournament</span>
               <strong>{formatCountdown(tournament.readyCountdownSeconds)}</strong>
-              <p>Tournament starts in {tournament.readyCountdownSeconds} seconds</p>
+              <p>Tournament begins in {tournament.readyCountdownSeconds} seconds</p>
+            </div>
+            <div className="ready-room-meta-grid">
+              <div><FaUsers /><span>Total registered</span><strong>{tournament.registrationCount} {tournament.registrationCount === 1 ? "user" : "users"}</strong></div>
+              <div><FaTrophy /><span>Exam track</span><strong>{tournament.examTrack === "mixed" ? "Mixed" : registration.selectedExam}</strong></div>
+              <div><FaUserCheck /><span>Language mode</span><strong>{registration.preferredLanguage}</strong></div>
+              <div><FaRegClock /><span>Format</span><strong>20 mixed questions</strong></div>
             </div>
             <div className="tournament-format-grid">
               <div className="tournament-format-item"><FaCheckCircle /> 20 mixed Loksewa questions</div>
               <div className="tournament-format-item"><FaCheckCircle /> 15 seconds per question</div>
+              <div className="tournament-format-item"><FaCheckCircle /> Speed bonus up to +50 points</div>
               <div className="tournament-format-item"><FaCheckCircle /> Answers lock after submission</div>
               <div className="tournament-format-item"><FaCheckCircle /> Correct/wrong reveals after timer closes</div>
               <div className="tournament-format-item"><FaCheckCircle /> Speed bonus rewards faster correct answers</div>
               <div className="tournament-format-item"><FaShieldAlt /> No betting. No coin loss.</div>
             </div>
+            <div className="ready-participant-panel">
+              <div className="card-heading">
+                <h2 className="card-title"><FaUsers /> Registered Participants</h2>
+                <span className="status-chip">{state.participants?.length || 0} total</span>
+              </div>
+              <div className="ready-participant-list">
+                {state.participants?.length ? state.participants.map((participant) => (
+                  <div className={`ready-participant-row${participant.isCurrentUser ? " current-user" : ""}`} key={participant.userId}>
+                    <strong>{participant.displayName}</strong>
+                    <span>{participant.selectedExam} · {participant.preferredLanguage}</span>
+                    {participant.isCurrentUser ? <em>You</em> : null}
+                  </div>
+                )) : <p className="empty-state">No users registered yet.</p>}
+              </div>
+            </div>
             <button className="tournament-primary-btn" type="button" disabled={readyBusy || registration.readyStatus} onClick={handleReady}>
-              <FaTrophy /> {registration.readyStatus ? "I'm Ready" : "Enter Battle / I'm Ready"}
+              <FaTrophy /> {registration.readyStatus ? "Entered Tournament" : "Enter Tournament"}
             </button>
             <p className="tournament-note">Question 1 starts from the shared server clock for everyone together.</p>
           </section>
@@ -236,6 +273,7 @@ function TournamentSessionPage() {
                   <span className="learner-cell">
                     {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
                     <strong>{row.displayName}</strong>
+                    {row.isCurrentUser ? <em className="you-badge">You</em> : null}
                   </span>
                   <span>{row.correctAnswers} correct · {row.wrongAnswers} wrong · {row.unanswered} unanswered</span>
                   <strong>{row.score} pts</strong>
@@ -277,10 +315,10 @@ function TournamentSessionPage() {
                   <span className="question-pill">Tournament</span>
                 </div>
                 <p className="question-text">{questionText?.question}</p>
-                <p className="lock-warning">Choose carefully. Your answer cannot be changed after submission.</p>
+                <p className="lock-warning">Choose carefully. You can change your answer before locking it.</p>
                 <div className="answer-options">
                   {questionText?.options.map((option) => {
-                    const isSelected = selectedOptionKey === option.key || answer?.selectedOptionKey === option.key;
+                    const isSelected = (locked ? answer?.selectedOptionKey : selectedOptionKey) === option.key;
                     const optionState = reveal
                       ? option.key === question.correctOption
                         ? "correct"
@@ -297,7 +335,10 @@ function TournamentSessionPage() {
                         key={option.key}
                         disabled={locked || submitting || phase.phase !== "question"}
                         aria-pressed={isSelected}
-                        onClick={() => handleSubmit(option.key)}
+                        onClick={() => {
+                          setError("");
+                          setSelectedOptionKey(option.key);
+                        }}
                       >
                         <span className="option-copy">{option.label}</span>
                       </button>
@@ -319,6 +360,13 @@ function TournamentSessionPage() {
                   <span className="xp-preview">Correct Answer: +100 · Speed Bonus: +0 to +50 · Max: 150</span>
                 )}
               </div>
+              {!reveal && !locked ? (
+                <div className="question-actions lock-answer-row">
+                  <button className="tournament-primary-btn lock-answer-btn" type="button" disabled={!selectedOptionKey || submitting || phase?.phase !== "question"} onClick={handleSubmit}>
+                    <FaCheckCircle /> {submitting ? "Locking..." : "Lock Answer"}
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <aside className="board-coach-panel" aria-label="Tournament feedback panel">
@@ -329,6 +377,7 @@ function TournamentSessionPage() {
                   <div><span>Correct</span><strong>{registration.correctAnswers}</strong></div>
                   <div><span>Wrong</span><strong>{registration.wrongAnswers}</strong></div>
                   <div><span>Unanswered</span><strong>{registration.unanswered}</strong></div>
+                  <div><span>Speed Bonus</span><strong>+{registration.speedBonusTotal || 0}</strong></div>
                 </div>
               </section>
 
@@ -357,10 +406,14 @@ function TournamentSessionPage() {
                         <span>Points earned</span>
                         <strong>{answer?.pointsEarned || 0}</strong>
                       </div>
+                      <div>
+                        <span>Base points</span>
+                        <strong>{answer?.basePoints || 0}</strong>
+                      </div>
                       {answer?.isCorrect && (
                         <div>
                           <span>Speed bonus</span>
-                          <strong>+{Math.max(0, (answer.pointsEarned || 0) - 100)}</strong>
+                          <strong>+{answer.speedBonus || 0}</strong>
                         </div>
                       )}
                     </div>

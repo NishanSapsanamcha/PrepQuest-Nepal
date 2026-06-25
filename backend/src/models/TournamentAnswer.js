@@ -46,6 +46,11 @@ TournamentAnswer.init(
 			type: DataTypes.INTEGER,
 			allowNull: false
 		},
+		speedBonus: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			defaultValue: 0
+		},
 		answeredAt: {
 			type: DataTypes.DATE,
 			allowNull: false,

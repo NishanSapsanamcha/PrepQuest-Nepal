@@ -23,8 +23,8 @@ const EXAM_LABELS = {
 const VALID_LANGUAGES = new Set(["english", "nepali", "both"]);
 const VALID_OPTIONS = new Set(["A", "B", "C", "D"]);
 const DEMO_PARTICIPANTS = [
-	{ id: "11111111-1111-4111-8111-111111111111", name: "Suman Adhikari", email: "demo.suman@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
 	{ id: "22222222-2222-4222-8222-222222222222", name: "Aayush Sharma", email: "demo.aayush@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
+	{ id: "11111111-1111-4111-8111-111111111111", name: "Suman Adhikari", email: "demo.suman@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
 	{ id: "33333333-3333-4333-8333-333333333333", name: "Ramesh Thapa", email: "demo.ramesh@prepquest.local", selectedExam: "nayab-subba", preferredLanguage: "nepali" },
 	{ id: "44444444-4444-4444-8444-444444444444", name: "Nisha Karki", email: "demo.nisha@prepquest.local", selectedExam: "sakha-adhikrit", preferredLanguage: "nepali" },
 	{ id: "55555555-5555-4555-8555-555555555555", name: "Prabin Gurung", email: "demo.prabin@prepquest.local", selectedExam: "nayab-subba", preferredLanguage: "nepali" }
@@ -290,7 +290,20 @@ function serializeRegistration(registration, answeredQuestionLimit = null) {
 		wrongAnswers: registration.wrongAnswers,
 		unanswered,
 		totalAnswered: registration.totalAnswered,
-		totalTimeTaken: registration.totalTimeTaken
+		totalTimeTaken: registration.totalTimeTaken,
+		speedBonusTotal: registration.speedBonusTotal || 0
+	};
+}
+
+function serializeParticipant(registration, currentUserId = null) {
+	return {
+		userId: registration.userId,
+		displayName: registration.displayName,
+		selectedExam: registration.selectedExam,
+		preferredLanguage: registration.preferredLanguage,
+		registeredAt: registration.registeredAt,
+		readyStatus: registration.readyStatus,
+		isCurrentUser: registration.userId === currentUserId
 	};
 }
 
@@ -301,6 +314,14 @@ async function getRegistration(tournamentId, userId) {
 
 async function getRegistrationCount(tournamentId) {
 	return TournamentRegistration.count({ where: { tournamentId } });
+}
+
+async function getParticipants(tournamentId, currentUserId = null) {
+	const registrations = await TournamentRegistration.findAll({
+		where: { tournamentId },
+		order: [["registeredAt", "ASC"]]
+	});
+	return registrations.map((registration) => serializeParticipant(registration, currentUserId));
 }
 
 async function getTournamentOrThrow(tournamentId) {
@@ -359,7 +380,8 @@ async function syncDemoParticipantAnswers(tournament, phase) {
 				? question.correctOption
 				: ["A", "B", "C", "D"].find((key) => key !== question.correctOption);
 			const timeTaken = ANSWER_SECONDS - profile.timeLeft;
-			const pointsEarned = profile.isCorrect ? 100 + Math.round((profile.timeLeft / ANSWER_SECONDS) * 50) : 0;
+			const speedBonus = profile.isCorrect ? Math.round((profile.timeLeft / ANSWER_SECONDS) * 50) : 0;
+			const pointsEarned = profile.isCorrect ? 100 + speedBonus : 0;
 
 			await TournamentAnswer.create({
 				tournamentId: tournament.id,
@@ -371,6 +393,7 @@ async function syncDemoParticipantAnswers(tournament, phase) {
 				timeLeft: profile.timeLeft,
 				timeTaken,
 				pointsEarned,
+				speedBonus,
 				answeredAt: new Date(new Date(tournament.startAt).getTime() + questionIndex * (ANSWER_SECONDS + REVEAL_SECONDS) * 1000 + timeTaken * 1000)
 			});
 
@@ -379,7 +402,8 @@ async function syncDemoParticipantAnswers(tournament, phase) {
 				correctAnswers: profile.isCorrect ? 1 : 0,
 				wrongAnswers: profile.isCorrect ? 0 : 1,
 				totalAnswered: 1,
-				totalTimeTaken: timeTaken
+				totalTimeTaken: timeTaken,
+				speedBonusTotal: speedBonus
 			});
 		}
 	}));
@@ -402,6 +426,8 @@ async function getLeaderboard(tournamentId, currentUserId = null, answeredQuesti
 				unanswered: liveUnanswered,
 				totalAnswered: registration.totalAnswered,
 				totalTimeTaken: registration.totalTimeTaken,
+				speedBonusTotal: registration.speedBonusTotal || 0,
+				reward: rewardForRank(0),
 				isCurrentUser: registration.userId === currentUserId
 			};
 		})
@@ -412,7 +438,7 @@ async function getLeaderboard(tournamentId, currentUserId = null, answeredQuesti
 			if (a.unanswered !== b.unanswered) return a.unanswered - b.unanswered;
 			return new Date(a.registeredAt) - new Date(b.registeredAt);
 		})
-		.map((row, index) => ({ ...row, rank: index + 1 }));
+		.map((row, index) => ({ ...row, rank: index + 1, reward: rewardForRank(index + 1) }));
 
 	return rows;
 }
@@ -460,11 +486,14 @@ async function buildLiveState(tournamentId, userId) {
 		tournament: tournamentPayload,
 		registration: serializedRegistration,
 		phase,
+		participants: await getParticipants(tournament.id, userId),
 		question: publicQuestion(currentQuestion, phase.phase === "reveal"),
 		answer: userAnswer ? {
 			selectedOptionKey: userAnswer.selectedOptionKey,
 			isCorrect: phase.phase === "reveal" ? userAnswer.isCorrect : null,
 			pointsEarned: phase.phase === "reveal" ? userAnswer.pointsEarned : null,
+			speedBonus: phase.phase === "reveal" ? userAnswer.speedBonus : null,
+			basePoints: phase.phase === "reveal" && userAnswer.isCorrect ? 100 : 0,
 			locked: true
 		} : null,
 		leaderboard,
@@ -575,7 +604,8 @@ async function submitAnswer(tournamentId, userId, selectedOptionKey) {
 	const timeLeft = Math.max(0, (new Date(phase.questionStartedAt).getTime() + ANSWER_SECONDS * 1000 - now.getTime()) / 1000);
 	const timeTaken = Math.max(0, ANSWER_SECONDS - timeLeft);
 	const isCorrect = selectedOptionKey === question.correctOption;
-	const pointsEarned = isCorrect ? 100 + Math.round((timeLeft / ANSWER_SECONDS) * 50) : 0;
+	const speedBonus = isCorrect ? Math.round((timeLeft / ANSWER_SECONDS) * 50) : 0;
+	const pointsEarned = isCorrect ? 100 + speedBonus : 0;
 
 	const answer = await TournamentAnswer.create({
 		tournamentId: tournament.id,
@@ -587,6 +617,7 @@ async function submitAnswer(tournamentId, userId, selectedOptionKey) {
 		timeLeft,
 		timeTaken,
 		pointsEarned,
+		speedBonus,
 		answeredAt: now
 	});
 
@@ -595,11 +626,14 @@ async function submitAnswer(tournamentId, userId, selectedOptionKey) {
 		correctAnswers: isCorrect ? 1 : 0,
 		wrongAnswers: isCorrect ? 0 : 1,
 		totalAnswered: 1,
-		totalTimeTaken: timeTaken
+		totalTimeTaken: timeTaken,
+		speedBonusTotal: speedBonus
 	});
 
 	return {
 		selectedOptionKey: answer.selectedOptionKey,
+		speedBonus,
+		pointsEarned,
 		locked: true,
 		message: "Answer locked. Waiting for reveal."
 	};
@@ -620,8 +654,7 @@ async function publishResults(tournamentId) {
 		await registration.update({ unanswered, status: "completed" });
 
 		const existing = await TournamentResult.findOne({ where: { tournamentId, userId: registration.userId } });
-		if (existing) return existing;
-		return TournamentResult.create({
+		const resultPayload = {
 			tournamentId,
 			userId: registration.userId,
 			finalScore: registration.score,
@@ -630,11 +663,16 @@ async function publishResults(tournamentId) {
 			wrongAnswers: registration.wrongAnswers,
 			unanswered,
 			totalTimeTaken: registration.totalTimeTaken,
+			speedBonusTotal: registration.speedBonusTotal || 0,
 			rewardXp: reward.rewardXp,
 			rewardCoins: reward.rewardCoins,
 			badgeEarned: reward.badgeEarned,
 			rewardsApplied: true
-		});
+		};
+		if (existing) {
+			return existing.update(resultPayload);
+		}
+		return TournamentResult.create(resultPayload);
 	}));
 
 	if (tournament.status !== "results_published") {
@@ -670,7 +708,9 @@ async function getResults(tournamentId, userId) {
 				isCorrect: answer.isCorrect,
 				pointsEarned: answer.pointsEarned,
 				score: answer.pointsEarned,
-				timeTaken: answer.timeTaken
+				timeTaken: answer.timeTaken,
+				speedBonus: answer.speedBonus || 0,
+				basePoints: answer.isCorrect ? 100 : 0
 			};
 		})
 	};
@@ -703,6 +743,7 @@ export {
 	findRecentTournamentForResults,
 	getCurrent,
 	getLeaderboard,
+	getParticipants,
 	getRegistration,
 	getRegistrationCount,
 	getResults,

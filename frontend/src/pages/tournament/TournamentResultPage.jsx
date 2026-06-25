@@ -177,6 +177,7 @@ function TournamentResultPage() {
               <article className="stat-card"><div className="stat-icon"><FaCheckCircle /></div><div><div className="stat-value">{result.correctAnswers}</div><div className="stat-helper">Correct answers</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers}</div><div className="stat-helper">Wrong answers</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaRegClock /></div><div><div className="stat-value">{result.unanswered}</div><div className="stat-helper">Unanswered</div></div></article>
+              <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.speedBonusTotal || 0}</div><div className="stat-helper">Speed Bonus</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers + result.unanswered}</div><div className="stat-helper">Total missed</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.rewardXp} XP</div><div className="stat-helper">XP earned</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.rewardCoins}</div><div className="stat-helper">Coins earned</div></div></article>
@@ -201,7 +202,7 @@ function TournamentResultPage() {
                     <th>Correct</th>
                     <th>Wrong</th>
                     <th>Unanswered</th>
-                    <th>Time Taken</th>
+                    <th>Speed Bonus</th>
                     <th>Reward</th>
                   </tr>
                 </thead>
@@ -213,13 +214,14 @@ function TournamentResultPage() {
                         <span className="table-name-cell">
                           {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
                           <strong>{row.displayName}</strong>
+                          {row.isCurrentUser ? <em className="you-badge">You</em> : null}
                         </span>
                       </td>
                       <td>{row.score}</td>
                       <td>{row.correctAnswers}</td>
                       <td>{row.wrongAnswers}</td>
                       <td>{row.unanswered}</td>
-                      <td>{Math.round(row.totalTimeTaken || 0)}s</td>
+                      <td>+{row.speedBonusTotal || 0}</td>
                       <td>{formatReward(row)}</td>
                     </tr>
                   ))}

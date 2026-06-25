@@ -20,6 +20,16 @@ export const getTournamentLiveState = async (tournamentId) => {
 	return data;
 };
 
+export const getTournamentParticipants = async (tournamentId) => {
+	const { data } = await api.get(`/tournaments/${tournamentId}/participants`);
+	return data;
+};
+
+export const getTournamentLeaderboard = async (tournamentId) => {
+	const { data } = await api.get(`/tournaments/${tournamentId}/leaderboard`);
+	return data;
+};
+
 export const submitTournamentAnswer = async (tournamentId, selectedOptionKey) => {
 	const { data } = await api.post(`/tournaments/${tournamentId}/answer`, { selectedOptionKey });
 	return data;
@@ -27,5 +37,10 @@ export const submitTournamentAnswer = async (tournamentId, selectedOptionKey) =>
 
 export const getTournamentResults = async (tournamentId) => {
 	const { data } = await api.get(`/tournaments/${tournamentId}/results`);
+	return data;
+};
+
+export const getLatestTournamentResults = async () => {
+	const { data } = await api.get("/tournaments/results/latest");
 	return data;
 };

@@ -60,10 +60,10 @@ function getAction(tournament) {
   if (!tournament) return { label: "Unavailable", disabled: true, kind: "disabled" };
   if (tournament.status === "registration_open" && !registered) return { label: "Join Tournament", disabled: false, kind: "join" };
   if (tournament.status === "registration_open" && registered) return { label: "Registered", disabled: true, kind: "registered" };
-  if (tournament.status === "ready_room" && registered) return { label: "Enter Battle / I'm Ready", disabled: false, kind: "enter" };
+  if (tournament.status === "ready_room" && registered) return { label: "Enter Tournament", disabled: false, kind: "enter" };
   if (tournament.status === "ready_room" && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
-  if ((tournament.status === "live" || tournament.status === "checkpoint") && registered) return { label: "Enter Battle", disabled: false, kind: "enter" };
-  if ((tournament.status === "live" || tournament.status === "checkpoint") && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
+  if (["live", "reveal", "checkpoint"].includes(tournament.status) && registered) return { label: "Enter Battle", disabled: false, kind: "enter" };
+  if (["live", "reveal", "checkpoint"].includes(tournament.status) && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
   if (tournament.status === "finished" || tournament.status === "results_published") return { label: "View Results", disabled: false, kind: "results" };
   return { label: "Registration Closed", disabled: true, kind: "closed" };
 }
@@ -193,7 +193,7 @@ function Tournament() {
               </div>
               <div className="tournament-detail-list">
                 <div><span>Status</span><strong>{String(tournament?.status || "loading").replaceAll("_", " ")}</strong></div>
-                <div><span>Countdown</span><strong>{formatCountdown(tournament?.secondsToStart || 0)}</strong></div>
+              <div><span>{tournament?.status === "ready_room" ? "Ready Room" : "Countdown"}</span><strong>{tournament?.status === "ready_room" ? `${tournament?.readyCountdownSeconds || 0}s` : formatCountdown(tournament?.secondsToStart || 0)}</strong></div>
                 <div><span>Questions</span><strong>{tournament?.questionCount || 20} mixed questions, {tournament?.timePerQuestion || 15}s each</strong></div>
                 <div><span>Ranking</span><strong>After questions 5, 10, and 15</strong></div>
               </div>

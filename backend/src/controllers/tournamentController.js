@@ -4,6 +4,7 @@ import {
 	findRecentTournamentForResults,
 	getCurrent,
 	getLeaderboard,
+	getParticipants,
 	getRegistration,
 	getRegistrationCount,
 	getResults,
@@ -45,6 +46,11 @@ const registrationCount = asyncHandler(async (req, res) => {
 	res.json({ success: true, count });
 });
 
+const participants = asyncHandler(async (req, res) => {
+	const rows = await getParticipants(req.params.id, req.user.id);
+	res.json({ success: true, participants: rows });
+});
+
 const liveState = asyncHandler(async (req, res) => {
 	const state = await buildLiveState(req.params.id, req.user.id);
 	res.json({ success: true, ...state });
@@ -65,6 +71,13 @@ const leaderboard = asyncHandler(async (req, res) => {
 	res.json({ success: true, leaderboard: rows });
 });
 
+const checkpoint = asyncHandler(async (req, res) => {
+	const tournament = await getTournamentOrThrow(req.params.id);
+	const refreshed = await refreshTournamentStatus(tournament);
+	const rows = await getLeaderboard(req.params.id, req.user.id);
+	res.json({ success: true, phase: refreshed.phase, leaderboard: rows });
+});
+
 const results = asyncHandler(async (req, res) => {
 	const tournamentId = req.params.id || (await findRecentTournamentForResults())?.id;
 	if (!tournamentId) {
@@ -82,12 +95,20 @@ const results = asyncHandler(async (req, res) => {
 	res.json({ success: true, ...data });
 });
 
+const applyRewards = asyncHandler(async (req, res) => {
+	const data = await getResults(req.params.id, req.user.id);
+	res.json({ success: true, message: "Rewards have been saved once and will not duplicate on refresh.", ...data });
+});
+
 export {
 	answer,
+	applyRewards,
+	checkpoint,
 	current,
 	leaderboard,
 	liveState,
 	myRegistration,
+	participants,
 	ready,
 	register,
 	registrationCount,

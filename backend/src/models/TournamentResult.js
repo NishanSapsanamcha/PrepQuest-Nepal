@@ -47,6 +47,11 @@ TournamentResult.init(
 			allowNull: false,
 			defaultValue: 0
 		},
+		speedBonusTotal: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			defaultValue: 0
+		},
 		rewardXp: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
