@@ -67,8 +67,20 @@
   text-overflow: ellipsis;
 }
 
-.badge-unlock-copy .rarity-pill {
+/* Self-contained rarity pill (the toast mounts at the app root, outside the
+   .dashboard-page scope where the page-level pill styles live). */
+.badge-unlock-toast .rarity-pill {
   justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--rc);
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 .badge-unlock-close {

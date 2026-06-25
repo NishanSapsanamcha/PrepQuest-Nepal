@@ -5,7 +5,8 @@ import BadgeIcon from "../components/badges/BadgeIcon";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
-import { mockBadges, mockProfileActivity, mockTournamentHistory, rankThresholds } from "../data/gamificationMockData";
+import { mockProfileActivity, mockTournamentHistory, rankThresholds } from "../data/gamificationMockData";
+import { getEarnedBadges, syncBadges } from "../utils/badgeUtils";
 import { getCurrentStreak } from "../utils/dailyQuizUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../utils/practiceUtils";
 import { getUser } from "../utils/storageUtils";
@@ -59,12 +60,13 @@ function Profile() {
     ? [...practicedSubjects].sort((a, b) => b.progress.questionsSolved - a.progress.questionsSolved)[0].name
     : "Not started yet";
 
-  const earnedBadges = mockBadges.filter((badge) => badge.status === "earned");
-  const showcaseBadges = [
-    ...earnedBadges,
-    mockBadges.find((badge) => badge.id === "seven_day_warrior"),
-    mockBadges.find((badge) => badge.id === "review_hero"),
-  ].filter(Boolean).slice(0, 5);
+  // Earned badges are computed from real activity and shown with their gem art.
+  const allBadges = syncBadges();
+  const earnedBadges = getEarnedBadges(allBadges);
+  const lockedByProgress = allBadges
+    .filter((badge) => badge.status !== "earned")
+    .sort((a, b) => b.percent - a.percent);
+  const showcaseBadges = [...earnedBadges, ...lockedByProgress].slice(0, 5);
 
   const realActivity = getXPTransactions()
     .slice(0, 8)

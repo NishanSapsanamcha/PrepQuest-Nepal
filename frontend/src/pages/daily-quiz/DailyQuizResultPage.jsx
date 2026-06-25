@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
 import { getValidatedQuestions, getOptionLabel, getText } from "../../utils/practiceUtils";
 import { formatElapsedTime, getDailyQuizAnswerDisplay, getLatestDailyQuizResult, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import "./DailyQuizPage.css";
@@ -24,6 +25,7 @@ function DailyQuizResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { playClick, playComplete } = usePrepQuestSound();
+  const { celebrate } = useBadgeCelebration();
   const completionSoundCheckedRef = useRef(false);
   const result = getLatestDailyQuizResult() || getTodayDailyQuizAttempt();
   const questions = useMemo(() => getValidatedQuestions(), []);
@@ -31,6 +33,11 @@ function DailyQuizResultPage() {
   useEffect(() => {
     if (!result) navigate("/daily-quiz", { replace: true });
   }, [navigate, result]);
+
+  // Award + celebrate any badges this quiz unlocked.
+  useEffect(() => {
+    celebrate();
+  }, [celebrate]);
 
   useEffect(() => {
     if (!result || completionSoundCheckedRef.current) return;

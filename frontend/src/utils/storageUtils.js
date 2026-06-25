@@ -34,6 +34,8 @@ const PER_ACCOUNT_KEYS = [
   "prepquest_tournament_active",
   "prepquest_tournament_latest_result",
   "prepquest_tournament_joined_preview",
+  "prepquest_earned_badges",
+  "prepquest_badge_unseen",
   "selectedExam",
   "preferredLanguage",
   "onboardingCompleted",

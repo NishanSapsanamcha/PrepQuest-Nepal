@@ -20,6 +20,7 @@ import {
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
 import {
   DETAILED_REPORT_COST,
   formatMockDuration,
@@ -35,6 +36,7 @@ function MockTestResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { playClick, playComplete } = usePrepQuestSound();
+  const { celebrate } = useBadgeCelebration();
   const [filter, setFilter] = useState("all");
   const [reportUnlocked, setReportUnlocked] = useState(false);
   const [reportMessage, setReportMessage] = useState("");
@@ -57,6 +59,11 @@ function MockTestResultPage() {
     sessionStorage.setItem(playedKey, "true");
     playComplete();
   }, [playComplete, result]);
+
+  // Award + celebrate any badges this mock test unlocked.
+  useEffect(() => {
+    celebrate();
+  }, [celebrate]);
 
   if (!result) return null;
 

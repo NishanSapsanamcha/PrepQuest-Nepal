@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
 import { getOptionLabel, getText } from "../../utils/practiceUtils";
 import { getTournamentResults } from "../../services/tournamentService";
 import "../Tournament.css";
@@ -25,6 +26,7 @@ function TournamentResultPage() {
   const [searchParams] = useSearchParams();
   const tournamentId = searchParams.get("id");
   const { playClick, playComplete } = usePrepQuestSound();
+  const { celebrate } = useBadgeCelebration();
   const completionSoundCheckedRef = useRef(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -41,6 +43,11 @@ function TournamentResultPage() {
       })
       .catch((err) => setError(err.response?.data?.message || "Results will appear after the tournament finishes."));
   }, [navigate, tournamentId]);
+
+  // Award + celebrate any badges this tournament unlocked, once results load.
+  useEffect(() => {
+    if (data) celebrate();
+  }, [data, celebrate]);
 
   useEffect(() => {
     if (!data || completionSoundCheckedRef.current) return;
