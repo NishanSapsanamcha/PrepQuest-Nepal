@@ -6,7 +6,6 @@ import {
   FaCalendarCheck,
   FaCheckCircle,
   FaClock,
-  FaCoins,
   FaFire,
   FaGraduationCap,
   FaHistory,
@@ -15,6 +14,7 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { CoinIcon } from "../../components/common/Coin";
 import { examTracks } from "../../data/examTracks";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import {
@@ -118,7 +118,7 @@ function DailyQuizPage() {
                   <span>Score <strong>{todayAttempt.score} / {todayAttempt.totalQuestions}</strong></span>
                   <span>Accuracy <strong>{todayAttempt.accuracy}%</strong></span>
                   <span>XP <strong>+{todayAttempt.xpEarned}</strong></span>
-                  <span>Coins <strong>+{todayAttempt.coinsEarned}</strong></span>
+                  <span><CoinIcon size="sm" /> <strong>+{todayAttempt.coinsEarned}</strong></span>
                   <span>Weakest <strong>{todayAttempt.weakestSubject || "None"}</strong></span>
                 </div>
                 <div className="daily-action-row">
@@ -163,7 +163,7 @@ function DailyQuizPage() {
         <div className="daily-middle-grid">
           <article className="dashboard-card reward-card">
             <h2 className="card-title"><FaTrophy /> Reward Preview</h2>
-            <div className="reward-pills"><span>+50 XP</span><span><FaCoins /> +20 coins for 80%+</span><span>+30 XP perfect score</span></div>
+            <div className="reward-pills"><span>+50 XP</span><span><CoinIcon size="sm" /> +20 for 80%+</span><span>+30 XP perfect score</span></div>
           </article>
           <article className="dashboard-card">
             <h2 className="card-title"><FaFire /> Streak Reminder</h2>

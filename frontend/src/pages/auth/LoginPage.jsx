@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   FaBookOpen,
-  FaCoins,
   FaExclamationCircle,
   FaFire,
   FaLock,
@@ -10,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { CoinIcon } from "../../components/common/Coin";
 import { loginUser } from "../../services/authService";
 import { Link } from "react-router-dom";
 import "./LoginPage.css";
@@ -131,7 +131,7 @@ function LoginPage() {
             </div>
             <div className="mini-card">
               <div className="mini-card-icon xp">
-                <FaCoins aria-hidden="true" />
+                <CoinIcon size="sm" />
               </div>
               <div className="mini-card-title">XP &amp; Coins</div>
             </div>

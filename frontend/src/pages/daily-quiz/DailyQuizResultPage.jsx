@@ -6,7 +6,6 @@ import {
   FaBullseye,
   FaCheckCircle,
   FaClock,
-  FaCoins,
   FaExclamationTriangle,
   FaHome,
   FaListAlt,
@@ -15,8 +14,10 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { CoinIcon } from "../../components/common/Coin";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
+import { useCoinReward } from "../../context/CoinRewardContext";
 import { getValidatedQuestions, getOptionLabel, getText } from "../../utils/practiceUtils";
 import { formatElapsedTime, getDailyQuizAnswerDisplay, getLatestDailyQuizResult, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import "./DailyQuizPage.css";
@@ -26,6 +27,7 @@ function DailyQuizResultPage() {
   const location = useLocation();
   const { playClick, playComplete } = usePrepQuestSound();
   const { celebrate } = useBadgeCelebration();
+  const { celebrateCoins } = useCoinReward();
   const completionSoundCheckedRef = useRef(false);
   const result = getLatestDailyQuizResult() || getTodayDailyQuizAttempt();
   const questions = useMemo(() => getValidatedQuestions(), []);
@@ -34,10 +36,11 @@ function DailyQuizResultPage() {
     if (!result) navigate("/daily-quiz", { replace: true });
   }, [navigate, result]);
 
-  // Award + celebrate any badges this quiz unlocked.
+  // Award + celebrate any badges this quiz unlocked, and show the coin popup.
   useEffect(() => {
     celebrate();
-  }, [celebrate]);
+    celebrateCoins();
+  }, [celebrate, celebrateCoins]);
 
   useEffect(() => {
     if (!result || completionSoundCheckedRef.current) return;
@@ -129,7 +132,7 @@ function DailyQuizResultPage() {
           <article className="stat-card"><div className="stat-icon"><FaCheckCircle /></div><div><div className="stat-value">{result.correctAnswers}</div><div className="stat-helper">Correct answers</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers}</div><div className="stat-helper">Wrong answers</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.xpEarned} XP</div><div className="stat-helper">XP earned</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.coinsEarned}</div><div className="stat-helper">Coins earned</div></div></article>
+          <article className="stat-card"><div className="stat-icon coin-stat-icon"><CoinIcon size="md" /></div><div><div className="stat-value">+{result.coinsEarned}</div><div className="stat-helper">Coins earned</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaClock /></div><div><div className="stat-value">{formatElapsedTime(result.timeTakenSeconds)}</div><div className="stat-helper">Time taken</div></div></article>
         </section>
 

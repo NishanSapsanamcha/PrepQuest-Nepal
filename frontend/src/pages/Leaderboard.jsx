@@ -10,6 +10,7 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import { RewardDisplay } from "../components/common/Coin";
 import { examTracks } from "../data/examTracks";
 import { mockCurrentUser, mockLeaderboardUsers } from "../data/gamificationMockData";
 import { getLatestTournamentResults } from "../services/tournamentService";
@@ -289,7 +290,7 @@ function Leaderboard() {
           <span>Correct Answers <strong>{correctAnswers}</strong></span>
           <span>Accuracy <strong>{currentUser?.tournamentAccuracy || currentUser?.accuracy || 0}%</strong></span>
           <span>Speed Bonus <strong>+{formatNumber(currentUser?.speedBonus)}</strong></span>
-          <span>Reward <strong>{rewardForRank(currentUser || {})}</strong></span>
+          <span>Reward <strong><RewardText text={rewardForRank(currentUser || {})} /></strong></span>
         </>
       );
     }
@@ -358,7 +359,7 @@ function Leaderboard() {
               <span>{user.wrongAnswers || 0}</span>
               <span>{user.unanswered || 0}</span>
               <span>+{formatNumber(user.speedBonus)}</span>
-              <span>{rewardForRank(user)}</span>
+              <span><RewardText text={rewardForRank(user)} /></span>
             </div>
           ))}
         </div>
@@ -483,7 +484,7 @@ function Leaderboard() {
                       ? `${formatNumber(subjectStats.xp)} XP - ${subjectStats.accuracy}%`
                       : `${formatNumber(metricFor(user, selectedRankingType, { hallOfFameFilter }))} ${selectedRankingType === "hallOfFame" ? "lifetime" : "XP"} - ${user.accuracy}%`}
                 </strong>
-                {isTournament ? <span className="podium-reward">Reward: {rewardForRank(user)}</span> : null}
+                {isTournament ? <span className="podium-reward">Reward: <RewardText text={rewardForRank(user)} /></span> : null}
               </article>
             );
           })}
@@ -518,10 +519,10 @@ function Leaderboard() {
               <p>Compete every Friday with learners from your exam track. Answer timed questions, earn speed bonuses, and win XP, coins, and badges.</p>
             </div>
             <div className="tournament-rewards">
-              <span>1st: 500 coins + 500 XP</span>
-              <span>2nd: 300 coins + 300 XP</span>
-              <span>3rd: 150 coins + 200 XP</span>
-              <span>Everyone: 50 coins + 100 XP</span>
+              <span><b>1st</b> <RewardDisplay coins={500} xp={500} /></span>
+              <span><b>2nd</b> <RewardDisplay coins={300} xp={300} /></span>
+              <span><b>3rd</b> <RewardDisplay coins={150} xp={200} /></span>
+              <span><b>Everyone</b> <RewardDisplay coins={50} xp={100} /></span>
             </div>
             <button className="btn tournament-cta-button" type="button" onClick={() => navigate("/tournament")}>View Tournament</button>
           </section>

@@ -4,7 +4,6 @@ import {
   FaBalanceScale,
   FaCheckCircle,
   FaClock,
-  FaCoins,
   FaCrown,
   FaExclamationTriangle,
   FaGift,
@@ -18,6 +17,7 @@ import {
   FaUsers,
 } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import { CoinIcon, RewardDisplay } from "../components/common/Coin";
 import { getCurrentTournaments, registerForTournament } from "../services/tournamentService";
 import "./Tournament.css";
 
@@ -33,11 +33,11 @@ const languageLabels = {
 };
 
 const rewards = [
-  ["1st Place", "500 coins + 500 XP + Gold Champion Badge"],
-  ["2nd Place", "300 coins + 300 XP + Silver Champion Badge"],
-  ["3rd Place", "150 coins + 200 XP + Bronze Champion Badge"],
-  ["Top 10", "Top Performer Badge"],
-  ["All Participants", "50 coins + 100 XP"],
+  { rank: "1st Place", coins: 500, xp: 500, badge: "Gold Champion Badge" },
+  { rank: "2nd Place", coins: 300, xp: 300, badge: "Silver Champion Badge" },
+  { rank: "3rd Place", coins: 150, xp: 200, badge: "Bronze Champion Badge" },
+  { rank: "Top 10", badge: "Top Performer Badge" },
+  { rank: "All Participants", coins: 50, xp: 100 },
 ];
 
 function formatPreference(value, labels) {
@@ -251,14 +251,18 @@ function Tournament() {
                 <span className="gold-chip"><FaCrown /> Podium</span>
               </div>
               <div className="tournament-reward-list">
-                {rewards.map(([rank, reward]) => (
+                {rewards.map(({ rank, coins, xp, badge }) => (
                   <div className="tournament-reward-row" key={rank}>
                     <span>{rank}</span>
-                    <strong>{reward}</strong>
+                    {coins != null || xp != null ? (
+                      <RewardDisplay coins={coins} xp={xp} extra={badge} />
+                    ) : (
+                      <strong>{badge}</strong>
+                    )}
                   </div>
                 ))}
               </div>
-              <p className="tournament-note"><FaCoins /> Rewards are applied once when results are published.</p>
+              <p className="tournament-note"><CoinIcon size="sm" /> Rewards are applied once when results are published.</p>
             </section>
           </aside>
         </div>

@@ -19,7 +19,6 @@ import {
   Circle,
   CircleHelp,
   ClipboardList,
-  Coins,
   FileCheck,
   FileText,
   Flame,
@@ -49,10 +48,11 @@ import { rankThresholds } from "../../data/gamificationMockData";
 import { getCurrentStreak, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
-import { getUser as getStoredUser } from "../../utils/storageUtils";
 import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress, getXPTransactions } from "../../utils/xpUtils";
 import { getNextBadge, syncBadges } from "../../utils/badgeUtils";
 import BadgeIcon from "../../components/badges/BadgeIcon";
+import { CoinIcon } from "../../components/common/Coin";
+import { getUserCoinBalance } from "../../services/coinService";
 import "./DashboardPage.css";
 
 const examNames = {
@@ -122,7 +122,6 @@ function DashboardPage() {
 
   const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
-  const storedUser = getStoredUser();
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
   const totalXp = calculateTotalXPFromTransactions();
   const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
@@ -280,10 +279,10 @@ function DashboardPage() {
                   <div className="stat-helper">{totalXp.toLocaleString()} XP earned</div>
                 </div>
               </article>
-              <article className="stat-card">
-                <div className="stat-icon"><Coins /></div>
+              <article className="stat-card coin-stat-card">
+                <CoinIcon size="lg" className="stat-coin" />
                 <div>
-                  <div className="stat-value">{(storedUser.coins || 0).toLocaleString()}</div>
+                  <div className="stat-value coin-stat-value">{getUserCoinBalance().toLocaleString()}</div>
                   <div className="stat-label">Coins</div>
                   <div className="stat-helper">Earned from eligible activities</div>
                 </div>

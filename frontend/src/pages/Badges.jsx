@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaCrown, FaFire, FaMedal, FaShieldAlt } from "react-icons/fa";
 import BadgeIcon from "../components/badges/BadgeIcon";
+import { RewardText } from "../components/common/Coin";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useBadgeCelebration } from "../context/BadgeCelebrationContext";
 import { getNextBadge, syncBadges } from "../utils/badgeUtils";
@@ -69,7 +70,7 @@ function Badges() {
             <p className="eyebrow">Next Badge Progress</p>
             <h2>{displayName(nextBadge)}</h2>
             <p>{masked(nextBadge) ? "A hidden achievement is within reach." : nextBadge.description}</p>
-            <div className="badge-progress-row"><span>{masked(nextBadge) ? "??? / ???" : `${nextBadge.progress} / ${nextBadge.target}`}</span><strong>{masked(nextBadge) ? "???" : nextBadge.reward}</strong></div>
+            <div className="badge-progress-row"><span>{masked(nextBadge) ? "??? / ???" : `${nextBadge.progress} / ${nextBadge.target}`}</span><strong>{masked(nextBadge) ? "???" : <RewardText text={nextBadge.reward} />}</strong></div>
             <div className="progress-bar"><div className="progress-fill" style={{ width: `${nextBadge.percent}%` }} /></div>
           </div>
         </section>
@@ -121,7 +122,7 @@ function Badges() {
                     <div className="progress-bar"><div className="progress-fill" style={{ width: `${isMasked ? 0 : badge.percent}%` }} /></div>
                     <div className="badge-meta-row">
                       <span>{isMasked ? "??? / ???" : `${badge.progress}/${badge.target}`}</span>
-                      <strong className="reward-tag">{isMasked ? "???" : badge.reward}</strong>
+                      <strong className="reward-tag">{isMasked ? "???" : <RewardText text={badge.reward} />}</strong>
                     </div>
                     {isEarned && badge.earnedAt && <span className="earned-date">Earned {badge.earnedAt}</span>}
                   </div>
@@ -148,7 +149,7 @@ function Badges() {
             <p>{displayDesc(selectedBadge)}</p>
             <div className="detail-list">
               <div><span>Requirement</span><strong>{selectedMasked ? "???" : `${selectedBadge.progress} / ${selectedBadge.target}`}</strong></div>
-              <div><span>Reward</span><strong>{selectedMasked ? "???" : selectedBadge.reward}</strong></div>
+              <div><span>Reward</span><strong>{selectedMasked ? "???" : <RewardText text={selectedBadge.reward} />}</strong></div>
               <div><span>Rarity</span><strong className={`rarity-pill rarity-${selectedBadge.rarity.toLowerCase()}`}>{selectedBadge.rarity}</strong></div>
               <div><span>Status</span><strong>{selectedBadge.status === "earned" ? `Earned ${selectedBadge.earnedAt || ""}`.trim() : "Locked"}</strong></div>
             </div>

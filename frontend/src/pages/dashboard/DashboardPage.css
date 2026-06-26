@@ -481,6 +481,22 @@
   line-height: 1.2;
 }
 
+/* Premium coin stat tile: gold-tinted card, big minted coin, gradient number. */
+.dashboard-page .coin-stat-card {
+  border-color: rgba(251, 176, 52, 0.3);
+}
+
+.dashboard-page .coin-stat-card .stat-coin {
+  filter: drop-shadow(0 4px 10px rgba(224, 122, 22, 0.4));
+}
+
+.dashboard-page .coin-stat-value {
+  background: linear-gradient(180deg, #ffe7a6, #f6a31f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .dashboard-page .stat-label {
   color: var(--soft);
   font-size: 0.82rem;

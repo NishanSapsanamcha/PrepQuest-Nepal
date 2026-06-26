@@ -4,7 +4,6 @@ import {
   FaArrowLeft,
   FaBullseye,
   FaCheckCircle,
-  FaCoins,
   FaCrown,
   FaHome,
   FaListAlt,
@@ -15,8 +14,10 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { CoinIcon, CoinValue } from "../../components/common/Coin";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
+import { useCoinReward } from "../../context/CoinRewardContext";
 import { getOptionLabel, getText } from "../../utils/practiceUtils";
 import { getTournamentResults } from "../../services/tournamentService";
 import "../Tournament.css";
@@ -27,6 +28,7 @@ function TournamentResultPage() {
   const tournamentId = searchParams.get("id");
   const { playClick, playComplete } = usePrepQuestSound();
   const { celebrate } = useBadgeCelebration();
+  const { celebrateCoins } = useCoinReward();
   const completionSoundCheckedRef = useRef(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -44,10 +46,14 @@ function TournamentResultPage() {
       .catch((err) => setError(err.response?.data?.message || "Results will appear after the tournament finishes."));
   }, [navigate, tournamentId]);
 
-  // Award + celebrate any badges this tournament unlocked, once results load.
+  // Award + celebrate any badges this tournament unlocked, once results load,
+  // and surface the coin reward popup.
   useEffect(() => {
-    if (data) celebrate();
-  }, [data, celebrate]);
+    if (data) {
+      celebrate();
+      celebrateCoins();
+    }
+  }, [data, celebrate, celebrateCoins]);
 
   useEffect(() => {
     if (!data || completionSoundCheckedRef.current) return;
@@ -160,8 +166,8 @@ function TournamentResultPage() {
               <div className="result-hero-copy">
                 <h2>Your Battle Result</h2>
                 <p>
-                  Rank #{result.finalRank} of {totalParticipants}. Rewards: +{result.rewardXp} XP,
-                  +{result.rewardCoins} coins{result.badgeEarned ? `, ${result.badgeEarned}` : ""}.
+                  Rank #{result.finalRank} of {totalParticipants}. Rewards: +{result.rewardXp} XP,{" "}
+                  <CoinValue amount={result.rewardCoins} prefix="+" />{result.badgeEarned ? `, ${result.badgeEarned}` : ""}.
                 </p>
                 <p>Rewards have been saved once and will not duplicate on refresh.</p>
                 <div className="daily-action-row">
@@ -187,7 +193,7 @@ function TournamentResultPage() {
               <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.speedBonusTotal || 0}</div><div className="stat-helper">Speed Bonus</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaTimesCircle /></div><div><div className="stat-value">{result.wrongAnswers + result.unanswered}</div><div className="stat-helper">Total missed</div></div></article>
               <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.rewardXp} XP</div><div className="stat-helper">XP earned</div></div></article>
-              <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.rewardCoins}</div><div className="stat-helper">Coins earned</div></div></article>
+              <article className="stat-card"><div className="stat-icon coin-stat-icon"><CoinIcon size="md" /></div><div><div className="stat-value">+{result.rewardCoins}</div><div className="stat-helper">Coins earned</div></div></article>
               {result.badgeEarned && <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{result.badgeEarned}</div><div className="stat-helper">Badge earned</div></div></article>}
             </section>
           </>
