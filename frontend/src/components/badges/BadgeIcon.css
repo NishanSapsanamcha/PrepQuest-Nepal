@@ -39,10 +39,11 @@
     drop-shadow(0 0 8px color-mix(in srgb, var(--badge-ring) 55%, transparent));
 }
 
-/* Locked: desaturated and dimmed until unlocked. */
+/* Locked: desaturated and dimmed until unlocked, but still clearly visible
+   so the badge graphic stays the focus rather than looking empty. */
 .badge-icon.is-locked .badge-icon-svg {
-  filter: grayscale(0.92) brightness(0.82) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
-  opacity: 0.55;
+  filter: grayscale(0.82) brightness(0.86) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+  opacity: 0.66;
 }
 .badge-icon.is-locked::before {
   opacity: 0.12;

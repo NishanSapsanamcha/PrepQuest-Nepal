@@ -164,48 +164,33 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-/* Circular medal container — the emblem is the focal point of the card. */
+/* The badge graphic IS the focus — no empty circular frame around it.
+   The BadgeIcon component already renders its own subtle rarity glow; this
+   wrapper just centers it and adds a touch more aura for earned badges. */
 .dashboard-page .badge-emblem,
 .dashboard-page .badge-detail-emblem {
   display: grid;
   place-items: center;
-  border-radius: 50%;
   position: relative;
+  line-height: 0;
 }
 .dashboard-page .badge-emblem {
-  width: 124px;
-  height: 124px;
-  margin-top: -0.1rem;
+  margin: 0.1rem 0 0.15rem;
 }
 .dashboard-page .badge-detail-emblem {
-  width: 158px;
-  height: 158px;
-  margin: 0.2rem auto 0;
+  margin: 0.3rem 0 0.1rem;
 }
 
-/* Soft inner disc behind the gem so it reads like a minted medal. */
-.dashboard-page .badge-emblem::before,
-.dashboard-page .badge-detail-emblem::before {
-  content: "";
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.08), rgba(8, 14, 26, 0.55) 72%);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+/* Earned: amplify the badge's own rarity-coloured aura (set by BadgeIcon)
+   so the glow matches the tier — teal for Common, gold for Legendary,
+   coral for Mythic, etc. — instead of forcing a single colour. */
+.dashboard-page .badge-emblem.is-earned .badge-icon::before {
+  opacity: 0.72;
+  inset: -26%;
 }
-
-/* Earned emblems get a stronger ring + teal/green glow. */
-.dashboard-page .badge-emblem.is-earned::before,
-.dashboard-page .badge-detail-emblem.is-earned::before {
-  border-color: rgba(45, 212, 191, 0.5);
-  box-shadow: 0 0 22px rgba(45, 212, 191, 0.32), inset 0 0 18px rgba(45, 212, 191, 0.14);
-}
-
-/* Locked emblems still show a clear, larger faded medal. */
-.dashboard-page .badge-emblem.is-locked::before,
-.dashboard-page .badge-detail-emblem.is-locked::before {
-  border-color: rgba(148, 163, 184, 0.18);
-  background: radial-gradient(circle at 50% 38%, rgba(148, 163, 184, 0.06), rgba(8, 14, 26, 0.6) 72%);
+.dashboard-page .badge-detail-emblem.is-earned .badge-icon::before {
+  opacity: 0.78;
+  inset: -30%;
 }
 
 .dashboard-page .badge-name {
