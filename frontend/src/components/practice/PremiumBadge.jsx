@@ -5,10 +5,10 @@
  * art can be dropped in later (see data/practiceIconAssets.js) with no code
  * changes and without any 404 requests for art that hasn't been added.
  */
-function PremiumBadge({ src, alt = "", className = "", style, children }) {
+function PremiumBadge({ src, alt = "", className = "", imgClassName = "premium-badge-img", style, children }) {
   return (
     <span className={`${className}${src ? " has-img" : ""}`.trim()} style={style}>
-      {src ? <img className="premium-badge-img" src={src} alt={alt} /> : children}
+      {src ? <img className={imgClassName} src={src} alt={alt} loading="lazy" /> : children}
     </span>
   );
 }

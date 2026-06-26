@@ -40,7 +40,7 @@
   /* Icon + badge sizes (TUNE: icon sizes) */
   --practice-icon-lg: 58px;     /* subject card hexagon icon */
   --practice-icon-mode: 3.5rem; /* mode card hexagon icon */
-  --practice-badge-icon: 3rem;  /* summary strip gem/coin badge */
+  --practice-badge-icon: 3.4rem;  /* summary strip gem/coin badge (CSS fallback) */
 
   /* Controls */
   --practice-progress-h: 8px;   /* TUNE: progress bar height */
@@ -58,6 +58,13 @@
   --practice-card-radius: var(--practice-radius-lg);
   --practice-icon-size: var(--practice-icon-lg);
   --practice-grid-gap: var(--practice-subject-gap);
+
+  /* Summary strip (TUNE: glow / border / background to match the reference) */
+  --summary-glow: 0 0 32px rgba(45, 212, 191, 0.18);
+  --summary-border: rgba(45, 212, 191, 0.35);
+  --summary-bg: linear-gradient(135deg, rgba(15, 31, 54, 0.96), rgba(8, 18, 34, 0.98));
+  --summary-icon-size: 4.6rem;   /* TUNE: premium image icon size in the strip */
+  --summary-subject-icon: 68px;  /* TUNE: premium image icon size on subject cards */
 }
 
 .dashboard-page.practice-dashboard-page {
@@ -159,18 +166,23 @@
   z-index: 1;
 }
 
-/* TUNE: summary strip — Total XP / Coins / Streak / Badges (height = padding) */
+/* TUNE: summary strip — glowing game-style bar (Total XP / Coins / Streak / Badges) */
 .dashboard-page .practice-summary-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--practice-card-border-teal);
-  border-radius: var(--practice-radius-md);
+  min-height: 128px;
+  padding: 1.05rem 1.25rem;
+  border: 1px solid var(--summary-border);
+  border-radius: 20px;
   background:
-    radial-gradient(140% 160% at 0% 0%, rgba(45, 212, 191, 0.1), transparent 55%),
-    linear-gradient(180deg, var(--practice-card-grad-top), var(--practice-card-grad-bottom));
-  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.04), 0 10px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    radial-gradient(140% 180% at 0% 0%, rgba(45, 212, 191, 0.12), transparent 52%),
+    var(--summary-bg);
+  box-shadow:
+    var(--summary-glow),
+    inset 0 1px 0 rgba(125, 211, 252, 0.16),
+    inset 0 0 22px rgba(8, 18, 34, 0.55),
+    0 12px 36px rgba(0, 0, 0, 0.4);
 }
 
 .dashboard-page .summary-stat {
@@ -270,24 +282,41 @@
 .dashboard-page .practice-footer-tagline svg { color: #fb923c; }
 .dashboard-page .practice-footer-tagline strong { color: var(--text); }
 
-/* Premium image badge — shown when art is dropped into public/assets/practice/
-   and mapped in data/practiceIconAssets.js. Otherwise the CSS gem icon shows. */
-.dashboard-page .premium-badge-img {
+/* Premium image badge — shown when art is added to src/assets/gamification/.
+   Otherwise the CSS gem/hex icon shows. (TUNE sizes via the tokens above.) */
+.dashboard-page .premium-badge-img,
+.dashboard-page .practice-summary-icon,
+.dashboard-page .practice-subject-icon-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
 }
 
+/* When real art is present, drop the hex clip/gradient so the badge art shows
+   cleanly, and give it a soft glow that matches the reference. */
 .dashboard-page .summary-stat-icon.has-img,
 .dashboard-page .subject-card-icon.has-img {
   background: none !important;
   clip-path: none !important;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 4px 14px rgba(45, 212, 191, 0.28));
 }
 
 .dashboard-page .summary-stat-icon.has-img::before,
 .dashboard-page .subject-card-icon.has-img::before {
   display: none;
+}
+
+/* TUNE: premium image icon sizes (larger than the CSS fallback badges) */
+.dashboard-page .summary-stat-icon.has-img {
+  width: var(--summary-icon-size);
+  height: var(--summary-icon-size);
+}
+
+.dashboard-page .subject-card-icon.has-img {
+  width: var(--summary-subject-icon);
+  height: var(--summary-subject-icon);
+  min-width: var(--summary-subject-icon);
 }
 
 /* TUNE: "How XP & Gamification Works" explainer cards (bottom of the page) */

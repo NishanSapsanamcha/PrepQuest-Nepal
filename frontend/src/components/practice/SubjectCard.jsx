@@ -65,6 +65,7 @@ function SubjectCard({ subject, onPractice }) {
         <PremiumBadge
           src={iconAsset}
           alt={subject.name}
+          imgClassName="practice-subject-icon-img"
           className="subject-card-icon hex-badge"
           style={
             iconAsset

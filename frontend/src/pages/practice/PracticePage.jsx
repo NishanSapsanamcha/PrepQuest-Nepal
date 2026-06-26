@@ -104,7 +104,7 @@ function PracticePage() {
         {/* B. Summary strip */}
         <section className="practice-summary-strip" aria-label="Your gamification stats" data-debug="Summary Strip">
           <div className="summary-stat">
-            <PremiumBadge src={STAT_ICON_ASSETS.xp} alt="XP" className="summary-stat-icon xp"><FaStar /></PremiumBadge>
+            <PremiumBadge src={STAT_ICON_ASSETS.xp} alt="XP" className="summary-stat-icon xp" imgClassName="practice-summary-icon"><FaStar /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Total XP</span>
               <strong className="summary-stat-value">{totalXp.toLocaleString()}</strong>
@@ -112,7 +112,7 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <PremiumBadge src={STAT_ICON_ASSETS.coin} alt="Coins" className="summary-stat-icon coin"><CoinIcon size="md" /></PremiumBadge>
+            <PremiumBadge src={STAT_ICON_ASSETS.coin} alt="Coins" className="summary-stat-icon coin" imgClassName="practice-summary-icon"><CoinIcon size="md" /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Coins</span>
               <strong className="summary-stat-value">{coinBalance.toLocaleString()}</strong>
@@ -120,7 +120,7 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <PremiumBadge src={STAT_ICON_ASSETS.streak} alt="Streak" className="summary-stat-icon streak"><FaFire /></PremiumBadge>
+            <PremiumBadge src={STAT_ICON_ASSETS.streak} alt="Streak" className="summary-stat-icon streak" imgClassName="practice-summary-icon"><FaFire /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Current Streak</span>
               <strong className="summary-stat-value">{currentStreak} {currentStreak === 1 ? "Day" : "Days"}</strong>
@@ -128,7 +128,7 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <PremiumBadge src={STAT_ICON_ASSETS.badges} alt="Badges" className="summary-stat-icon badges"><FaMedal /></PremiumBadge>
+            <PremiumBadge src={STAT_ICON_ASSETS.badges} alt="Badges" className="summary-stat-icon badges" imgClassName="practice-summary-icon"><FaMedal /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Badges Earned</span>
               <strong className="summary-stat-value">{badgesEarned}</strong>
