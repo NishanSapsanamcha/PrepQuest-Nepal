@@ -13,6 +13,7 @@ export const QUESTION_COUNT = 20;
 export const TIME_PER_QUESTION_SECONDS = 15;
 export const BASE_POINTS_PER_QUESTION = 100;
 export const LEADERBOARD_CHECKPOINTS = [5, 10, 15, 20];
+export const LEADERBOARD_DISPLAY_LIMIT = 6;
 const COIN_PARTICIPATION = 50;
 
 function readJson(key, fallback) {
@@ -138,8 +139,21 @@ export function computeQuestionScore({ isCorrect, timeRemainingSeconds }) {
   return Math.round(BASE_POINTS_PER_QUESTION * 0.5 + speedFraction * BASE_POINTS_PER_QUESTION * 0.5);
 }
 
-export function getMergedLeaderboard(liveScore) {
-  const others = mockLeaderboardUsers.filter((user) => !user.isCurrentUser);
+// mockLeaderboardUsers' tournamentPoints is a season-long/lifetime stat (can run
+// into the thousands) - not comparable to a single 20-question, 2000-point-max
+// battle. Re-derive a believable score for THIS battle from each competitor's
+// accuracy, scaled to how many questions have been completed so far, so the
+// live/checkpoint leaderboard never shows an unbeatable, out-of-range number.
+function estimateBattleScore(competitor, questionsCompleted) {
+  const accuracyFactor = Math.min(1, Math.max(0, (competitor.tournamentAccuracy ?? competitor.accuracy ?? 70) / 100));
+  const perQuestionAverage = accuracyFactor * BASE_POINTS_PER_QUESTION * 0.75;
+  return Math.round(perQuestionAverage * questionsCompleted);
+}
+
+export function getMergedLeaderboard(liveScore, questionsCompleted = QUESTION_COUNT) {
+  const others = mockLeaderboardUsers
+    .filter((user) => !user.isCurrentUser)
+    .map((user) => ({ ...user, tournamentPoints: estimateBattleScore(user, questionsCompleted) }));
   const examId = normalizeExamId(localStorage.getItem("selectedExam"));
   const you = {
     id: "you",
@@ -149,7 +163,19 @@ export function getMergedLeaderboard(liveScore) {
     tournamentPoints: liveScore,
     isCurrentUser: true,
   };
-  return [...others, you].sort((a, b) => b.tournamentPoints - a.tournamentPoints);
+  return [...others, you]
+    .sort((a, b) => b.tournamentPoints - a.tournamentPoints)
+    .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+// Keeps the in-battle/result leaderboard widget compact regardless of how many
+// mock competitors exist - shows the top N, and always includes "you" even if
+// your real rank falls outside that top N.
+export function getDisplayLeaderboard(fullLeaderboard, limit = LEADERBOARD_DISPLAY_LIMIT) {
+  const top = fullLeaderboard.slice(0, limit);
+  if (top.some((row) => row.isCurrentUser)) return top;
+  const you = fullLeaderboard.find((row) => row.isCurrentUser);
+  return you ? [...top.slice(0, limit - 1), you] : top;
 }
 
 function getRankReward(rank) {

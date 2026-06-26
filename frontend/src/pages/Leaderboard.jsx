@@ -10,12 +10,15 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-import { RewardDisplay } from "../components/common/Coin";
+import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
-import { mockCurrentUser, mockLeaderboardUsers } from "../data/gamificationMockData";
-import { getLatestTournamentResults } from "../services/tournamentService";
+import { mockLeaderboardUsers } from "../data/gamificationMockData";
 import { getUser } from "../utils/storageUtils";
 import "./Leaderboard.css";
+
+function getInitials(name) {
+  return name.trim().split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "ME";
+}
 
 const rankingTypes = [
   { id: "tournament", label: "Tournament", description: "Ranking based on the latest Friday Loksewa Battle performance." },
@@ -66,7 +69,7 @@ function getSelectedExamTrack() {
       || storedPreferences.selectedExam
       || user.selectedExam
       || user.examTrack
-      || mockCurrentUser.examTrack
+      || "sakha-adhikrit"
   );
 }
 
@@ -127,6 +130,8 @@ function formatNumber(value) {
 
 function Leaderboard() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
+  const realName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
   const selectedExam = useMemo(() => getSelectedExamTrack(), []);
   const [selectedRankingType, setSelectedRankingType] = useState("tournament");
   const [tournamentFilter, setTournamentFilter] = useState("Latest Friday Battle");
@@ -139,9 +144,19 @@ function Leaderboard() {
   const [tournamentError, setTournamentError] = useState("");
 
   const activeRanking = rankingTypes.find((type) => type.id === selectedRankingType);
+  // Replace the mock "isCurrentUser" placeholder's identity with the real
+  // logged-in account so this leaderboard never shows a fake person's name
+  // as "you" - the other rows stay as flavor/seed competitors.
+  const leaderboardUsers = useMemo(
+    () =>
+      mockLeaderboardUsers.map((user) =>
+        user.isCurrentUser ? { ...user, name: realName, initials: getInitials(realName), examTrack: selectedExam } : user
+      ),
+    [realName, selectedExam]
+  );
   const examFilteredUsers = useMemo(
-    () => mockLeaderboardUsers.filter((user) => user.examTrack === selectedExam),
-    [selectedExam]
+    () => leaderboardUsers.filter((user) => user.examTrack === selectedExam),
+    [leaderboardUsers, selectedExam]
   );
 
   useEffect(() => {
