@@ -37,10 +37,11 @@ function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectO
               aria-pressed={selectedOptionKey === option.key}
               onClick={() => onSelectOption(option.key)}
             >
+              <span className="option-letter">{option.key}</span>
               <span className="option-copy">{option.label}</span>
               {isCorrect && (
                 <span className="option-status correct-answer">
-                  <FaCheckCircle /> Correct answer
+                  <FaCheckCircle /> Correct
                 </span>
               )}
               {isCorrect && showXpBurst && <span className="floating-xp" aria-hidden="true">+10 XP</span>}

@@ -9,6 +9,7 @@ import {
   Pencil,
   ScrollText,
 } from "lucide-react";
+import { FaArrowRight } from "react-icons/fa";
 
 const iconMap = {
   "general-knowledge": Globe2,
@@ -24,43 +25,58 @@ const iconMap = {
   "english-grammar": Languages,
 };
 
+// Per-subject accent so the icon reads as a strong, distinct emblem (matches the
+// gamified reference). Falls back to the brand teal for any unmapped subject.
+const accentMap = {
+  "general-knowledge": "#18e0c2",
+  constitution: "#a855f7",
+  "current-affairs": "#3b82f6",
+  "general-ability-iq": "#22d3ee",
+  "governance-basics": "#22c55e",
+  "public-administration-basics": "#f59e0b",
+  nepali: "#ef4444",
+  english: "#f97316",
+  "iq-mental-ability": "#22d3ee",
+  "nepali-grammar": "#ef4444",
+  "english-grammar": "#f97316",
+};
+
 function SubjectCard({ subject, onPractice }) {
   const Icon = iconMap[subject.id] || Building2;
+  const accent = accentMap[subject.id] || "#18e0c2";
   const progress = subject.progress;
   const levelProgress = subject.levelProgress;
   const currentLevel = subject.currentLevel;
-  const nextLevelLabel = levelProgress.nextLevel ? `Level ${levelProgress.nextLevel.level}` : "Mastered";
-  const statusLabel = subject.masteryStatus === "Not Started" ? "Starting" : subject.masteryStatus;
-  const accuracyLabel = subject.accuracyLabel || (subject.accuracy === null ? "Not Started Yet" : `${subject.accuracy}%`);
-  const reviewLine = [
-    subject.savedReviewCount > 0 && `Saved: ${subject.savedReviewCount}`,
-    subject.wrongReviewCount > 0 && `Mistakes: ${subject.wrongReviewCount}`,
-  ].filter(Boolean).join(" · ");
+  const hasStarted = subject.hasStarted;
+  const nextLevelLabel = levelProgress.nextLevel ? `Lvl ${levelProgress.nextLevel.level}` : "Max";
   const displayProgressPercent = levelProgress.nextRequiredXp
     ? Math.min(100, Math.round((progress.xp / levelProgress.nextRequiredXp) * 100))
     : 100;
-  const subjectCopy = {
-    "general-knowledge": "History, geography, science, and everyday facts.",
-    constitution: "Build constitutional knowledge, rights, duties, and governance structure.",
-    "current-affairs": "Stay updated on national and international events.",
-    "general-ability-iq": "Logical reasoning, puzzles, and analytical thinking.",
-    "governance-basics": "Government systems, policies, and administrative law.",
-    "public-administration-basics": "Concepts of public service, bureaucracy, and administration.",
-  };
+  const accuracyStat = hasStarted && subject.accuracy !== null ? `${subject.accuracy}%` : "—";
+  const solvedStat = progress.questionsSolved || 0;
+  const mistakesStat = progress.wrongAnswers || 0;
 
   return (
     <article className={`subject-card practice-subject-card${subject.canPractice ? "" : " disabled"}`}>
       <div className="subject-card-header">
-        <div className="subject-card-icon"><Icon /></div>
-        <div>
+        <div
+          className="subject-card-icon hex-badge"
+          style={{
+            color: accent,
+            background: `linear-gradient(150deg, ${accent}, ${accent}55)`,
+            filter: `drop-shadow(0 5px 14px ${accent}50)`,
+          }}
+        >
+          <Icon />
+        </div>
+        <div className="subject-card-titles">
           <div className="subject-card-name">{subject.name}</div>
-          <div className="subject-card-desc">{subjectCopy[subject.id] || subject.description}</div>
+          <span className="subject-level-chip" style={{ color: accent, background: `${accent}1a`, borderColor: `${accent}40` }}>
+            Level {currentLevel.level} · {hasStarted ? currentLevel.name : "Not Started"}
+          </span>
         </div>
       </div>
-      <div className="subject-card-meta">
-        <span className="subject-meta-badge level">Level {currentLevel.level}: {currentLevel.name}</span>
-        <span className="subject-meta-badge">{statusLabel}</span>
-      </div>
+
       <div className="subject-card-progress">
         <div className="subject-card-progress-label">
           <span>{progress.xp} / {levelProgress.nextRequiredXp} XP</span>
@@ -70,14 +86,29 @@ function SubjectCard({ subject, onPractice }) {
           <div className="progress-fill" style={{ width: `${displayProgressPercent}%` }} />
         </div>
       </div>
-      <div className="subject-card-stats">
-        <div>Accuracy: <span>{accuracyLabel}</span></div>
-        <div>Solved: <span>{progress.questionsSolved}</span></div>
+
+      <div className="subject-card-statgrid">
+        <div className="subject-stat">
+          <span>Accuracy</span>
+          <strong className="accuracy">{accuracyStat}</strong>
+        </div>
+        <div className="subject-stat">
+          <span>Solved</span>
+          <strong>{solvedStat}</strong>
+        </div>
+        <div className="subject-stat">
+          <span>Mistakes</span>
+          <strong className="mistakes">{mistakesStat}</strong>
+        </div>
       </div>
-      {reviewLine && <div className="subject-card-review-counts">{reviewLine}</div>}
+
       <div className="subject-card-footer">
-        <button className="primary-button small subject-btn" type="button" disabled={!subject.canPractice} onClick={onPractice}>
-          {subject.canPractice ? "Practice Now" : "Coming Soon"}
+        <button className="subject-practice-btn" type="button" disabled={!subject.canPractice} onClick={onPractice}>
+          {subject.canPractice ? (
+            <>Practice Now <FaArrowRight /></>
+          ) : (
+            "Question Bank Not Ready"
+          )}
         </button>
       </div>
     </article>

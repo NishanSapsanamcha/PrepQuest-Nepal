@@ -1,11 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { FaBolt, FaBookmark, FaBullseye, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaLightbulb, FaTools } from "react-icons/fa";
+import { FaBookmark, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLightbulb, FaMedal, FaStar, FaTools } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
+import { CoinIcon } from "../../components/common/Coin";
 import { useAuth } from "../../context/AuthContext";
 import { examTracks } from "../../data/examTracks";
 import { getCurrentStreak } from "../../utils/dailyQuizUtils";
+import { getEarnedBadges, syncBadges } from "../../utils/badgeUtils";
+import { getUserCoinBalance } from "../../services/coinService";
 import {
   buildSubjectCardData,
   getExamSubjects,
@@ -20,7 +23,7 @@ import {
   getWrongAnswerCountBySubject,
   getWrongAnswerReview,
 } from "../../utils/storageUtils";
-import { calculateTotalXPFromTransactions, getCorrectAnswerXP } from "../../utils/xpUtils";
+import { calculateTotalXPFromTransactions } from "../../utils/xpUtils";
 import "./PracticePage.css";
 
 function PracticePage() {
@@ -34,6 +37,8 @@ function PracticePage() {
   const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
   const subjectProgress = getNormalizedSubjectProgress();
   const totalXp = calculateTotalXPFromTransactions();
+  const coinBalance = getUserCoinBalance();
+  const badgesEarned = getEarnedBadges(syncBadges()).length;
   const savedQuestions = getSavedReviewQuestions();
   const wrongAnswers = getWrongAnswerReview().filter((item) => !item.mastered);
   const weakTopics = getWeakTopicsFromWrongAnswers();
@@ -71,13 +76,19 @@ function PracticePage() {
         subjectId: null,
       };
 
+  // DEV-ONLY: ?debugPracticeLayout=true outlines/labels major layout sections.
+  const debugLayout =
+    import.meta.env.DEV &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debugPracticeLayout") === "true";
+
   return (
     <DashboardLayout activeKey="practice">
       <header className="dashboard-header practice-header">
         <div className="header-left">
           <p className="eyebrow">Welcome back, <span>{userName}</span></p>
-          <h1>Practice Mode</h1>
-          <p>Choose a subject and improve your Loksewa preparation with XP, coins, feedback, and subject levels.</p>
+          <h1>Choose Your Practice Subject</h1>
+          <p>Master each subject step by step and level up your knowledge.</p>
         </div>
         <div className="header-right">
           <div className="header-chips">
@@ -90,24 +101,40 @@ function PracticePage() {
         </div>
       </header>
 
-      <section className="dashboard-content practice-content">
-        <section className="stats-grid" aria-label="Practice stats">
-          <article className="stat-card">
-            <div className="stat-icon"><FaBolt /></div>
-            <div><div className="stat-value">{totalXp.toLocaleString()} XP</div><div className="stat-helper">Earned from completed practice activity</div></div>
-          </article>
-          <article className="stat-card">
-            <div className="stat-icon"><FaBullseye /></div>
-            <div><div className="stat-value">+{getCorrectAnswerXP()} XP</div><div className="stat-helper">For each correct practice answer</div></div>
-          </article>
-          <article className="stat-card">
-            <div className="stat-icon"><FaFire /></div>
-            <div><div className="stat-value">{currentStreak} Days</div><div className="stat-helper">Complete a daily quiz today</div></div>
-          </article>
-          <article className="stat-card">
-            <div className="stat-icon"><FaLayerGroup /></div>
-            <div><div className="stat-value">{subjectCards.length} Subjects</div><div className="stat-helper">Based on your exam track</div></div>
-          </article>
+      <section className={`dashboard-content practice-content${debugLayout ? " debug-practice-layout" : ""}`}>
+        <section className="practice-summary-strip" aria-label="Your gamification stats" data-debug="Summary Strip">
+          <div className="summary-stat">
+            <span className="summary-stat-icon xp"><FaStar /></span>
+            <div className="summary-stat-body">
+              <span className="summary-stat-label">Total XP</span>
+              <strong className="summary-stat-value">{totalXp.toLocaleString()}</strong>
+              <span className="summary-stat-helper">Keep leveling up!</span>
+            </div>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat-icon coin"><CoinIcon size="md" /></span>
+            <div className="summary-stat-body">
+              <span className="summary-stat-label">Coins</span>
+              <strong className="summary-stat-value">{coinBalance.toLocaleString()}</strong>
+              <span className="summary-stat-helper">Earned from activities</span>
+            </div>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat-icon streak"><FaFire /></span>
+            <div className="summary-stat-body">
+              <span className="summary-stat-label">Current Streak</span>
+              <strong className="summary-stat-value">{currentStreak} {currentStreak === 1 ? "Day" : "Days"}</strong>
+              <span className="summary-stat-helper">{currentStreak > 0 ? "Keep it alive today" : "Start a daily quiz"}</span>
+            </div>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat-icon badges"><FaMedal /></span>
+            <div className="summary-stat-body">
+              <span className="summary-stat-label">Badges Earned</span>
+              <strong className="summary-stat-value">{badgesEarned}</strong>
+              <span className="summary-stat-helper">View your collection</span>
+            </div>
+          </div>
         </section>
 
         <RecommendedPracticeCard
@@ -161,7 +188,7 @@ function PracticePage() {
           <h2>Subjects</h2>
         </section>
 
-        <section className="subject-grid">
+        <section className="subject-grid" data-debug="Subject Grid">
           {subjectCards.map((subject) => (
             <SubjectCard
               key={subject.id}
@@ -170,6 +197,10 @@ function PracticePage() {
             />
           ))}
         </section>
+
+        <p className="practice-footer-tagline">
+          <FaFire /> <strong>Consistent practice makes perfect!</strong> Keep your streak alive and climb the leaderboard.
+        </p>
       </section>
     </DashboardLayout>
   );

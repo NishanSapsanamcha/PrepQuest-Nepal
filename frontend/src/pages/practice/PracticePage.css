@@ -1,3 +1,57 @@
+/* ============================================================================
+   PRACTICE UI DESIGN TOKENS  (single source of truth for visual tuning)
+   ----------------------------------------------------------------------------
+   Loaded on all 3 Practice pages (PracticePage.css is @imported by
+   SubjectPracticePage.css and PracticeSessionPage.css). Change a value here and
+   it updates everywhere. See PRACTICE_UI_QA.md for what to inspect locally.
+   ============================================================================ */
+.dashboard-page {
+  /* Surfaces */
+  --practice-bg: #07111f;
+  --practice-card: #111c2f;
+  --practice-card-grad-top: #16233c;     /* TUNE: card gradient (top) */
+  --practice-card-grad-bottom: #0f1828;  /* TUNE: card gradient (bottom) */
+  --practice-card-border: #233651;       /* TUNE: default card border */
+  --practice-card-border-teal: rgba(45, 212, 191, 0.28); /* TUNE: glowing border */
+
+  /* Accents + text */
+  --practice-accent: #2dd4bf;
+  --practice-accent-bright: #18e0c2;
+  --practice-success: #22c55e;
+  --practice-button-gradient: linear-gradient(135deg, #18e0c2, #22c55e);
+  --practice-muted: #94a3b8;
+  --practice-soft: #cbd5e1;
+  --practice-title: #f8fafc;
+
+  /* Glow (TUNE: glow intensity) */
+  --practice-glow-soft: 0 0 24px rgba(45, 212, 191, 0.16);
+  --practice-glow-strong: 0 0 0 1px rgba(45, 212, 191, 0.12), 0 14px 34px rgba(45, 212, 191, 0.12);
+  --practice-progress-glow: 0 0 10px rgba(24, 224, 194, 0.45);
+
+  /* Radii */
+  --practice-radius-lg: 18px;
+  --practice-radius-md: 14px;
+  --practice-radius-sm: 10px;
+
+  /* Spacing / gaps (TUNE: card spacing) */
+  --practice-subject-gap: 20px;
+  --practice-mode-gap: 1.2rem;
+
+  /* Icon + badge sizes (TUNE: icon sizes) */
+  --practice-icon-lg: 58px;     /* subject card hexagon icon */
+  --practice-icon-mode: 3.5rem; /* mode card hexagon icon */
+  --practice-badge-icon: 3rem;  /* summary strip gem/coin badge */
+
+  /* Controls */
+  --practice-progress-h: 8px;   /* TUNE: progress bar height */
+  --practice-button-h: 44px;    /* TUNE: primary button height */
+
+  /* Question screen */
+  --practice-question-pad: clamp(1.1rem, 1.5vw, 1.45rem); /* TUNE: question card padding */
+  --practice-panel-col: minmax(310px, 0.68fr);            /* TUNE: right panel width */
+  --practice-header-h: 76px;                              /* TUNE: session header height */
+}
+
 .dashboard-page.practice-dashboard-page {
   --sidebar-width: 280px;
 }
@@ -73,60 +127,139 @@
   padding-bottom: 2.4rem;
 }
 
-.dashboard-page .practice-content .stats-grid {
-  gap: 1.1rem;
-  margin-bottom: 0.1rem;
-}
-
-.dashboard-page .practice-content .stat-card {
-  min-height: 138px;
-  align-items: flex-start;
-  flex-direction: column;
+/* TUNE: glow intensity comes from each badge's inline drop-shadow + accent.
+   Reusable glowing hexagon icon badge (subject cards, summary strip, modes). */
+.dashboard-page .hex-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 1.6rem;
-  padding: 1.25rem;
-  border-color: rgba(58, 76, 112, 0.72);
-  border-radius: 8px;
-  background: #141d31;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 
-.dashboard-page .practice-content .stat-icon,
-.dashboard-page .practice-subject-card .stat-icon {
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 8px;
-  background: rgba(20, 184, 166, 0.16);
-  color: var(--teal);
+.dashboard-page .hex-badge::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: #101a2c;
 }
 
-.dashboard-page .practice-subject-card .stat-icon {
-  width: 4.4rem;
-  height: 4.4rem;
-  border-radius: 18px;
+.dashboard-page .hex-badge svg {
+  position: relative;
+  z-index: 1;
 }
 
-.dashboard-page .practice-content .stat-icon svg,
-.dashboard-page .practice-subject-card .stat-icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
+/* TUNE: summary strip — Total XP / Coins / Streak / Badges (height = padding) */
+.dashboard-page .practice-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--practice-card-border-teal);
+  border-radius: var(--practice-radius-md);
+  background:
+    radial-gradient(140% 160% at 0% 0%, rgba(45, 212, 191, 0.1), transparent 55%),
+    linear-gradient(180deg, var(--practice-card-grad-top), var(--practice-card-grad-bottom));
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.04), 0 10px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.dashboard-page .practice-subject-card .stat-icon svg {
-  width: 2.05rem;
-  height: 2.05rem;
+.dashboard-page .summary-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
 }
 
-.dashboard-page .practice-content .stat-value {
-  font-size: clamp(1.55rem, 2.4vw, 1.95rem);
-  line-height: 1.05;
-  letter-spacing: 0;
+.dashboard-page .summary-stat + .summary-stat {
+  border-left: 1px solid rgba(148, 163, 184, 0.12);
+  padding-left: 1.1rem;
 }
 
-.dashboard-page .practice-content .stat-helper {
-  margin-top: 0.6rem;
-  font-size: 0.76rem;
-  font-weight: 600;
+/* TUNE: summary strip badge icon size */
+.dashboard-page .summary-stat-icon {
+  width: var(--practice-badge-icon);
+  height: var(--practice-badge-icon);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
 }
+
+.dashboard-page .summary-stat-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+/* Gem-style hexagon badges (coin keeps its premium round coin graphic). */
+.dashboard-page .summary-stat-icon.xp,
+.dashboard-page .summary-stat-icon.streak,
+.dashboard-page .summary-stat-icon.badges {
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  border-radius: 0;
+}
+
+.dashboard-page .summary-stat-icon.xp {
+  background: linear-gradient(150deg, #38bdf8, #1d4ed8);
+  color: #f0f9ff;
+  filter: drop-shadow(0 4px 12px rgba(56, 189, 248, 0.4));
+}
+
+.dashboard-page .summary-stat-icon.streak {
+  background: linear-gradient(150deg, #fb923c, #ea580c);
+  color: #fff7ed;
+  filter: drop-shadow(0 4px 12px rgba(249, 115, 22, 0.4));
+}
+
+.dashboard-page .summary-stat-icon.badges {
+  background: linear-gradient(150deg, #c084fc, #7c3aed);
+  color: #faf5ff;
+  filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.4));
+}
+
+.dashboard-page .summary-stat-icon.coin {
+  filter: drop-shadow(0 4px 12px rgba(251, 176, 52, 0.35));
+}
+
+.dashboard-page .summary-stat-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dashboard-page .summary-stat-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.dashboard-page .summary-stat-value {
+  color: var(--text);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.dashboard-page .summary-stat-helper {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.dashboard-page .practice-footer-tagline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.dashboard-page .practice-footer-tagline svg { color: #fb923c; }
+.dashboard-page .practice-footer-tagline strong { color: var(--text); }
 
 .dashboard-page .recommended-practice-card {
   display: grid;
@@ -302,27 +435,33 @@
   border-radius: 8px;
 }
 
+/* TUNE: subject card grid — 4 columns on desktop (see media queries below) */
 .dashboard-page .practice-content .subject-grid {
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--practice-subject-gap);
   margin-bottom: 40px;
 }
 
+/* TUNE: subject (mission) card — padding / border / glow / radius */
 .dashboard-page .practice-subject-card {
   display: flex;
   flex-direction: column;
-  min-height: 410px;
-  padding: 24px;
-  border: 1px solid #223653;
-  border-radius: 20px;
-  background: #111c31;
-  transition: all 0.3s ease;
+  gap: 16px;
+  min-height: 0;
+  padding: 20px;
+  border: 1px solid var(--practice-card-border);
+  border-radius: var(--practice-radius-lg);
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(45, 212, 191, 0.06), transparent 60%),
+    linear-gradient(170deg, var(--practice-card-grad-top), var(--practice-card-grad-bottom));
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .dashboard-page .practice-subject-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(24, 224, 194, 0.4);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(24, 224, 194, 0.45);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(24, 224, 194, 0.12);
 }
 
 .dashboard-page .practice-subject-card.disabled {
@@ -331,86 +470,68 @@
 
 .dashboard-page .subject-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
-  margin-bottom: 16px;
 }
 
+/* TUNE: subject card hexagon icon size */
 .dashboard-page .subject-card-icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  width: var(--practice-icon-lg);
+  height: var(--practice-icon-lg);
+  min-width: var(--practice-icon-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: rgba(24, 224, 194, 0.1);
-  color: #18e0c2;
 }
 
 .dashboard-page .subject-card-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   stroke-width: 2.25;
 }
 
+.dashboard-page .subject-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
 .dashboard-page .subject-card-name {
-  margin-bottom: 4px;
   color: #f8fafc;
   font-size: 16px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
-.dashboard-page .subject-card-desc {
-  display: -webkit-box;
-  min-height: 39px;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  color: #94a3b8;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.dashboard-page .subject-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.dashboard-page .subject-meta-badge {
+.dashboard-page .subject-level-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: #14243a;
-  color: #cbd5e1;
+  width: fit-content;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   font-size: 11px;
-  font-weight: 600;
-}
-
-.dashboard-page .subject-meta-badge.level {
-  color: #18e0c2;
-  background: rgba(24, 224, 194, 0.08);
+  font-weight: 800;
 }
 
 .dashboard-page .subject-card-progress {
-  margin-bottom: 12px;
+  display: grid;
+  gap: 6px;
 }
 
 .dashboard-page .subject-card-progress-label {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
   color: #94a3b8;
   font-size: 12px;
+  font-weight: 600;
 }
 
+/* TUNE: subject card progress bar height + glow */
 .dashboard-page .practice-subject-card .progress-bar {
   width: 100%;
-  height: 8px;
+  height: var(--practice-progress-h);
   overflow: hidden;
   border-radius: 8px;
   background: #14243a;
@@ -419,75 +540,102 @@
 .dashboard-page .practice-subject-card .progress-fill {
   height: 100%;
   border-radius: 8px;
-  background: linear-gradient(90deg, #18e0c2, #22c55e);
+  background: var(--practice-button-gradient);
+  box-shadow: var(--practice-progress-glow);
   transition: width 0.4s ease;
 }
 
-.dashboard-page .subject-card-stats {
+.dashboard-page .subject-card-statgrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  background: rgba(15, 23, 39, 0.5);
+}
+
+.dashboard-page .subject-stat {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+
+.dashboard-page .subject-stat span {
   color: #94a3b8;
-  font-size: 12px;
-}
-
-.dashboard-page .subject-card-stats span {
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-.dashboard-page .subject-card-review-counts {
-  width: fit-content;
-  margin-bottom: 14px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(24, 224, 194, 0.08);
-  color: #99f6e4;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
+.dashboard-page .subject-stat strong {
+  color: #f1f5f9;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.dashboard-page .subject-stat strong.accuracy { color: #4ade80; }
+.dashboard-page .subject-stat strong.mistakes { color: #fb7185; }
 
 .dashboard-page .subject-card-footer {
   margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid #223653;
 }
 
-.dashboard-page .practice-subject-card .primary-button.small {
+/* TUNE: subject "Practice Now" button height + gradient */
+.dashboard-page .subject-practice-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-width: 0;
-  min-height: 0;
-  width: auto;
+  width: 100%;
+  min-height: var(--practice-button-h);
   padding: 8px 16px;
-  border: 0 !important;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #18e0c2, #22c55e) !important;
-  color: #07111f !important;
+  border: 0;
+  border-radius: 12px;
+  background: var(--practice-button-gradient);
+  color: #07111f;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
-.dashboard-page .practice-subject-card .primary-button.small:hover {
+.dashboard-page .subject-practice-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(24, 224, 194, 0.25);
 }
 
-.dashboard-page .practice-subject-card .subject-btn:disabled,
+.dashboard-page .subject-practice-btn:disabled {
+  cursor: not-allowed;
+  background: #1b2638;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
 .dashboard-page .recommended-practice-card .btn:disabled {
   cursor: not-allowed;
   opacity: 0.65;
   transform: none;
 }
 
+/* TUNE: subject grid columns per width — desktop (>1280) stays 4-up like the
+   reference (stable at 1366 / 1440 / 1536 / 1920). */
 @media (max-width: 1280px) {
   .dashboard-page .practice-content .subject-grid {
-    grid-template-columns: repeat(2, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .dashboard-page .practice-summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page .summary-stat:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0.5rem;
   }
 }
 
@@ -525,4 +673,47 @@
   .dashboard-page .practice-card-main {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================================================
+   DEV-ONLY layout debug. Append ?debugPracticeLayout=true to the URL in a dev
+   build (npm run dev) to outline + label the major Practice layout sections.
+   The wrapper class is added only when import.meta.env.DEV is true, so this can
+   never appear in a production build.
+   ============================================================================ */
+.dashboard-page .debug-practice-layout .practice-summary-strip,
+.dashboard-page .debug-practice-layout .subject-grid,
+.dashboard-page .debug-practice-layout .practice-subject-card,
+.dashboard-page .debug-practice-layout .subject-hero,
+.dashboard-page .debug-practice-layout .practice-mode-grid,
+.dashboard-page .debug-practice-layout .practice-type-card,
+.dashboard-page .debug-practice-layout .subject-learn-row,
+.dashboard-page .debug-practice-layout .practice-board,
+.dashboard-page .debug-practice-layout .board-question-side,
+.dashboard-page .debug-practice-layout .session-panel,
+.dashboard-page .debug-practice-layout .question-card,
+.dashboard-page .debug-practice-layout .hint-card {
+  outline: 1px dashed rgba(45, 212, 191, 0.55);
+  outline-offset: 2px;
+}
+
+.dashboard-page .debug-practice-layout [data-debug] {
+  position: relative;
+}
+
+.dashboard-page .debug-practice-layout [data-debug]::before {
+  content: attr(data-debug);
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  transform: translateY(-100%);
+  padding: 1px 6px;
+  border-radius: 5px 5px 0 0;
+  background: rgba(45, 212, 191, 0.92);
+  color: #04231f;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 60;
 }
