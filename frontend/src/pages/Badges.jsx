@@ -85,6 +85,12 @@ function Badges() {
         </section>
 
         <section className="badges-layout">
+          {visibleBadges.length === 0 ? (
+            <div className="dashboard-card badge-empty">
+              <p>No badges match this filter yet.</p>
+              <span>Keep practicing to unlock more achievements.</span>
+            </div>
+          ) : (
           <div className="badge-grid">
             {visibleBadges.map((badge) => {
               const isEarned = badge.status === "earned";
@@ -92,38 +98,52 @@ function Badges() {
               return (
                 <button className={`dashboard-card badge-card rarity-${badge.rarity.toLowerCase()} ${badge.status}${selectedBadgeId === badge.id ? " selected" : ""}`} type="button" key={badge.id} onClick={() => setSelectedBadgeId(badge.id)}>
                   <div className="badge-card-top">
+                    <span className={`status-chip ${isEarned ? "is-earned" : "is-locked"}`}>{isEarned ? "✓ Earned" : "Locked"}</span>
+                  </div>
+                  <div className={`badge-emblem rarity-${badge.rarity.toLowerCase()} ${isEarned ? "is-earned" : "is-locked"}`}>
                     <BadgeIcon
                       shape={badge.shape}
                       iconKind={badge.iconKind}
                       rarity={badge.rarity}
-                      size="sm"
+                      size={86}
                       locked={!isEarned}
                       earned={isEarned}
                       isSecret={badge.isSecret}
                     />
-                    <span className="status-chip">{isEarned ? "Earned" : "Locked"}</span>
                   </div>
-                  <h3>{displayName(badge)}</h3>
-                  <p>{displayDesc(badge)}</p>
-                  <div className="badge-meta-row"><span>{isMasked ? "Hidden" : badge.category}</span><span className={`rarity-pill rarity-${badge.rarity.toLowerCase()}`}>{badge.rarity}</span></div>
-                  <div className="progress-bar"><div className="progress-fill" style={{ width: `${isMasked ? 0 : badge.percent}%` }} /></div>
-                  <div className="badge-meta-row"><span>{isMasked ? "??? / ???" : `${badge.progress}/${badge.target}`}</span><strong>{isMasked ? "???" : badge.reward}</strong></div>
-                  {badge.earnedAt && <span className="earned-date">Earned {badge.earnedAt}</span>}
+                  <h3 className="badge-name">{displayName(badge)}</h3>
+                  <p className="badge-desc">{displayDesc(badge)}</p>
+                  <div className="badge-chips">
+                    <span className="cat-chip">{isMasked ? "Hidden" : badge.category}</span>
+                    <span className={`rarity-pill rarity-${badge.rarity.toLowerCase()}`}>{badge.rarity}</span>
+                  </div>
+                  <div className="badge-card-bottom">
+                    <div className="progress-bar"><div className="progress-fill" style={{ width: `${isMasked ? 0 : badge.percent}%` }} /></div>
+                    <div className="badge-meta-row">
+                      <span>{isMasked ? "??? / ???" : `${badge.progress}/${badge.target}`}</span>
+                      <strong className="reward-tag">{isMasked ? "???" : badge.reward}</strong>
+                    </div>
+                    {isEarned && badge.earnedAt && <span className="earned-date">Earned {badge.earnedAt}</span>}
+                  </div>
                 </button>
               );
             })}
           </div>
+          )}
 
           <aside className="dashboard-card badge-detail-card">
-            <BadgeIcon
-              shape={selectedBadge.shape}
-              iconKind={selectedBadge.iconKind}
-              rarity={selectedBadge.rarity}
-              size="lg"
-              locked={selectedBadge.status !== "earned"}
-              earned={selectedBadge.status === "earned"}
-              isSecret={selectedBadge.isSecret}
-            />
+            <div className={`badge-detail-emblem rarity-${selectedBadge.rarity.toLowerCase()} ${selectedBadge.status === "earned" ? "is-earned" : "is-locked"}`}>
+              <BadgeIcon
+                shape={selectedBadge.shape}
+                iconKind={selectedBadge.iconKind}
+                rarity={selectedBadge.rarity}
+                size={112}
+                locked={selectedBadge.status !== "earned"}
+                earned={selectedBadge.status === "earned"}
+                isSecret={selectedBadge.isSecret}
+              />
+            </div>
+            <span className={`status-chip ${selectedBadge.status === "earned" ? "is-earned" : "is-locked"}`}>{selectedBadge.status === "earned" ? "✓ Earned" : "Locked"}</span>
             <h2>{displayName(selectedBadge)}</h2>
             <p>{displayDesc(selectedBadge)}</p>
             <div className="detail-list">
