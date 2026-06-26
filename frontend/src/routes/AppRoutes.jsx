@@ -21,6 +21,8 @@ import DailyQuizResultPage from "../pages/daily-quiz/DailyQuizResultPage";
 import MockTestsPage from "../pages/mock-tests/MockTestsPage";
 import MockTestSessionPage from "../pages/mock-tests/MockTestSessionPage";
 import MockTestResultPage from "../pages/mock-tests/MockTestResultPage";
+import TournamentSessionPage from "../pages/tournament/TournamentSessionPage";
+import TournamentResultPage from "../pages/tournament/TournamentResultPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {

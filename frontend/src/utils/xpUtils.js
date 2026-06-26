@@ -8,6 +8,8 @@ const VALID_XP_TYPES = new Set([
   "daily_quiz_bonus",
   "mock_test_complete",
   "mock_test_score_bonus",
+  "tournament_participation",
+  "tournament_rank_bonus",
 ]);
 
 export const XP_REWARDS = {
@@ -16,6 +18,10 @@ export const XP_REWARDS = {
   DAILY_QUIZ_PERFECT_BONUS: 30,
   MOCK_TEST_COMPLETE: 100,
   MOCK_TEST_SCORE_BONUS: 50,
+  TOURNAMENT_PARTICIPATION: 100,
+  TOURNAMENT_RANK_1: 500,
+  TOURNAMENT_RANK_2: 300,
+  TOURNAMENT_RANK_3: 200,
 };
 
 function readJson(key, fallback) {

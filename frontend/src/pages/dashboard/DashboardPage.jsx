@@ -45,7 +45,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
+import { rankThresholds } from "../../data/gamificationMockData";
+import { getCurrentStreak, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
 import { getUser as getStoredUser } from "../../utils/storageUtils";
@@ -124,6 +125,7 @@ function DashboardPage() {
   const totalXp = calculateTotalXPFromTransactions();
   const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
   const dailyQuizCompleted = Boolean(todayDailyQuizAttempt);
+  const currentStreak = getCurrentStreak();
   const mockStats = getMockDashboardStats();
   const mockCompletedToday = hasCompletedMockToday();
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);

@@ -12,6 +12,7 @@ import {
   computeQuestionScore,
   completeTournament,
   getActiveTournamentSession,
+  getDisplayLeaderboard,
   getMergedLeaderboard,
   hasCompletedTournamentThisWeek,
   saveActiveTournamentSession,
@@ -125,7 +126,7 @@ function TournamentSessionPage() {
     navigate("/tournament");
   };
 
-  const leaderboard = showLeaderboard ? getMergedLeaderboard(runningScore) : null;
+  const leaderboard = showLeaderboard ? getDisplayLeaderboard(getMergedLeaderboard(runningScore, currentIndex + 1)) : null;
   const timerLow = timeRemaining <= 5 && !feedback;
 
   return (
@@ -189,11 +190,11 @@ function TournamentSessionPage() {
                   <span className="status-chip">After Question {currentIndex + 1}</span>
                 </div>
                 <div className="checkpoint-leaderboard-list">
-                  {leaderboard.map((row, index) => (
+                  {leaderboard.map((row) => (
                     <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.id}>
-                      <span className="rank-badge">{index + 1}</span>
+                      <span className="rank-badge">{row.rank}</span>
                       <span className="learner-cell">
-                        {index === 0 ? <FaCrown /> : index < 3 ? <FaMedal /> : null}
+                        {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
                         <strong>{row.name}</strong>
                       </span>
                       <span>{row.examTrack}</span>
