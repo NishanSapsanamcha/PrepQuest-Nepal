@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { FaBookmark, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLightbulb, FaMedal, FaStar, FaTools } from "react-icons/fa";
+import { FaBookmark, FaExclamationTriangle, FaFire, FaGraduationCap, FaLanguage, FaLayerGroup, FaLightbulb, FaMedal, FaStar, FaTools } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import RecommendedPracticeCard from "../../components/practice/RecommendedPracticeCard";
 import SubjectCard from "../../components/practice/SubjectCard";
+import PremiumBadge from "../../components/practice/PremiumBadge";
 import { CoinIcon } from "../../components/common/Coin";
-import { useAuth } from "../../context/AuthContext";
+import { STAT_ICON_ASSETS } from "../../data/practiceIconAssets";
 import { examTracks } from "../../data/examTracks";
 import { getCurrentStreak } from "../../utils/dailyQuizUtils";
 import { getEarnedBadges, syncBadges } from "../../utils/badgeUtils";
@@ -28,9 +29,7 @@ import "./PracticePage.css";
 
 function PracticePage() {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
   const user = getUser();
-  const userName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
   const currentStreak = getCurrentStreak();
   const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
@@ -84,9 +83,9 @@ function PracticePage() {
 
   return (
     <DashboardLayout activeKey="practice">
+      {/* A. Header — clean, no welcome line */}
       <header className="dashboard-header practice-header">
         <div className="header-left">
-          <p className="eyebrow">Welcome back, <span>{userName}</span></p>
           <h1>Choose Your Practice Subject</h1>
           <p>Master each subject step by step and level up your knowledge.</p>
         </div>
@@ -102,9 +101,10 @@ function PracticePage() {
       </header>
 
       <section className={`dashboard-content practice-content${debugLayout ? " debug-practice-layout" : ""}`}>
+        {/* B. Summary strip */}
         <section className="practice-summary-strip" aria-label="Your gamification stats" data-debug="Summary Strip">
           <div className="summary-stat">
-            <span className="summary-stat-icon xp"><FaStar /></span>
+            <PremiumBadge src={STAT_ICON_ASSETS.xp} alt="XP" className="summary-stat-icon xp"><FaStar /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Total XP</span>
               <strong className="summary-stat-value">{totalXp.toLocaleString()}</strong>
@@ -112,7 +112,7 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <span className="summary-stat-icon coin"><CoinIcon size="md" /></span>
+            <PremiumBadge src={STAT_ICON_ASSETS.coin} alt="Coins" className="summary-stat-icon coin"><CoinIcon size="md" /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Coins</span>
               <strong className="summary-stat-value">{coinBalance.toLocaleString()}</strong>
@@ -120,7 +120,7 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <span className="summary-stat-icon streak"><FaFire /></span>
+            <PremiumBadge src={STAT_ICON_ASSETS.streak} alt="Streak" className="summary-stat-icon streak"><FaFire /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Current Streak</span>
               <strong className="summary-stat-value">{currentStreak} {currentStreak === 1 ? "Day" : "Days"}</strong>
@@ -128,62 +128,16 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <span className="summary-stat-icon badges"><FaMedal /></span>
+            <PremiumBadge src={STAT_ICON_ASSETS.badges} alt="Badges" className="summary-stat-icon badges"><FaMedal /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Badges Earned</span>
               <strong className="summary-stat-value">{badgesEarned}</strong>
-              <span className="summary-stat-helper">View your collection</span>
+              <span className="summary-stat-helper">{badgesEarned > 0 ? "View your collection" : "Start earning badges"}</span>
             </div>
           </div>
         </section>
 
-        <RecommendedPracticeCard
-          recommendation={recommendation}
-          onStart={() => recommendation.canPractice && navigate(`/practice/${recommendation.subjectId}/session?recommended=1`)}
-        />
-
-        <section className="review-mistakes-section" aria-labelledby="review-mistakes-title">
-          <div className="practice-section-heading compact">
-            <h2 id="review-mistakes-title">Review &amp; Mistakes</h2>
-            <p>Revisit saved questions and correct your weak areas before your next practice.</p>
-          </div>
-          <div className="review-card-grid">
-            <article className="review-mini-card">
-              <div className="review-mini-icon"><FaBookmark /></div>
-              <div>
-                <h3>Saved Questions</h3>
-                <strong>{savedQuestions.length ? `${savedQuestions.length} saved` : "No saved questions yet"}</strong>
-                <p>Questions you bookmarked during practice.</p>
-              </div>
-              <button className="btn btn-secondary" type="button" disabled={!savedQuestions.length} onClick={() => navigate("/practice/review?tab=saved")}>
-                Review Saved
-              </button>
-            </article>
-            <article className="review-mini-card mistakes">
-              <div className="review-mini-icon"><FaExclamationTriangle /></div>
-              <div>
-                <h3>Wrong Answers</h3>
-                <strong>{wrongAnswers.length ? `${wrongAnswers.length} to review` : "No mistakes to review"}</strong>
-                <p>Learn from mistakes with explanations.</p>
-              </div>
-              <button className="btn btn-secondary" type="button" disabled={!wrongAnswers.length} onClick={() => navigate("/practice/review?tab=wrong")}>
-                Review Mistakes
-              </button>
-            </article>
-            <article className="review-mini-card">
-              <div className="review-mini-icon"><FaLightbulb /></div>
-              <div>
-                <h3>Weak Topic</h3>
-                <strong>{topWeakTopic ? topWeakTopic.topic : "No weak topic detected yet"}</strong>
-                <p>Most missed topic from recent practice.</p>
-              </div>
-              <button className="btn btn-secondary" type="button" disabled={!topWeakTopic} onClick={() => navigate("/practice/review?tab=weak")}>
-                Practice Topic
-              </button>
-            </article>
-          </div>
-        </section>
-
+        {/* C. Subjects grid (main focus) */}
         <section className="practice-section-heading">
           <h2>Subjects</h2>
         </section>
@@ -196,6 +150,95 @@ function PracticePage() {
               onPractice={() => subject.canPractice && navigate(`/practice/${subject.id}`)}
             />
           ))}
+        </section>
+
+        {/* D. Recommended Practice */}
+        <RecommendedPracticeCard
+          recommendation={recommendation}
+          onStart={() => recommendation.canPractice && navigate(`/practice/${recommendation.subjectId}/session?recommended=1`)}
+        />
+
+        {/* E. Review & Mistakes */}
+        <section className="review-mistakes-section" aria-labelledby="review-mistakes-title">
+          <div className="practice-section-heading compact">
+            <h2 id="review-mistakes-title">Review &amp; Mistakes</h2>
+            <p>Revisit saved questions and correct your weak areas before your next practice.</p>
+          </div>
+          <div className="review-card-grid">
+            <article className="review-mini-card">
+              <div className="review-mini-icon"><FaBookmark /></div>
+              <div>
+                <h3>Saved Questions</h3>
+                <strong>{savedQuestions.length} saved</strong>
+                <p>Questions you bookmarked during practice.</p>
+              </div>
+              <button className="btn btn-secondary" type="button" disabled={!savedQuestions.length} onClick={() => navigate("/practice/review?tab=saved")}>
+                Review Saved
+              </button>
+            </article>
+            <article className="review-mini-card mistakes">
+              <div className="review-mini-icon"><FaExclamationTriangle /></div>
+              <div>
+                <h3>Wrong Answers</h3>
+                <strong>{wrongAnswers.length ? `${wrongAnswers.length} to review` : "No mistakes yet"}</strong>
+                <p>Learn from mistakes with explanations.</p>
+              </div>
+              <button className="btn btn-secondary" type="button" disabled={!wrongAnswers.length} onClick={() => navigate("/practice/review?tab=wrong")}>
+                Review Mistakes
+              </button>
+            </article>
+            <article className="review-mini-card">
+              <div className="review-mini-icon"><FaLightbulb /></div>
+              <div>
+                <h3>Weak Topic</h3>
+                <strong>{topWeakTopic ? topWeakTopic.topic : "Not enough data yet"}</strong>
+                <p>Most missed topic from recent practice.</p>
+              </div>
+              <button className="btn btn-secondary" type="button" disabled={!topWeakTopic} onClick={() => navigate("/practice/review?tab=weak")}>
+                Practice Topic
+              </button>
+            </article>
+          </div>
+        </section>
+
+        {/* F. How XP & Gamification Works (extra explanation lives here) */}
+        <section className="how-xp-section" aria-labelledby="how-xp-title">
+          <div className="practice-section-heading compact">
+            <h2 id="how-xp-title">How XP &amp; Gamification Works</h2>
+            <p>A quick guide to how progress, rewards, and unlocks are earned.</p>
+          </div>
+          <div className="how-xp-grid">
+            <article className="how-xp-card">
+              <span className="how-xp-icon xp"><FaStar /></span>
+              <h3>Earn XP</h3>
+              <p>Each correct practice answer gives +10 XP.</p>
+            </article>
+            <article className="how-xp-card">
+              <span className="how-xp-icon level"><FaLayerGroup /></span>
+              <h3>Level Up Subjects</h3>
+              <p>Subject XP unlocks new practice modes and harder challenges.</p>
+            </article>
+            <article className="how-xp-card">
+              <span className="how-xp-icon streak"><FaFire /></span>
+              <h3>Build Streaks</h3>
+              <p>Daily learning increases your streak and can unlock streak badges.</p>
+            </article>
+            <article className="how-xp-card">
+              <span className="how-xp-icon coin"><CoinIcon size="sm" /></span>
+              <h3>Earn Coins</h3>
+              <p>Coins come from daily challenges, mocks, tournaments, badges, and strong practice.</p>
+            </article>
+            <article className="how-xp-card">
+              <span className="how-xp-icon badge"><FaMedal /></span>
+              <h3>Unlock Badges</h3>
+              <p>Badges unlock automatically when real requirements are completed.</p>
+            </article>
+            <article className="how-xp-card">
+              <span className="how-xp-icon weak"><FaLightbulb /></span>
+              <h3>Improve Weak Areas</h3>
+              <p>Wrong answers and weak topics are tracked so you can review and improve.</p>
+            </article>
+          </div>
         </section>
 
         <p className="practice-footer-tagline">

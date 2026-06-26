@@ -50,6 +50,14 @@
   --practice-question-pad: clamp(1.1rem, 1.5vw, 1.45rem); /* TUNE: question card padding */
   --practice-panel-col: minmax(310px, 0.68fr);            /* TUNE: right panel width */
   --practice-header-h: 76px;                              /* TUNE: session header height */
+
+  /* Convenience aliases (friendly names → the tokens above) */
+  --practice-card-bg: var(--practice-card);
+  --practice-border: var(--practice-card-border);
+  --practice-glow: var(--practice-glow-soft);
+  --practice-card-radius: var(--practice-radius-lg);
+  --practice-icon-size: var(--practice-icon-lg);
+  --practice-grid-gap: var(--practice-subject-gap);
 }
 
 .dashboard-page.practice-dashboard-page {
@@ -76,27 +84,28 @@
   display: none;
 }
 
+/* TUNE: page header — compact (no welcome line) */
 .dashboard-page .practice-header {
   position: relative;
-  min-height: 170px;
-  padding: 1.75rem clamp(1.75rem, 2.4vw, 2.3rem) 1.1rem;
-  align-items: flex-start;
+  min-height: 0;
+  padding: 1.35rem clamp(1.5rem, 2.4vw, 2.3rem) 1rem;
+  align-items: center;
   border-bottom: 0;
   background: rgba(8, 13, 24, 0.62);
   backdrop-filter: none;
 }
 
 .dashboard-page .practice-header .header-left h1 {
-  margin-top: 0.7rem;
-  font-size: clamp(1.7rem, 2.5vw, 1.95rem);
-  line-height: 1.05;
+  margin-top: 0;
+  font-size: clamp(1.55rem, 2.4vw, 1.9rem);
+  line-height: 1.1;
 }
 
 .dashboard-page .practice-header .header-left p:not(.eyebrow) {
   max-width: 545px;
-  margin-top: 0.8rem;
-  font-size: 0.8rem;
-  line-height: 1.55;
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .dashboard-page .practice-header .eyebrow {
@@ -260,6 +269,80 @@
 
 .dashboard-page .practice-footer-tagline svg { color: #fb923c; }
 .dashboard-page .practice-footer-tagline strong { color: var(--text); }
+
+/* Premium image badge — shown when art is dropped into public/assets/practice/
+   and mapped in data/practiceIconAssets.js. Otherwise the CSS gem icon shows. */
+.dashboard-page .premium-badge-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dashboard-page .summary-stat-icon.has-img,
+.dashboard-page .subject-card-icon.has-img {
+  background: none !important;
+  clip-path: none !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+}
+
+.dashboard-page .summary-stat-icon.has-img::before,
+.dashboard-page .subject-card-icon.has-img::before {
+  display: none;
+}
+
+/* TUNE: "How XP & Gamification Works" explainer cards (bottom of the page) */
+.dashboard-page .how-xp-section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dashboard-page .how-xp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--practice-grid-gap);
+}
+
+.dashboard-page .how-xp-card {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--practice-card-border);
+  border-radius: var(--practice-radius-md);
+  background: linear-gradient(170deg, var(--practice-card-grad-top), var(--practice-card-grad-bottom));
+}
+
+.dashboard-page .how-xp-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--practice-accent);
+  font-size: 1rem;
+}
+
+.dashboard-page .how-xp-icon.xp { background: rgba(56, 189, 248, 0.14); color: #38bdf8; }
+.dashboard-page .how-xp-icon.level { background: rgba(168, 85, 247, 0.14); color: #c084fc; }
+.dashboard-page .how-xp-icon.streak { background: rgba(249, 115, 22, 0.16); color: #fb923c; }
+.dashboard-page .how-xp-icon.coin { background: rgba(251, 176, 52, 0.14); }
+.dashboard-page .how-xp-icon.badge { background: rgba(34, 197, 94, 0.14); color: #4ade80; }
+.dashboard-page .how-xp-icon.weak { background: rgba(250, 204, 21, 0.14); color: #fde047; }
+
+.dashboard-page .how-xp-card h3 {
+  margin: 0;
+  color: var(--practice-title);
+  font-size: 0.95rem;
+}
+
+.dashboard-page .how-xp-card p {
+  margin: 0;
+  color: var(--practice-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
 
 .dashboard-page .recommended-practice-card {
   display: grid;
@@ -629,7 +712,8 @@
 }
 
 @media (max-width: 980px) {
-  .dashboard-page .practice-summary-strip {
+  .dashboard-page .practice-summary-strip,
+  .dashboard-page .how-xp-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -670,7 +754,8 @@
     padding: 1.15rem;
   }
 
-  .dashboard-page .practice-card-main {
+  .dashboard-page .practice-card-main,
+  .dashboard-page .how-xp-grid {
     grid-template-columns: 1fr;
   }
 }

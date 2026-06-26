@@ -10,6 +10,8 @@ import {
   ScrollText,
 } from "lucide-react";
 import { FaArrowRight } from "react-icons/fa";
+import PremiumBadge from "./PremiumBadge";
+import { SUBJECT_ICON_ASSETS } from "../../data/practiceIconAssets";
 
 const iconMap = {
   "general-knowledge": Globe2,
@@ -44,6 +46,7 @@ const accentMap = {
 function SubjectCard({ subject, onPractice }) {
   const Icon = iconMap[subject.id] || Building2;
   const accent = accentMap[subject.id] || "#18e0c2";
+  const iconAsset = SUBJECT_ICON_ASSETS[subject.id]; // premium art if added later
   const progress = subject.progress;
   const levelProgress = subject.levelProgress;
   const currentLevel = subject.currentLevel;
@@ -59,16 +62,22 @@ function SubjectCard({ subject, onPractice }) {
   return (
     <article className={`subject-card practice-subject-card${subject.canPractice ? "" : " disabled"}`}>
       <div className="subject-card-header">
-        <div
+        <PremiumBadge
+          src={iconAsset}
+          alt={subject.name}
           className="subject-card-icon hex-badge"
-          style={{
-            color: accent,
-            background: `linear-gradient(150deg, ${accent}, ${accent}55)`,
-            filter: `drop-shadow(0 5px 14px ${accent}50)`,
-          }}
+          style={
+            iconAsset
+              ? undefined
+              : {
+                  color: accent,
+                  background: `linear-gradient(150deg, ${accent}, ${accent}55)`,
+                  filter: `drop-shadow(0 5px 14px ${accent}50)`,
+                }
+          }
         >
           <Icon />
-        </div>
+        </PremiumBadge>
         <div className="subject-card-titles">
           <div className="subject-card-name">{subject.name}</div>
           <span className="subject-level-chip" style={{ color: accent, background: `${accent}1a`, borderColor: `${accent}40` }}>
