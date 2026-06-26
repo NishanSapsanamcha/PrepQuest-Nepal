@@ -100,12 +100,12 @@ function Badges() {
                   <div className="badge-card-top">
                     <span className={`status-chip ${isEarned ? "is-earned" : "is-locked"}`}>{isEarned ? "✓ Earned" : "Locked"}</span>
                   </div>
-                  <div className={`badge-emblem ${isEarned ? "is-earned" : "is-locked"}`}>
+                  <div className={`badge-emblem rarity-${badge.rarity.toLowerCase()} ${isEarned ? "is-earned" : "is-locked"}`}>
                     <BadgeIcon
                       shape={badge.shape}
                       iconKind={badge.iconKind}
                       rarity={badge.rarity}
-                      size={116}
+                      size={138}
                       locked={!isEarned}
                       earned={isEarned}
                       isSecret={badge.isSecret}
@@ -132,12 +132,12 @@ function Badges() {
           )}
 
           <aside className="dashboard-card badge-detail-card">
-            <div className={`badge-detail-emblem ${selectedBadge.status === "earned" ? "is-earned" : "is-locked"}`}>
+            <div className={`badge-detail-emblem rarity-${selectedBadge.rarity.toLowerCase()} ${selectedBadge.status === "earned" ? "is-earned" : "is-locked"}`}>
               <BadgeIcon
                 shape={selectedBadge.shape}
                 iconKind={selectedBadge.iconKind}
                 rarity={selectedBadge.rarity}
-                size={150}
+                size={184}
                 locked={selectedBadge.status !== "earned"}
                 earned={selectedBadge.status === "earned"}
                 isSecret={selectedBadge.isSecret}

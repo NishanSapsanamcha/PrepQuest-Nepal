@@ -149,10 +149,13 @@ function BadgeIcon({
 
   return (
     <span className={classes} style={{ "--badge-ring": theme.ring }}>
+      {/* Inline width/height win over the global `.dashboard-page svg { width: 1.15rem }`
+          rule, which would otherwise shrink every badge down to an icon. */}
       <svg
         className="badge-icon-svg"
         width={px}
         height={px}
+        style={{ width: px, height: px }}
         viewBox="0 0 100 100"
         role="img"
         aria-label={`${rarity} badge`}
@@ -186,7 +189,7 @@ function BadgeIcon({
             y="53"
             textAnchor="middle"
             dominantBaseline="central"
-            fontSize="44"
+            fontSize="52"
             fontWeight="800"
             fontFamily="inherit"
             fill={theme.glyph}
@@ -194,7 +197,7 @@ function BadgeIcon({
             ?
           </text>
         ) : (
-          <g transform="translate(50 51) scale(1.7) translate(-12 -12)">
+          <g transform="translate(50 51) scale(1.92) translate(-12 -12)">
             {renderGlyph(iconKind, theme.glyph)}
           </g>
         )}
