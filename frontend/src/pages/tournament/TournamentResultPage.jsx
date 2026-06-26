@@ -16,7 +16,7 @@ import {
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { getOptionLabel, getText } from "../../utils/practiceUtils";
-import { getLatestTournamentResult, getThisWeekTournamentAttempt } from "../../utils/tournamentUtils";
+import { getDisplayLeaderboard, getLatestTournamentResult, getThisWeekTournamentAttempt } from "../../utils/tournamentUtils";
 import "../Tournament.css";
 
 function TournamentResultPage() {
@@ -115,11 +115,11 @@ function TournamentResultPage() {
             <span className="status-chip">{result.totalParticipants} participants</span>
           </div>
           <div className="checkpoint-leaderboard-list">
-            {result.leaderboard.map((row, index) => (
+            {getDisplayLeaderboard(result.leaderboard).map((row, index) => (
               <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.id}>
-                <span className="rank-badge">{index + 1}</span>
+                <span className="rank-badge">{row.rank ?? index + 1}</span>
                 <span className="learner-cell">
-                  {index === 0 ? <FaCrown /> : index < 3 ? <FaMedal /> : null}
+                  {(row.rank ?? index + 1) === 1 ? <FaCrown /> : (row.rank ?? index + 1) <= 3 ? <FaMedal /> : null}
                   <strong>{row.name}</strong>
                 </span>
                 <span>{row.examTrack}</span>
