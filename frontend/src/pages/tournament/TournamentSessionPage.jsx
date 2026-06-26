@@ -1,141 +1,190 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaCrown, FaDoorOpen, FaMedal, FaRegClock, FaTrophy, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import AnswerFeedback from "../../components/practice/AnswerFeedback";
-import QuestionCard from "../../components/practice/QuestionCard";
-import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  LEADERBOARD_CHECKPOINTS,
-  TIME_PER_QUESTION_SECONDS,
-  buildTournamentSession,
-  computeQuestionScore,
-  completeTournament,
-  getActiveTournamentSession,
-  getDisplayLeaderboard,
-  getMergedLeaderboard,
-  hasCompletedTournamentThisWeek,
-  saveActiveTournamentSession,
-} from "../../utils/tournamentUtils";
+  FaCheckCircle,
+  FaCrown,
+  FaDoorOpen,
+  FaExclamationTriangle,
+  FaMedal,
+  FaRegClock,
+  FaShieldAlt,
+  FaTrophy,
+  FaUserCheck,
+  FaUsers,
+  FaVolumeMute,
+  FaVolumeUp,
+} from "react-icons/fa";
+import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { getOptionLabel, getText } from "../../utils/practiceUtils";
+import { getCurrentTournaments, getTournamentLiveState, markTournamentReady, submitTournamentAnswer } from "../../services/tournamentService";
 import "../Tournament.css";
+
+function useTournamentId() {
+  const [searchParams] = useSearchParams();
+  return searchParams.get("id");
+}
+
+function formatCountdown(seconds = 0) {
+  return String(Math.max(0, Math.floor(seconds))).padStart(2, "0");
+}
 
 function TournamentSessionPage() {
   const navigate = useNavigate();
-  const { isMuted, toggleMute, playClick, playCorrect, playWrong } = usePrepQuestSound();
-  const [session, setSession] = useState(() => {
-    if (hasCompletedTournamentThisWeek()) return null;
-    const active = getActiveTournamentSession();
-    if (active) return active;
-    const built = buildTournamentSession();
-    return built.ok ? built.session : null;
-  });
-  const [currentIndex, setCurrentIndex] = useState(() => session?.currentIndex || 0);
+  const requestedId = useTournamentId();
+  const { isMuted, toggleMute, playClick, playCorrect, playWrong, playLevelUp } = usePrepQuestSound();
+  const lastRevealSoundRef = useRef("");
+  const lastCheckpointSoundRef = useRef("");
+  const autoLockRef = useRef("");
+  const [state, setState] = useState(null);
   const [selectedOptionKey, setSelectedOptionKey] = useState("");
-  const [feedback, setFeedback] = useState(null);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(TIME_PER_QUESTION_SECONDS);
+  const [submitting, setSubmitting] = useState(false);
+  const [readyBusy, setReadyBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (hasCompletedTournamentThisWeek()) {
-      navigate("/tournament/result", { replace: true });
-      return;
-    }
-    if (!session?.questions?.length) {
-      navigate("/tournament", { replace: true });
-    }
-  }, [navigate, session]);
-
-  // Owns the full per-question countdown with its own local counter so a
-  // question change never reads the previous question's stale timeRemaining
-  // value (that race used to auto-submit the next question as a timeout).
-  useEffect(() => {
-    if (feedback || showLeaderboard) return undefined;
-    let remaining = TIME_PER_QUESTION_SECONDS;
-    setTimeRemaining(remaining);
-    const interval = window.setInterval(() => {
-      remaining -= 1;
-      setTimeRemaining(remaining);
-      if (remaining <= 0) {
-        window.clearInterval(interval);
-        submitAnswer("");
+  const loadState = async () => {
+    try {
+      let tournamentId = requestedId;
+      if (!tournamentId) {
+        const current = await getCurrentTournaments();
+        tournamentId = current.tournament?.id;
       }
-    }, 1000);
-    return () => window.clearInterval(interval);
+      if (!tournamentId) {
+        navigate("/tournament", { replace: true });
+        return;
+      }
+      const data = await getTournamentLiveState(tournamentId);
+      setState(data);
+      setError("");
+      if (data.phase?.phase === "finished" || data.tournament?.status === "results_published") {
+        navigate(`/tournament/result?id=${encodeURIComponent(tournamentId)}`, { replace: true });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Live battle is unavailable.");
+    }
+  };
+
+  useEffect(() => {
+    loadState();
+    const id = window.setInterval(loadState, 1000);
+    return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, feedback, showLeaderboard]);
+  }, [requestedId]);
 
-  if (!session) return null;
+  useEffect(() => {
+    setSelectedOptionKey(state?.answer?.selectedOptionKey || "");
+    if (state?.answer?.locked && state?.phase?.phase === "question") {
+      setNotice("Answer locked. Waiting for reveal.");
+    }
+  }, [state?.answer?.locked, state?.answer?.selectedOptionKey, state?.phase?.phase, state?.question?.id]);
 
-  const question = session.questions[currentIndex];
-  const answers = session.answers || [];
-  const runningScore = answers.reduce((sum, answer) => sum + (answer.score || 0), 0);
-  const correctCount = answers.filter((answer) => answer.isCorrect).length;
-  const progressPercent = Math.round(((currentIndex + 1) / session.questions.length) * 100);
-  const isLastQuestion = currentIndex === session.questions.length - 1;
-  const isCheckpoint = LEADERBOARD_CHECKPOINTS.includes(currentIndex + 1);
-
-  const persistSession = (nextSession, nextIndex = currentIndex) => {
-    const updated = { ...nextSession, currentIndex: nextIndex };
-    saveActiveTournamentSession(updated);
-    setSession(updated);
-  };
-
-  function submitAnswer(optionKey) {
-    if (feedback) return;
-    const isCorrect = optionKey !== "" && optionKey === question.correctOption;
-    const score = computeQuestionScore({ isCorrect, timeRemainingSeconds: timeRemaining });
-    const answer = { questionId: question.id, selectedOptionKey: optionKey, isCorrect, score, timeRemainingSeconds: timeRemaining };
-    const nextSession = {
-      ...session,
-      answers: [...answers.filter((item) => item.questionId !== question.id), answer],
-    };
-    persistSession(nextSession);
-    setFeedback({ isCorrect, answer });
-    if (isCorrect) playCorrect();
+  useEffect(() => {
+    if (state?.phase?.phase !== "reveal" || !state?.question?.id) return;
+    const key = `${state.question.id}-${state.answer?.selectedOptionKey || "unanswered"}`;
+    if (lastRevealSoundRef.current === key) return;
+    lastRevealSoundRef.current = key;
+    if (state.answer?.isCorrect) playCorrect();
     else playWrong();
-  }
+  }, [playCorrect, playWrong, state?.answer?.isCorrect, state?.answer?.selectedOptionKey, state?.phase?.phase, state?.question?.id]);
 
-  const handleOptionSelect = (optionKey) => {
-    if (feedback) return;
+  useEffect(() => {
+    if (state?.phase?.phase !== "checkpoint") return;
+    const key = String(state.phase.afterQuestion || "");
+    if (!key || lastCheckpointSoundRef.current === key) return;
+    lastCheckpointSoundRef.current = key;
+    playLevelUp();
+  }, [playLevelUp, state?.phase?.afterQuestion, state?.phase?.phase]);
+
+  const registration = state?.registration;
+  const tournament = state?.tournament;
+  const phase = state?.phase;
+  const question = state?.question;
+  const answer = state?.answer;
+  const currentRank = state?.currentUserRank;
+  const languageMode = registration?.preferredLanguage || "english";
+  const questionText = useMemo(() => question ? getText(question, languageMode) : null, [question, languageMode]);
+  const questionNumber = Number.isInteger(phase?.questionIndex) ? phase.questionIndex + 1 : phase?.afterQuestion || 0;
+  const progressPercent = Math.round((Math.min(questionNumber || 0, tournament?.questionCount || 20) / (tournament?.questionCount || 20)) * 100);
+  const reveal = phase?.phase === "reveal";
+  const locked = Boolean(answer?.locked);
+  const selectedAnswerLabel = question && answer?.selectedOptionKey ? getOptionLabel(question, answer.selectedOptionKey, languageMode) : "No answer submitted";
+  const correctAnswerLabel = question?.correctOption ? getOptionLabel(question, question.correctOption, languageMode) : "";
+
+  const handleReady = async () => {
+    if (!tournament || readyBusy) return;
+    setReadyBusy(true);
+    setError("");
     playClick();
-    setSelectedOptionKey(optionKey);
-    submitAnswer(optionKey);
+    try {
+      await markTournamentReady(tournament.id);
+      setNotice("You're ready. Question 1 starts on server time.");
+      await loadState();
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not mark you ready.");
+    } finally {
+      setReadyBusy(false);
+    }
   };
 
-  const handleNext = () => {
+  const handleSubmit = async () => {
+    if (!tournament || locked || submitting || phase?.phase !== "question") return;
+    if (!selectedOptionKey) {
+      setError("Choose an answer before locking it.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    setNotice("");
     playClick();
-    if (isCheckpoint && !showLeaderboard) {
-      setShowLeaderboard(true);
-      return;
+    try {
+      const data = await submitTournamentAnswer(tournament.id, selectedOptionKey);
+      setNotice(data.answer?.message || "Answer locked. Waiting for reveal.");
+      await loadState();
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not lock answer.");
+    } finally {
+      setSubmitting(false);
     }
-    setShowLeaderboard(false);
-    if (isLastQuestion) {
-      const attempt = completeTournament(session);
-      navigate("/tournament/result", { state: { resultId: attempt.id } });
-      return;
-    }
-    const nextIndex = currentIndex + 1;
-    setCurrentIndex(nextIndex);
-    setSelectedOptionKey("");
-    setFeedback(null);
-    persistSession(session, nextIndex);
   };
+
+  useEffect(() => {
+    if (!tournament || locked || submitting || phase?.phase !== "question" || !question?.id || !selectedOptionKey) return;
+    if ((phase.timeLeft || 0) > 0) return;
+    const key = `${tournament.id}-${question.id}-${selectedOptionKey}`;
+    if (autoLockRef.current === key) return;
+    autoLockRef.current = key;
+    handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locked, phase?.phase, phase?.timeLeft, question?.id, selectedOptionKey, submitting, tournament?.id]);
 
   const handleExit = () => {
     playClick();
     navigate("/tournament");
   };
 
-  const leaderboard = showLeaderboard ? getDisplayLeaderboard(getMergedLeaderboard(runningScore, currentIndex + 1)) : null;
-  const timerLow = timeRemaining <= 5 && !feedback;
+  if (!state && !error) return null;
+
+  if (!registration) {
+    return (
+      <DashboardLayout activeKey="tournament">
+        <section className="dashboard-content tournament-page">
+          <section className="dashboard-card tournament-card">
+            <h1>Registration Closed</h1>
+            <p className="empty-state">You must be registered before entering a live tournament battle.</p>
+            <button className="tournament-primary-btn" type="button" onClick={() => navigate("/tournament")}>Back to Tournament</button>
+          </section>
+        </section>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout activeKey="tournament">
       <header className="dashboard-header session-header">
         <div className="header-left">
-          <p className="eyebrow subject-pill">Friday Tournament</p>
+          <p className="eyebrow subject-pill">Friday Live Tournament</p>
           <h1>Live Battle</h1>
-          <p>Question {currentIndex + 1} of {session.questions.length}</p>
         </div>
         <div className="header-right">
           <button
@@ -147,7 +196,7 @@ function TournamentSessionPage() {
           >
             {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
           </button>
-          <span className="soft-timer"><FaTrophy /> {runningScore} pts</span>
+          <span className="soft-timer"><FaTrophy /> {registration.score} pts</span>
           <button className="outline-pill exit-practice-btn" type="button" onClick={handleExit}>
             <FaDoorOpen /> Exit Battle
           </button>
@@ -155,120 +204,239 @@ function TournamentSessionPage() {
       </header>
 
       <section className="dashboard-content practice-session-content tournament-session-content">
-        <div className="practice-board tournament-practice-board">
-          <div className="board-question-side">
-            <div className="board-top-strip">
-              <div className="preview-progress-row">
-                <span>Question {currentIndex + 1} of {session.questions.length}</span>
-                <span>{progressPercent}% complete</span>
+        {error && <p className="tournament-error"><FaExclamationTriangle /> {error}</p>}
+
+        {phase?.phase === "ready_room" ? (
+          <section className="dashboard-card ready-room-card">
+            <div className="ready-countdown">
+              <span>Get Ready for Friday Live Tournament</span>
+              <strong>{formatCountdown(tournament.readyCountdownSeconds)}</strong>
+              <p>Tournament begins in {tournament.readyCountdownSeconds} seconds</p>
+            </div>
+            <div className="ready-room-meta-grid">
+              <div><FaUsers /><span>Total registered</span><strong>{tournament.registrationCount} {tournament.registrationCount === 1 ? "user" : "users"}</strong></div>
+              <div><FaTrophy /><span>Exam track</span><strong>{tournament.examTrack === "mixed" ? "Mixed" : registration.selectedExam}</strong></div>
+              <div><FaUserCheck /><span>Language mode</span><strong>{registration.preferredLanguage}</strong></div>
+              <div><FaRegClock /><span>Format</span><strong>20 mixed questions</strong></div>
+            </div>
+            <div className="tournament-format-grid">
+              <div className="tournament-format-item"><FaCheckCircle /> 20 mixed Loksewa questions</div>
+              <div className="tournament-format-item"><FaCheckCircle /> 15 seconds per question</div>
+              <div className="tournament-format-item"><FaCheckCircle /> Speed bonus up to +50 points</div>
+              <div className="tournament-format-item"><FaCheckCircle /> Answers lock after submission</div>
+              <div className="tournament-format-item"><FaCheckCircle /> Correct/wrong reveals after timer closes</div>
+              <div className="tournament-format-item"><FaCheckCircle /> Speed bonus rewards faster correct answers</div>
+              <div className="tournament-format-item"><FaShieldAlt /> No betting. No coin loss.</div>
+            </div>
+            <div className="ready-participant-panel">
+              <div className="card-heading">
+                <h2 className="card-title"><FaUsers /> Registered Participants</h2>
+                <span className="status-chip">{state.participants?.length || 0} total</span>
               </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+              <div className="ready-participant-list">
+                {state.participants?.length ? state.participants.map((participant) => (
+                  <div className={`ready-participant-row${participant.isCurrentUser ? " current-user" : ""}`} key={participant.userId}>
+                    <strong>{participant.displayName}</strong>
+                    <span>{participant.selectedExam} · {participant.preferredLanguage}</span>
+                    {participant.isCurrentUser ? <em>You</em> : null}
+                  </div>
+                )) : <p className="empty-state">No users registered yet.</p>}
               </div>
-              <div className="progress-strip-footer">
-                <span className="xp-chip">Score: {runningScore} pts &middot; {correctCount} correct</span>
-                {!feedback && !showLeaderboard && (
-                  <span className={`question-timer${timerLow ? " low" : ""}`}>
-                    <FaRegClock /> {timeRemaining}s
+            </div>
+            <button className="tournament-primary-btn" type="button" disabled={readyBusy || registration.readyStatus} onClick={handleReady}>
+              <FaTrophy /> {registration.readyStatus ? "Entered Tournament" : "Enter Tournament"}
+            </button>
+            <p className="tournament-note">Question 1 starts from the shared server clock for everyone together.</p>
+          </section>
+        ) : tournament?.status === "registration_open" ? (
+          <section className="dashboard-card checkpoint-leaderboard-card">
+            <div className="card-heading">
+              <h2 className="card-title"><FaRegClock /> Battle Starting Soon</h2>
+              <span className="status-chip">Registered</span>
+            </div>
+            <p className="empty-state">Next question starts after registration closes in {tournament?.secondsToStart || phase?.secondsToStart || 0} seconds.</p>
+          </section>
+        ) : phase?.phase === "checkpoint" ? (
+          <section className="dashboard-card checkpoint-leaderboard-card major-checkpoint-card">
+            <div className="checkpoint-countdown-card">
+              <span>Next question starts in 15 seconds.</span>
+              <strong>{phase.countdownSeconds}</strong>
+            </div>
+            <div className="card-heading">
+              <h2 className="card-title"><FaTrophy /> Live Ranking Checkpoint</h2>
+              <span className="status-chip">After Question {phase.afterQuestion}</span>
+            </div>
+            <div className="checkpoint-leaderboard-list scrollable-ranking">
+              {state.leaderboard.length ? state.leaderboard.map((row) => (
+                <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.userId}>
+                  <span className={`rank-badge rank-${row.rank <= 3 ? row.rank : "default"}`}>{row.rank}</span>
+                  <span className="learner-cell">
+                    {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
+                    <strong>{row.displayName}</strong>
+                    {row.isCurrentUser ? <em className="you-badge">You</em> : null}
                   </span>
-                )}
-              </div>
-              {!feedback && !showLeaderboard && (
+                  <span>{row.correctAnswers} correct · {row.wrongAnswers} wrong · {row.unanswered} unanswered</span>
+                  <strong>{row.score} pts</strong>
+                </div>
+              )) : <p className="empty-state">Leaderboard will appear after participants answer live questions.</p>}
+            </div>
+            <p className="tournament-note">Your rank: {currentRank ? `#${currentRank.rank} · ${currentRank.score} pts · ${currentRank.correctAnswers} correct` : "Not ranked yet"}</p>
+          </section>
+        ) : question ? (
+          <div className="practice-board tournament-practice-board">
+            <div className="board-question-side">
+              <div className="board-top-strip">
+                <div className="preview-progress-row">
+                  <span>Question {questionNumber} of {tournament.questionCount}</span>
+                  <span>{progressPercent}% complete</span>
+                </div>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <div className="progress-strip-footer">
+                  <span className="xp-chip">Score: {registration.score} pts · {registration.correctAnswers} correct</span>
+                  <span className={`question-timer${(phase.timeLeft || 0) <= 5 && phase.phase === "question" ? " low" : ""}`}>
+                    <FaRegClock /> {phase.phase === "question" ? `${phase.timeLeft}s` : `Reveal ${phase.revealCountdownSeconds}s`}
+                  </span>
+                </div>
                 <div className="progress-bar question-timer-bar">
                   <div
-                    className={`progress-fill${timerLow ? " timer-low-fill" : ""}`}
-                    style={{ width: `${(timeRemaining / TIME_PER_QUESTION_SECONDS) * 100}%` }}
+                    className={`progress-fill${(phase.timeLeft || 0) <= 5 && phase.phase === "question" ? " timer-low-fill" : ""}`}
+                    style={{ width: `${phase.phase === "question" ? ((phase.timeLeft || 0) / tournament.timePerQuestion) * 100 : 0}%` }}
                   />
                 </div>
-              )}
+              </div>
+
+              <section className="dashboard-card question-card">
+                <div className="question-meta-row">
+                  <span className="question-pill difficulty">{question.difficulty}</span>
+                  <span className="question-pill">{question.topic}</span>
+                  <span className="question-pill level">{question.subject}</span>
+                  <span className="question-pill">Tournament</span>
+                </div>
+                <p className="question-text">{questionText?.question}</p>
+                <p className="lock-warning">Choose carefully. You can change your answer before locking it.</p>
+                <div className="answer-options">
+                  {questionText?.options.map((option) => {
+                    const isSelected = (locked ? answer?.selectedOptionKey : selectedOptionKey) === option.key;
+                    const optionState = reveal
+                      ? option.key === question.correctOption
+                        ? "correct"
+                        : isSelected
+                          ? "wrong"
+                          : "muted"
+                      : isSelected
+                        ? "selected"
+                        : "";
+                    return (
+                      <button
+                        className={`answer-option ${optionState}`}
+                        type="button"
+                        key={option.key}
+                        disabled={locked || submitting || phase.phase !== "question"}
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setError("");
+                          setSelectedOptionKey(option.key);
+                        }}
+                      >
+                        <span className="option-copy">{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <div className={`question-actions${locked ? " answered" : ""}`}>
+                {reveal && answer ? (
+                  <span className={`tournament-score-badge${answer.isCorrect ? " correct" : " wrong"}`}>
+                    {answer.isCorrect ? `+${answer.pointsEarned} points` : "+0 points"}
+                  </span>
+                ) : reveal ? (
+                  <span className="tournament-score-badge wrong">Time's up · +0 points</span>
+                ) : locked ? (
+                  <span className="tournament-score-badge">Answer locked. Waiting for reveal.</span>
+                ) : (
+                  <span className="xp-preview">Correct Answer: +100 · Speed Bonus: +0 to +50 · Max: 150</span>
+                )}
+              </div>
+              {!reveal && !locked ? (
+                <div className="question-actions lock-answer-row">
+                  <button className="tournament-primary-btn lock-answer-btn" type="button" disabled={!selectedOptionKey || submitting || phase?.phase !== "question"} onClick={handleSubmit}>
+                    <FaCheckCircle /> {submitting ? "Locking..." : "Lock Answer"}
+                  </button>
+                </div>
+              ) : null}
             </div>
 
-            {showLeaderboard ? (
-              <section className="dashboard-card checkpoint-leaderboard-card">
-                <div className="card-heading">
-                  <h2 className="card-title"><FaTrophy /> Live Leaderboard</h2>
-                  <span className="status-chip">After Question {currentIndex + 1}</span>
-                </div>
-                <div className="checkpoint-leaderboard-list">
-                  {leaderboard.map((row) => (
-                    <div className={`checkpoint-leaderboard-row${row.isCurrentUser ? " current-user" : ""}`} key={row.id}>
-                      <span className="rank-badge">{row.rank}</span>
-                      <span className="learner-cell">
-                        {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
-                        <strong>{row.name}</strong>
-                      </span>
-                      <span>{row.examTrack}</span>
-                      <strong>{row.tournamentPoints} pts</strong>
-                    </div>
-                  ))}
-                </div>
-                <button className="btn btn-full" type="button" onClick={handleNext}>
-                  {isLastQuestion ? "View Final Results" : "Continue Battle"}
-                </button>
-              </section>
-            ) : (
-              <>
-                <div className="practice-question-stack">
-                  <QuestionCard
-                    question={question}
-                    selectedOptionKey={selectedOptionKey}
-                    correctOptionKey={question.correctOption}
-                    languageMode={session.preferredLanguage}
-                    isAnswered={Boolean(feedback)}
-                    levelLabel={question.subject}
-                    practiceType="Tournament"
-                    onSelectOption={handleOptionSelect}
-                  />
-                </div>
-
-                <div className={`question-actions${feedback ? " answered" : ""}`}>
-                  {feedback ? (
-                    <>
-                      <span className={`tournament-score-badge${feedback.isCorrect ? " correct" : " wrong"}`}>
-                        {feedback.isCorrect ? `+${feedback.answer.score} points` : "+0 points"}
-                      </span>
-                      <button className="btn" type="button" onClick={handleNext}>
-                        {isLastQuestion ? "Finish Battle" : "Next Question"}
-                      </button>
-                    </>
-                  ) : (
-                    <span className="xp-preview">Pick an answer fast &mdash; speed adds points</span>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {!showLeaderboard && (
             <aside className="board-coach-panel" aria-label="Tournament feedback panel">
               <section className="coach-section mini-session-stats">
-                <div className="coach-section-heading"><span>Battle</span><strong>{currentIndex + 1}/{session.questions.length}</strong></div>
+                <div className="coach-section-heading"><span>Battle</span><strong>{questionNumber}/{tournament.questionCount}</strong></div>
                 <div className="summary-grid">
-                  <div><span>Score</span><strong>{runningScore}</strong></div>
-                  <div><span>Correct</span><strong>{correctCount}</strong></div>
+                  <div><span>Score</span><strong>{registration.score}</strong></div>
+                  <div><span>Correct</span><strong>{registration.correctAnswers}</strong></div>
+                  <div><span>Wrong</span><strong>{registration.wrongAnswers}</strong></div>
+                  <div><span>Unanswered</span><strong>{registration.unanswered}</strong></div>
+                  <div><span>Speed Bonus</span><strong>+{registration.speedBonusTotal || 0}</strong></div>
                 </div>
               </section>
 
               <section className="coach-feedback-shell">
-                {feedback ? (
-                  <AnswerFeedback
-                    question={question}
-                    isCorrect={feedback.isCorrect}
-                    selectedOptionKey={feedback.answer.selectedOptionKey}
-                    languageMode={session.preferredLanguage}
-                    showReward={false}
-                  />
+                {reveal ? (
+                  <div className={`answer-feedback ${answer?.isCorrect ? "correct" : "wrong"}`}>
+                    <div className="feedback-heading">
+                      <span className="feedback-icon">{answer?.isCorrect ? <FaCheckCircle /> : <FaExclamationTriangle />}</span>
+                      <div>
+                        <h3>{answer ? (answer.isCorrect ? "Correct" : "Not correct") : "Time's up"}</h3>
+                        <p>{answer ? (answer.isCorrect ? "Nice work - your answer was correct." : "Your selected answer was not correct.") : "No answer was submitted."}</p>
+                      </div>
+                    </div>
+                    <div className="feedback-answer-grid">
+                      {!answer?.isCorrect && (
+                        <div>
+                          <span>Your answer</span>
+                          <strong>{selectedAnswerLabel}</strong>
+                        </div>
+                      )}
+                      <div>
+                        <span>Correct answer</span>
+                        <strong>{correctAnswerLabel}</strong>
+                      </div>
+                      <div>
+                        <span>Points earned</span>
+                        <strong>{answer?.pointsEarned || 0}</strong>
+                      </div>
+                      <div>
+                        <span>Base points</span>
+                        <strong>{answer?.basePoints || 0}</strong>
+                      </div>
+                      {answer?.isCorrect && (
+                        <div>
+                          <span>Speed bonus</span>
+                          <strong>+{answer.speedBonus || 0}</strong>
+                        </div>
+                      )}
+                    </div>
+                    <div className="feedback-explanation">
+                      <strong>Explanation</strong>
+                      <span>{questionText?.explanation}</span>
+                    </div>
+                  </div>
                 ) : (
                   <div className="coach-placeholder">
-                    <span>Feedback</span>
-                    <strong>Answer when ready</strong>
-                    <p>Faster correct answers earn more points. The timer auto-submits as wrong at 0.</p>
+                    <span>Live State</span>
+                    <strong>{notice || "Answer before the server timer ends"}</strong>
+                    <p>Correct or wrong is revealed only after the 15-second timer closes.</p>
                   </div>
                 )}
               </section>
             </aside>
-          )}
-        </div>
+          </div>
+        ) : (
+          <section className="dashboard-card tournament-card">
+            <p className="empty-state">Not enough validated tournament questions are available yet.</p>
+          </section>
+        )}
       </section>
     </DashboardLayout>
   );

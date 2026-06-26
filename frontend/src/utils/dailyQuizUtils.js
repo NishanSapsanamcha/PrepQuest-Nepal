@@ -1,22 +1,20 @@
 import { examTracks } from "../data/examTracks";
 import { getOptionLabel, getText, getValidatedQuestions, normalizeExamId, normalizeLanguageMode } from "./practiceUtils";
 import {
-  getCoinTransactions,
   getUser,
   getWrongAnswerReview,
-  saveCoinTransactions,
   saveSavedReviewQuestions,
   saveUser,
   saveWrongAnswerReview,
   getSavedReviewQuestions,
 } from "./storageUtils";
 import { addXPTransaction, calculateTotalXPFromTransactions, XP_REWARDS } from "./xpUtils";
+import { awardActivityCoins, COIN_REWARDS, getActiveUserId } from "../services/coinService";
 
 const ATTEMPTS_KEY = "prepquest_daily_quiz_attempts";
 const ACTIVE_KEY = "prepquest_daily_quiz_active";
 const RESULT_KEY = "prepquest_daily_quiz_latest_result";
 const REQUIRED_QUESTION_COUNT = 10;
-const COIN_REWARD = 20;
 
 const subjectAliases = {
   "iq-mental-ability": "general-ability-iq",
@@ -330,7 +328,7 @@ export function completeDailyQuiz(session, elapsedSeconds) {
   const wrongAnswers = answers.length - correctAnswers;
   const accuracy = Math.round((correctAnswers / REQUIRED_QUESTION_COUNT) * 100);
   const xpEarned = XP_REWARDS.DAILY_QUIZ_COMPLETE + (correctAnswers === REQUIRED_QUESTION_COUNT ? XP_REWARDS.DAILY_QUIZ_PERFECT_BONUS : 0);
-  const coinsEarned = accuracy >= 80 ? COIN_REWARD : 0;
+  const coinsEarned = COIN_REWARDS.DAILY_QUICK_COMPLETE + (accuracy >= 80 ? COIN_REWARDS.DAILY_QUICK_SCORE_BONUS : 0);
   const { strongestSubject, weakestSubject } = getSubjectInsights(answers);
   const attempt = {
     id: session.id,
@@ -374,33 +372,53 @@ export function completeDailyQuiz(session, elapsedSeconds) {
   }
 
   const user = getUser();
-  const updatedUser = {
+  saveUser({
     ...user,
     totalXp: calculateTotalXPFromTransactions(),
-    coins: Math.max(0, user.coins || 0) + coinsEarned,
     lastDailyQuizDate: today,
-  };
-  saveUser(updatedUser);
-
-  if (coinsEarned > 0) {
-    saveCoinTransactions([
-      {
-        id: `daily_quiz_coins_${today}`,
-        type: "daily_quiz",
-        amount: coinsEarned,
-        date: today,
-        source: "Daily Quiz",
-        reason: "Scored 80% or above",
-        createdAt: completedAt,
-      },
-      ...getCoinTransactions().filter((transaction) => transaction.id !== `daily_quiz_coins_${today}`),
-    ]);
-  }
+  });
 
   saveDailyQuizWrongAnswers(answers, session.questions, session.preferredLanguage);
   saveDailyQuizAttempts([attempt, ...getDailyQuizAttempts()]);
   saveLatestDailyQuizResult(attempt);
   clearActiveDailyQuizSession();
+
+  // Award coins through the central engine (idempotent). Streak milestones are
+  // evaluated AFTER today's attempt is saved so today counts toward the streak.
+  const userId = getActiveUserId();
+  const streak = getCurrentStreak();
+  const streakComponents = Object.entries(COIN_REWARDS.STREAK_MILESTONES)
+    .filter(([milestone]) => streak >= Number(milestone))
+    .map(([milestone, reward]) => ({
+      amount: reward,
+      source: "streak_milestone",
+      sourceId: String(milestone),
+      reason: `${milestone}-Day Streak Milestone`,
+      label: `${milestone}-Day Streak Milestone`,
+      idempotencyKey: `${userId}:streak_milestone:${milestone}`,
+    }));
+
+  awardActivityCoins([
+    {
+      amount: COIN_REWARDS.DAILY_QUICK_COMPLETE,
+      source: "daily_quick_challenge",
+      sourceId: today,
+      reason: "Daily Quick Challenge Complete",
+      label: "Daily Quick Challenge Complete",
+      idempotencyKey: `${userId}:daily_quick_challenge:${today}:complete`,
+    },
+    {
+      condition: accuracy >= 80,
+      amount: COIN_REWARDS.DAILY_QUICK_SCORE_BONUS,
+      source: "daily_quick_challenge",
+      sourceId: today,
+      reason: "80% Score Bonus",
+      label: "80% Score Bonus",
+      idempotencyKey: `${userId}:daily_quick_challenge:${today}:score_80_bonus`,
+    },
+    ...streakComponents,
+  ]);
+
   return attempt;
 }
 

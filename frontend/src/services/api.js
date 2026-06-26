@@ -8,4 +8,20 @@ const api = axios.create({
 	}
 });
 
+api.interceptors.request.use((config) => {
+	const parse = (value) => {
+		if (!value) return null;
+		try {
+			return JSON.parse(value);
+		} catch {
+			return null;
+		}
+	};
+	const auth = parse(localStorage.getItem("prepquest-auth")) || parse(sessionStorage.getItem("prepquest-auth"));
+	if (auth?.token) {
+		config.headers.Authorization = `Bearer ${auth.token}`;
+	}
+	return config;
+});
+
 export default api;

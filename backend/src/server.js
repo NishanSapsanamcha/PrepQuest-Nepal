@@ -3,6 +3,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import { testDatabaseConnection } from "./config/database.js";
+import { ensureRuntimeSchema } from "./config/ensureSchema.js";
 import { sequelize } from "./models/index.js";
 
 // Server port from environment variable or default to 5000
@@ -18,6 +19,7 @@ const startServer = async () => {
     // Synchronize Sequelize models with database schema
     // Creates tables if they don't exist (in development)
     await sequelize.sync();
+    await ensureRuntimeSchema(sequelize);
 
     // Start HTTP server on specified PORT
     app.listen(PORT, () => {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaArrowDown,
@@ -140,6 +140,8 @@ function Leaderboard() {
   const [subjectFilter, setSubjectFilter] = useState("Constitution of Nepal");
   const [hallOfFameFilter, setHallOfFameFilter] = useState("Lifetime XP");
   const [tournamentType, setTournamentType] = useState(`${selectedExam} Friday Battle`);
+  const [tournamentData, setTournamentData] = useState(null);
+  const [tournamentError, setTournamentError] = useState("");
 
   const activeRanking = rankingTypes.find((type) => type.id === selectedRankingType);
   // Replace the mock "isCurrentUser" placeholder's identity with the real
@@ -157,7 +159,44 @@ function Leaderboard() {
     [leaderboardUsers, selectedExam]
   );
 
+  useEffect(() => {
+    if (selectedRankingType !== "tournament") return;
+    getLatestTournamentResults()
+      .then((data) => {
+        setTournamentData(data);
+        setTournamentError("");
+      })
+      .catch((err) => {
+        setTournamentData(null);
+        setTournamentError(err.response?.data?.message || "Results will appear after the tournament finishes.");
+      });
+  }, [selectedRankingType, tournamentFilter]);
+
   const rows = useMemo(() => {
+    if (selectedRankingType === "tournament") {
+      if (!tournamentData?.leaderboard?.length) return [];
+      return tournamentData.leaderboard.map((row) => ({
+        id: row.userId,
+        rank: row.rank,
+        name: row.displayName,
+        initials: row.displayName?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "PQ",
+        examTrack: normalizeExamTrack(row.selectedExam),
+        tournamentPoints: row.score,
+        tournamentAccuracy: Math.round(((row.correctAnswers || 0) / 20) * 100),
+        tournamentCorrectAnswers: row.correctAnswers,
+        wrongAnswers: row.wrongAnswers,
+        unanswered: row.unanswered,
+        speedBonus: row.speedBonusTotal || 0,
+        reward: row.result
+          ? `${row.result.rewardCoins} coins + ${row.result.rewardXp} XP${row.result.badgeEarned ? ` + ${row.result.badgeEarned}` : ""}`
+          : row.reward
+            ? `${row.reward.rewardCoins} coins + ${row.reward.rewardXp} XP${row.reward.badgeEarned ? ` + ${row.reward.badgeEarned}` : ""}`
+            : "Pending",
+        isCurrentUser: row.isCurrentUser,
+        trend: "same"
+      }));
+    }
+
     const context = { subjectFilter, hallOfFameFilter };
     const filteredUsers = examFilteredUsers.map((user) => {
       if (selectedRankingType === "weekly") return applyTimeFilter(user, "weekly", weeklyFilter);
@@ -167,7 +206,7 @@ function Leaderboard() {
     });
 
     return buildRankedUsers(filteredUsers, selectedRankingType, context);
-  }, [examFilteredUsers, hallOfFameFilter, monthlyFilter, selectedRankingType, subjectFilter, tournamentFilter, weeklyFilter]);
+  }, [examFilteredUsers, hallOfFameFilter, monthlyFilter, selectedRankingType, subjectFilter, tournamentData, weeklyFilter]);
 
   const currentUser = rows.find((user) => user.isCurrentUser);
   const podium = rows.slice(0, 3);
@@ -266,7 +305,7 @@ function Leaderboard() {
           <span>Correct Answers <strong>{correctAnswers}</strong></span>
           <span>Accuracy <strong>{currentUser?.tournamentAccuracy || currentUser?.accuracy || 0}%</strong></span>
           <span>Speed Bonus <strong>+{formatNumber(currentUser?.speedBonus)}</strong></span>
-          <span>Reward <strong>{rewardForRank(currentUser || {})}</strong></span>
+          <span>Reward <strong><RewardText text={rewardForRank(currentUser || {})} /></strong></span>
         </>
       );
     }
@@ -311,7 +350,7 @@ function Leaderboard() {
         <div className="leaderboard-empty-state">
           <p>
             {isTournament
-              ? `No tournament ranking yet for ${selectedExam}. Join the next Friday Loksewa Battle to appear here.`
+              ? tournamentError || "Results will appear after the tournament finishes."
               : "No ranking data yet for this filter. Start practicing to appear on the leaderboard."}
           </p>
           <button className="btn" type="button" onClick={handlePrimaryCta}>{isTournament ? "View Tournament" : "Start Practice"}</button>
@@ -323,7 +362,7 @@ function Leaderboard() {
       return (
         <div className="leaderboard-table tournament-table">
           <div className="leaderboard-table-head">
-            <span>Rank</span><span>Learner</span><span>Exam Track</span><span>Points</span><span>Accuracy</span><span>Speed Bonus</span><span>Reward</span><span>Trend</span>
+            <span>Rank</span><span>Learner</span><span>Exam Track</span><span>Points</span><span>Correct</span><span>Wrong</span><span>Unanswered</span><span>Speed Bonus</span><span>Reward</span>
           </div>
           {rows.map((user) => (
             <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
@@ -331,10 +370,11 @@ function Leaderboard() {
               <span className="learner-cell"><span className="mini-avatar">{user.initials}</span><span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span></span>
               <span>{user.examTrack}</span>
               <strong>{formatNumber(user.tournamentPoints)}</strong>
-              <span>{user.tournamentAccuracy || user.accuracy}%</span>
+              <span>{user.tournamentCorrectAnswers || 0}</span>
+              <span>{user.wrongAnswers || 0}</span>
+              <span>{user.unanswered || 0}</span>
               <span>+{formatNumber(user.speedBonus)}</span>
-              <span>{rewardForRank(user)}</span>
-              <span className={`trend ${user.trend}`}><TrendIcon trend={user.trend} /></span>
+              <span><RewardText text={rewardForRank(user)} /></span>
             </div>
           ))}
         </div>
@@ -459,7 +499,7 @@ function Leaderboard() {
                       ? `${formatNumber(subjectStats.xp)} XP - ${subjectStats.accuracy}%`
                       : `${formatNumber(metricFor(user, selectedRankingType, { hallOfFameFilter }))} ${selectedRankingType === "hallOfFame" ? "lifetime" : "XP"} - ${user.accuracy}%`}
                 </strong>
-                {isTournament ? <span className="podium-reward">Reward: {rewardForRank(user)}</span> : null}
+                {isTournament ? <span className="podium-reward">Reward: <RewardText text={rewardForRank(user)} /></span> : null}
               </article>
             );
           })}
@@ -494,10 +534,10 @@ function Leaderboard() {
               <p>Compete every Friday with learners from your exam track. Answer timed questions, earn speed bonuses, and win XP, coins, and badges.</p>
             </div>
             <div className="tournament-rewards">
-              <span>1st: 500 coins + 500 XP</span>
-              <span>2nd: 300 coins + 300 XP</span>
-              <span>3rd: 150 coins + 200 XP</span>
-              <span>Everyone: 50 coins + 100 XP</span>
+              <span><b>1st</b> <RewardDisplay coins={500} xp={500} /></span>
+              <span><b>2nd</b> <RewardDisplay coins={300} xp={300} /></span>
+              <span><b>3rd</b> <RewardDisplay coins={150} xp={200} /></span>
+              <span><b>Everyone</b> <RewardDisplay coins={50} xp={100} /></span>
             </div>
             <button className="btn tournament-cta-button" type="button" onClick={() => navigate("/tournament")}>View Tournament</button>
           </section>

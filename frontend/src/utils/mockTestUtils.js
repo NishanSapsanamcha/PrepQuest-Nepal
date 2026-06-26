@@ -2,16 +2,15 @@ import { examTracks } from "../data/examTracks";
 import { mockBadgeProgress, mockTestTypes, readinessLevels } from "../data/mockTestMockData";
 import { getOptionLabel, getText, getValidatedQuestions, normalizeExamId, normalizeLanguageMode } from "./practiceUtils";
 import {
-  getCoinTransactions,
   getSavedReviewQuestions,
   getUser,
   getWrongAnswerReview,
-  saveCoinTransactions,
   saveSavedReviewQuestions,
   saveUser,
   saveWrongAnswerReview,
 } from "./storageUtils";
 import { addXPTransaction, calculateTotalXPFromTransactions, XP_REWARDS } from "./xpUtils";
+import { awardActivityCoins, COIN_REWARDS, getActiveUserId, spendCoins } from "../services/coinService";
 
 export const MOCK_ATTEMPTS_KEY = "prepquest_mock_attempts";
 export const MOCK_USAGE_KEY = "prepquest_mock_usage_today";
@@ -240,17 +239,19 @@ export function getMockReadiness(mockType, selectedExam) {
   };
 }
 
+// Deduct coins for an optional paid feature, routed through the central engine
+// so the ledger and balance stay authoritative. `type` maps to a spend source.
 function spendCoinsOnce({ id, type, amount, reason, mockAttemptId = "" }) {
-  const user = getUser();
-  if ((user.coins || 0) < amount) return { ok: false, reason: "not_enough_coins" };
-  const transactions = getCoinTransactions();
-  if (transactions.some((transaction) => transaction.id === id)) return { ok: true, duplicate: true };
-  const createdAt = new Date().toISOString();
-  saveCoinTransactions([
-    { id, type, amount: -amount, source: "Mock Test", reason, mockAttemptId, date: getLocalDateKey(), createdAt },
-    ...transactions,
-  ]);
-  saveUser({ ...user, coins: Math.max(0, (user.coins || 0) - amount) });
+  const result = spendCoins({
+    amount,
+    source: type,
+    sourceId: mockAttemptId,
+    reason,
+    idempotencyKey: id,
+    metadata: { mockAttemptId },
+  });
+  if (result.duplicate) return { ok: true, duplicate: true };
+  if (!result.awarded) return { ok: false, reason: result.reason || "not_enough_coins" };
   return { ok: true, duplicate: false };
 }
 
@@ -478,16 +479,6 @@ export function saveMockReviewQuestion(question, selectedOptionKey, languageMode
   return item;
 }
 
-function addCoinRewardOnce({ id, type, amount, reason, mockAttemptId, createdAt }) {
-  if (!amount) return;
-  const transactions = getCoinTransactions();
-  if (transactions.some((transaction) => transaction.id === id)) return;
-  saveCoinTransactions([
-    { id, type, amount, source: "Mock Test", reason, mockAttemptId, date: getLocalDateKey(), createdAt },
-    ...transactions,
-  ]);
-}
-
 function applyMockRewards(attempt) {
   if (attempt.rewardsApplied) return attempt;
   const createdAt = attempt.completedAt;
@@ -513,29 +504,37 @@ function applyMockRewards(attempt) {
       createdAt,
     });
   }
-  addCoinRewardOnce({
-    id: `mock_complete_coins_${attempt.id}`,
-    type: "mock_test_complete",
-    amount: 40,
-    reason: "Completed mock test",
-    mockAttemptId: attempt.id,
-    createdAt,
-  });
-  if (attempt.accuracy >= 80) {
-    addCoinRewardOnce({
-      id: `mock_bonus_coins_${attempt.id}`,
-      type: "mock_test_score_bonus",
-      amount: 30,
-      reason: "Scored 80% or above in mock test",
-      mockAttemptId: attempt.id,
+
+  // Real coin rewards through the central engine (idempotent per attempt).
+  const userId = getActiveUserId();
+  awardActivityCoins([
+    {
+      amount: COIN_REWARDS.MOCK_COMPLETE,
+      source: "mock_test",
+      sourceId: attempt.id,
+      reason: "Mock Test Complete",
+      label: "Mock Test Complete",
+      idempotencyKey: `${userId}:mock_test:${attempt.id}:complete`,
       createdAt,
-    });
-  }
+      metadata: { mockAttemptId: attempt.id },
+    },
+    {
+      condition: attempt.accuracy >= 80,
+      amount: COIN_REWARDS.MOCK_SCORE_BONUS,
+      source: "mock_test",
+      sourceId: attempt.id,
+      reason: "80% Score Bonus",
+      label: "80% Score Bonus",
+      idempotencyKey: `${userId}:mock_test:${attempt.id}:score_80_bonus`,
+      createdAt,
+      metadata: { mockAttemptId: attempt.id },
+    },
+  ]);
+
   const user = getUser();
   saveUser({
     ...user,
     totalXp: calculateTotalXPFromTransactions(),
-    coins: Math.max(0, user.coins || 0) + attempt.coinsEarned,
     lastMockDate: attempt.date,
     streak: updateMockStreak().currentStreak,
   });

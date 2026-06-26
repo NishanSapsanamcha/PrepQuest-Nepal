@@ -1,14 +1,17 @@
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
 import AppRoutes from "./routes/AppRoutes";
+import { BadgeCelebrationProvider } from "./context/BadgeCelebrationContext";
+import { CoinRewardProvider } from "./context/CoinRewardContext";
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <CoinRewardProvider>
+        <BadgeCelebrationProvider>
+          <AppRoutes />
+        </BadgeCelebrationProvider>
+      </CoinRewardProvider>
+    </BrowserRouter>
   );
 }
 

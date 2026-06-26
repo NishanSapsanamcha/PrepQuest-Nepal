@@ -1,0 +1,74 @@
+/* Premium gold star-coin currency. One visual language used app-wide. */
+
+.coin-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.coin-icon-svg {
+  display: block;
+  /* Soft 3D drop shadow so the coin lifts off the dark navy background. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+
+/* When a coin sits inside a stat-card icon slot, drop the tinted box so the
+   coin's own minted look carries the visual (higher specificity than the
+   `.dashboard-page .stat-icon` teal background rule). */
+.dashboard-page .stat-icon.coin-stat-icon {
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* icon + amount, e.g. [coin] 0 / [coin] +50 */
+.coin-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin-value-amount {
+  font-weight: 800;
+  color: #ffd784;
+  line-height: 1;
+}
+
+/* coin reward + XP reward, side by side or stacked */
+.reward-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.reward-display.is-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.reward-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-weight: 800;
+  color: #7dd3fc;
+  font-variant-numeric: tabular-nums;
+}
+
+.reward-xp-icon {
+  color: #38bdf8;
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.reward-extra {
+  color: var(--soft, #cbd5f5);
+  font-weight: 700;
+}

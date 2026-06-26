@@ -30,6 +30,8 @@ import {
   saveSubjectProgress,
   saveUser,
 } from "./storageUtils";
+import { subjectLevels } from "../data/subjectLevels";
+import { awardActivityCoins, COIN_REWARDS, getActiveUserId, getUserCoinBalance } from "../services/coinService";
 
 export function normalizeExamId(exam) {
   return examNameToId[exam] || exam || "sakha-adhikrit";
@@ -383,20 +385,67 @@ export function applyPracticeRewards({ user, subjectProgress, subjectId, session
   saveSubjectProgress(nextSubjectProgress);
   markSessionAsRewarded(sessionId);
 
+  // Real coin rewards for a completed practice session. Idempotent and only
+  // reachable once per session thanks to the markSessionAsRewarded guard above.
+  const userId = getActiveUserId();
+  const maxLevel = subjectLevels[subjectLevels.length - 1].level;
+  const reachedMastery = levelUp.didLevelUp && levelUp.newLevel.level >= maxLevel;
+  const coinBreakdown = awardActivityCoins([
+    {
+      condition: result.accuracy >= 80,
+      amount: COIN_REWARDS.PRACTICE_SCORE_BONUS,
+      source: "practice_session",
+      sourceId: sessionId,
+      reason: "80% Practice Score Bonus",
+      label: "80% Practice Score Bonus",
+      idempotencyKey: `${userId}:practice_session:${sessionId}:score_80_bonus`,
+    },
+    {
+      condition: Boolean(result.isRecommendedPractice),
+      amount: COIN_REWARDS.RECOMMENDED_PRACTICE_BONUS,
+      source: "recommended_practice",
+      sourceId: sessionId,
+      reason: "Recommended Weak Subject Practice",
+      label: "Recommended Practice Bonus",
+      idempotencyKey: `${userId}:practice_session:${sessionId}:recommended_bonus`,
+    },
+    {
+      condition: levelUp.didLevelUp,
+      amount: COIN_REWARDS.SUBJECT_LEVEL_UP,
+      source: "subject_level_up",
+      sourceId: subjectId,
+      reason: `Reached ${levelUp.newLevel.name}`,
+      label: "Subject Level-Up",
+      idempotencyKey: `${userId}:subject_level_up:${subjectId}:${levelUp.newLevel.level}`,
+    },
+    {
+      condition: reachedMastery,
+      amount: COIN_REWARDS.SUBJECT_MASTERY,
+      source: "subject_mastery",
+      sourceId: subjectId,
+      reason: `${result.subjectName || "Subject"} Mastered`,
+      label: "Subject Mastery",
+      idempotencyKey: `${userId}:subject_mastery:${subjectId}`,
+    },
+  ]);
+
+  const newCoinBalance = getUserCoinBalance();
+
   return {
     applied: true,
-    user: updatedUser,
+    user: { ...updatedUser, coins: newCoinBalance },
     subjectProgress: nextSubjectProgress,
     result: {
       ...result,
       newUserXp: updatedUser.totalXp,
-      newCoins: user.coins || 0,
+      coinsEarned: coinBreakdown.total,
+      newCoins: newCoinBalance,
       newSubjectXp,
       didLevelUp: levelUp.didLevelUp,
       levelUp,
       subjectProgress: updatedSubjectProgress,
       xpTransactions,
-      coinTransactions: [],
+      coinTransactions: coinBreakdown.items,
     },
   };
 }

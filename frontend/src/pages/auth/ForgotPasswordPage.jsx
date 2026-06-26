@@ -3,7 +3,6 @@ import {
   FaArrowLeft,
   FaChartLine,
   FaCheckCircle,
-  FaCoins,
   FaEnvelope,
   FaKey,
   FaLock,
@@ -11,6 +10,7 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { CoinIcon } from "../../components/common/Coin";
 import {
   requestPasswordReset,
   resetPassword,
@@ -169,7 +169,7 @@ function ForgotPasswordPage() {
             </div>
             <div className="mini-card">
               <div className="mini-card-icon streak">
-                <FaCoins aria-hidden="true" />
+                <CoinIcon size="sm" />
               </div>
               <div className="mini-card-title">XP &amp; Coins Protected</div>
             </div>

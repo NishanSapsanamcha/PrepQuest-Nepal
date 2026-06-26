@@ -1,8 +1,9 @@
 import { examTracks } from "../data/examTracks";
 import { mockLeaderboardUsers } from "../data/gamificationMockData";
-import { getCoinTransactions, getUser, saveCoinTransactions, saveUser } from "./storageUtils";
+import { getUser, saveUser } from "./storageUtils";
 import { getValidatedQuestions, normalizeExamId, normalizeLanguageMode } from "./practiceUtils";
 import { addXPTransaction, calculateAccuracy, calculateTotalXPFromTransactions, XP_REWARDS } from "./xpUtils";
+import { awardActivityCoins, COIN_REWARDS, getActiveUserId } from "../services/coinService";
 
 const ATTEMPTS_KEY = "prepquest_tournament_attempts";
 const ACTIVE_KEY = "prepquest_tournament_active";
@@ -271,20 +272,31 @@ export function completeTournament(session) {
   saveUser({
     ...user,
     totalXp: calculateTotalXPFromTransactions(),
-    coins: Math.max(0, user.coins || 0) + coinsEarned,
   });
 
-  saveCoinTransactions([
+  // Real coin rewards through the central engine. Applied once per tournament
+  // (idempotency keyed by week + reward type), never duplicated on refresh.
+  const userId = getActiveUserId();
+  awardActivityCoins([
     {
-      id: `tournament_coins_${weekKey}`,
-      type: "tournament",
-      amount: coinsEarned,
-      date: weekKey,
-      source: "Friday Tournament",
-      reason: rankReward ? `Finished ${rankReward.label}` : "Tournament participation",
+      amount: COIN_REWARDS.TOURNAMENT_PARTICIPATION,
+      source: "friday_tournament",
+      sourceId: weekKey,
+      reason: "Friday Tournament Participation",
+      label: "Tournament Participation",
+      idempotencyKey: `${userId}:${weekKey}:participation`,
       createdAt: completedAt,
     },
-    ...getCoinTransactions().filter((transaction) => transaction.id !== `tournament_coins_${weekKey}`),
+    {
+      condition: Boolean(rankReward),
+      amount: rankReward?.coins || 0,
+      source: "friday_tournament",
+      sourceId: weekKey,
+      reason: rankReward ? `Finished ${rankReward.label}` : "Tournament rank reward",
+      label: rankReward ? `${rankReward.label} Reward` : "Rank Reward",
+      idempotencyKey: `${userId}:${weekKey}:finalRankReward`,
+      createdAt: completedAt,
+    },
   ]);
 
   saveTournamentAttempts([attempt, ...getTournamentAttempts()]);

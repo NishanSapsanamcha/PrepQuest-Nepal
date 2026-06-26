@@ -28,10 +28,15 @@
   margin: 0;
 }
 
-.dashboard-page .next-badge-card h2,
-.dashboard-page .badge-detail-card h2 {
+.dashboard-page .next-badge-card h2 {
   color: var(--text);
   font-size: 1.2rem;
+}
+
+.dashboard-page .badge-detail-card h2 {
+  color: var(--text);
+  font-size: 1.05rem;
+  text-align: center;
 }
 
 .dashboard-page .next-badge-card p,
@@ -41,145 +46,8 @@
   line-height: 1.5;
 }
 
-/* Badge emblem: premium icon container shared by the catalog grid, the
-   next-badge promo, and the detail panel. Rarity sets the accent ring
-   and corner detail; status controls glow intensity. */
-.dashboard-page .badge-emblem {
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background:
-    linear-gradient(160deg, rgba(45, 212, 191, 0.16), rgba(15, 23, 39, 0.94));
-  border: 1px solid rgba(45, 212, 191, 0.26);
-  box-shadow: inset 0 0 10px rgba(45, 212, 191, 0.1);
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.dashboard-page .badge-emblem.size-lg {
-  width: 4rem;
-  height: 4rem;
-  font-size: 1.7rem;
-  border-radius: 18px;
-}
-
-.dashboard-page .badge-emblem.size-sm {
-  width: 2.6rem;
-  height: 2.6rem;
-  font-size: 1.15rem;
-}
-
-.dashboard-page .badge-emblem-glow {
-  position: absolute;
-  inset: -35%;
-  z-index: 0;
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.34), transparent 62%);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.dashboard-page .badge-emblem-icon {
-  position: relative;
-  z-index: 1;
-  color: var(--teal);
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
-}
-
-.dashboard-page .badge-emblem-corner {
-  position: absolute;
-  z-index: 2;
-  top: 5px;
-  right: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 6px 1px rgba(45, 212, 191, 0.7);
-}
-
-/* Rarity accents */
-.dashboard-page .badge-emblem.rarity-rare {
-  border-color: rgba(56, 189, 248, 0.34);
-}
-.dashboard-page .badge-emblem.rarity-rare .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.3), transparent 62%);
-}
-.dashboard-page .badge-emblem.rarity-rare .badge-emblem-corner {
-  background: #38bdf8;
-  box-shadow: 0 0 6px 1px rgba(56, 189, 248, 0.7);
-}
-
-.dashboard-page .badge-emblem.rarity-epic {
-  border-color: rgba(168, 85, 247, 0.34);
-}
-.dashboard-page .badge-emblem.rarity-epic .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.3), transparent 62%);
-}
-.dashboard-page .badge-emblem.rarity-epic .badge-emblem-corner {
-  background: #a855f7;
-  box-shadow: 0 0 6px 1px rgba(168, 85, 247, 0.7);
-}
-
-.dashboard-page .badge-emblem.rarity-legendary {
-  border-color: rgba(251, 191, 36, 0.4);
-}
-.dashboard-page .badge-emblem.rarity-legendary .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.32), transparent 62%);
-}
-.dashboard-page .badge-emblem.rarity-legendary .badge-emblem-corner {
-  background: var(--gold);
-  box-shadow: 0 0 6px 1px rgba(251, 191, 36, 0.7);
-}
-
-.dashboard-page .badge-emblem.rarity-mythic {
-  border-color: rgba(45, 212, 191, 0.42);
-  background:
-    linear-gradient(160deg, rgba(45, 212, 191, 0.2), rgba(168, 85, 247, 0.14), rgba(15, 23, 39, 0.94));
-}
-.dashboard-page .badge-emblem.rarity-mythic .badge-emblem-glow {
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.3), rgba(168, 85, 247, 0.22) 55%, transparent 80%);
-  opacity: 0.65;
-}
-.dashboard-page .badge-emblem.rarity-mythic .badge-emblem-corner {
-  background: linear-gradient(135deg, var(--teal), #a855f7);
-  box-shadow: 0 0 7px 1px rgba(45, 212, 191, 0.5);
-}
-
-/* Status modifiers */
-.dashboard-page .badge-emblem.status-earned {
-  border-color: rgba(45, 212, 191, 0.68);
-  box-shadow: inset 0 0 14px rgba(45, 212, 191, 0.24), 0 0 16px rgba(45, 212, 191, 0.22);
-}
-.dashboard-page .badge-emblem.status-earned .badge-emblem-icon {
-  color: #5eead4;
-}
-.dashboard-page .badge-emblem.status-earned .badge-emblem-glow {
-  opacity: 0.7;
-}
-
-.dashboard-page .badge-emblem.status-next {
-  border-color: rgba(45, 212, 191, 0.5);
-  box-shadow: inset 0 0 12px rgba(45, 212, 191, 0.2), 0 0 12px rgba(45, 212, 191, 0.16);
-}
-.dashboard-page .badge-emblem.status-next .badge-emblem-glow {
-  opacity: 0.62;
-}
-
-.dashboard-page .badge-emblem.status-locked {
-  filter: saturate(0.82);
-}
-.dashboard-page .badge-emblem.status-locked .badge-emblem-icon {
-  color: var(--soft);
-}
-.dashboard-page .badge-emblem.status-locked .badge-emblem-glow {
-  opacity: 0.26;
-}
-.dashboard-page .badge-emblem.status-locked .badge-emblem-corner {
-  opacity: 0.65;
-}
+/* The gem-style badge emblem now lives in the reusable BadgeIcon component
+   (see components/badges/BadgeIcon.css). */
 
 .dashboard-page .badge-progress-row,
 .dashboard-page .badge-meta-row {
@@ -203,7 +71,38 @@
 }
 
 .dashboard-page .badge-filter-card {
-  padding: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.dashboard-page .badge-filter-card .tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dashboard-page .badge-filter-card .tab-pill {
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 39, 0.6);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-page .badge-filter-card .tab-pill:hover {
+  border-color: rgba(45, 212, 191, 0.45);
+  color: var(--soft);
+}
+
+.dashboard-page .badge-filter-card .tab-pill.active {
+  border-color: rgba(45, 212, 191, 0.7);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(34, 197, 94, 0.16));
+  color: var(--text);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.18);
 }
 
 .dashboard-page .badges-layout {
@@ -215,62 +114,265 @@
 
 .dashboard-page .badge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
+  align-items: stretch;
 }
 
 .dashboard-page .badge-card {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1rem 1.05rem;
   color: inherit;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
 }
+
+/* Earned cards get a faint rarity wash up top so the badge pops. */
+.dashboard-page .badge-card.earned::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 58%;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(45, 212, 191, 0.1), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.dashboard-page .badge-card > * { position: relative; z-index: 1; }
 
 .dashboard-page .badge-card.selected {
   border-color: rgba(45, 212, 191, 0.56);
-  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
-}
-
-.dashboard-page .badge-card.locked {
-  opacity: 0.82;
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.18);
 }
 
 .dashboard-page .badge-card-top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: flex-end;
+  width: 100%;
 }
 
-.dashboard-page .badge-card h3 {
+/* Status chip — earned reads active/green, locked reads muted. */
+.dashboard-page .status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.dashboard-page .status-chip.is-earned {
+  color: #6ee7b7;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(45, 212, 191, 0.45);
+}
+.dashboard-page .status-chip.is-locked {
+  color: var(--muted);
+  background: rgba(15, 23, 39, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* The badge graphic IS the hero. No empty circular frame — instead a soft
+   rarity-tinted aura sits BEHIND the badge (same energy as the unlock toast),
+   while the badge art itself is large and dominant. */
+.dashboard-page .badge-emblem,
+.dashboard-page .badge-detail-emblem {
+  --aura: #2dd4bf;
+  display: grid;
+  place-items: center;
+  position: relative;
+  line-height: 0;
+}
+.dashboard-page .badge-emblem { margin: 0.15rem 0 0.2rem; }
+.dashboard-page .badge-detail-emblem { margin: 0.35rem 0 0.15rem; }
+
+.dashboard-page .badge-emblem.rarity-common,
+.dashboard-page .badge-detail-emblem.rarity-common { --aura: #2dd4bf; }
+.dashboard-page .badge-emblem.rarity-rare,
+.dashboard-page .badge-detail-emblem.rarity-rare { --aura: #38bdf8; }
+.dashboard-page .badge-emblem.rarity-epic,
+.dashboard-page .badge-detail-emblem.rarity-epic { --aura: #a855f7; }
+.dashboard-page .badge-emblem.rarity-legendary,
+.dashboard-page .badge-detail-emblem.rarity-legendary { --aura: #fbbf24; }
+.dashboard-page .badge-emblem.rarity-mythic,
+.dashboard-page .badge-detail-emblem.rarity-mythic { --aura: #ff7a59; }
+
+/* Soft blurred aura behind the badge — a glow, not a frame. */
+.dashboard-page .badge-emblem::before,
+.dashboard-page .badge-detail-emblem::before {
+  content: "";
+  position: absolute;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--aura), transparent 66%);
+  filter: blur(8px);
+  opacity: 0.18;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.dashboard-page .badge-emblem.is-earned::before,
+.dashboard-page .badge-detail-emblem.is-earned::before {
+  opacity: 0.42;
+}
+.dashboard-page .badge-detail-emblem.is-earned::before {
+  opacity: 0.5;
+}
+/* Mythic earned badges get the strongest aura. */
+.dashboard-page .badge-emblem.rarity-mythic.is-earned::before,
+.dashboard-page .badge-detail-emblem.rarity-mythic.is-earned::before {
+  opacity: 0.6;
+  width: 92%;
+  height: 92%;
+}
+
+.dashboard-page .badge-emblem .badge-icon,
+.dashboard-page .badge-detail-emblem .badge-icon {
+  position: relative;
+  z-index: 1;
+}
+
+/* Slightly lift the badge on hover so it feels collectible. */
+.dashboard-page .badge-card:hover .badge-icon-svg {
+  transform: translateY(-2px) scale(1.03);
+  transition: transform 0.25s ease;
+}
+
+.dashboard-page .badge-name {
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.22;
+}
+
+.dashboard-page .badge-desc {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.38;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dashboard-page .badge-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.dashboard-page .cat-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: rgba(15, 23, 39, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+/* Bottom block pinned so progress bars line up across cards of equal height. */
+.dashboard-page .badge-card-bottom {
+  margin-top: auto;
+  width: 100%;
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 0.65rem;
+}
+
+.dashboard-page .badge-card-bottom .badge-meta-row {
+  margin: 0;
+  font-size: 0.74rem;
+}
+
+.dashboard-page .reward-tag {
+  color: var(--teal);
 }
 
 .dashboard-page .earned-date {
   color: #a7f3d0;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 800;
+  text-align: center;
 }
 
-.dashboard-page .rarity-common { border-color: rgba(45, 212, 191, 0.18); }
-.dashboard-page .rarity-rare { border-color: rgba(56, 189, 248, 0.24); }
-.dashboard-page .rarity-epic { border-color: rgba(168, 85, 247, 0.24); }
-.dashboard-page .rarity-legendary { border-color: rgba(251, 191, 36, 0.28); }
-.dashboard-page .rarity-mythic {
-  border-color: rgba(45, 212, 191, 0.32);
+.dashboard-page .badge-empty {
+  display: grid;
+  gap: 0.4rem;
+  place-items: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+.dashboard-page .badge-empty p { color: var(--text); font-weight: 700; margin: 0; }
+.dashboard-page .badge-empty span { color: var(--muted); font-size: 0.85rem; }
+
+.dashboard-page .badge-card.rarity-common { border-color: rgba(45, 212, 191, 0.18); }
+.dashboard-page .badge-card.rarity-rare { border-color: rgba(56, 189, 248, 0.24); }
+.dashboard-page .badge-card.rarity-epic { border-color: rgba(168, 85, 247, 0.24); }
+.dashboard-page .badge-card.rarity-legendary { border-color: rgba(251, 191, 36, 0.28); }
+
+/* Mythic badges stand out: warm coral glow + a wider span on roomy grids. */
+.dashboard-page .badge-card.rarity-mythic {
+  border-color: rgba(255, 122, 89, 0.42);
   background:
-    linear-gradient(135deg, rgba(45, 212, 191, 0.08), rgba(168, 85, 247, 0.06)),
-    #141d31;
+    linear-gradient(135deg, rgba(255, 122, 89, 0.12), rgba(255, 90, 95, 0.06)),
+    #16101a;
+  box-shadow: 0 0 0 1px rgba(255, 122, 89, 0.18), 0 0 22px rgba(255, 90, 95, 0.16);
+}
+
+@media (min-width: 900px) {
+  .dashboard-page .badge-grid .badge-card.rarity-mythic {
+    grid-column: span 2;
+  }
+}
+
+/* Rarity label pill — colours mirror the BadgeIcon RARITY_THEME ring. */
+.dashboard-page .rarity-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.dashboard-page .rarity-pill.rarity-common { color: #2dd4bf; }
+.dashboard-page .rarity-pill.rarity-rare { color: #38bdf8; }
+.dashboard-page .rarity-pill.rarity-epic { color: #c084fc; }
+.dashboard-page .rarity-pill.rarity-legendary { color: #fbbf24; }
+.dashboard-page .rarity-pill.rarity-mythic { color: #ff7a59; }
+
+.dashboard-page .preview-unlock-btn {
+  margin-top: 0.2rem;
+  width: 100%;
+  justify-content: center;
 }
 
 .dashboard-page .badge-detail-card {
   position: sticky;
   top: 1rem;
   display: grid;
-  gap: 0.8rem;
+  justify-items: center;
+  gap: 0.7rem;
+  text-align: center;
+}
+
+.dashboard-page .badge-detail-card .detail-list {
+  width: 100%;
+}
+
+.dashboard-page .badge-detail-card p {
+  font-size: 0.82rem;
 }
 
 .dashboard-page .detail-list {

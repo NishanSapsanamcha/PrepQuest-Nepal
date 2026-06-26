@@ -6,7 +6,6 @@ import {
   FaBookOpen,
   FaBullseye,
   FaCheckCircle,
-  FaCoins,
   FaExclamationTriangle,
   FaFire,
   FaHome,
@@ -19,7 +18,10 @@ import {
   FaTrophy,
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { CoinIcon } from "../../components/common/Coin";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
+import { useCoinReward } from "../../context/CoinRewardContext";
 import {
   DETAILED_REPORT_COST,
   formatMockDuration,
@@ -35,6 +37,8 @@ function MockTestResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { playClick, playComplete } = usePrepQuestSound();
+  const { celebrate } = useBadgeCelebration();
+  const { celebrateCoins } = useCoinReward();
   const [filter, setFilter] = useState("all");
   const [reportUnlocked, setReportUnlocked] = useState(false);
   const [reportMessage, setReportMessage] = useState("");
@@ -57,6 +61,12 @@ function MockTestResultPage() {
     sessionStorage.setItem(playedKey, "true");
     playComplete();
   }, [playComplete, result]);
+
+  // Award + celebrate any badges this mock test unlocked, and show the coin popup.
+  useEffect(() => {
+    celebrate();
+    celebrateCoins();
+  }, [celebrate, celebrateCoins]);
 
   if (!result) return null;
 
@@ -160,7 +170,7 @@ function MockTestResultPage() {
           <article className="stat-card"><div className="stat-icon"><FaExclamationTriangle /></div><div><div className="stat-value">{result.unansweredCount}</div><div className="stat-helper">Unanswered</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaRegClock /></div><div><div className="stat-value">{formatMockDuration(result.timeTakenSeconds)}</div><div className="stat-helper">Time taken</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaStar /></div><div><div className="stat-value">+{result.xpEarned} XP</div><div className="stat-helper">XP earned</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaCoins /></div><div><div className="stat-value">+{result.coinsEarned}</div><div className="stat-helper">Coins earned</div></div></article>
+          <article className="stat-card"><div className="stat-icon coin-stat-icon"><CoinIcon size="md" /></div><div><div className="stat-value">+{result.coinsEarned}</div><div className="stat-helper">Coins earned</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">Active</div><div className="stat-helper">Streak status</div></div></article>
         </section>
 

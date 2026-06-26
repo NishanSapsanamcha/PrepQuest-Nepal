@@ -138,7 +138,7 @@
 }
 
 .dashboard-page .profile-badge-row {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .dashboard-page .profile-activity-row {
@@ -195,6 +195,193 @@
 .dashboard-page .stat-icon.small {
   width: 2rem;
   height: 2rem;
+}
+
+/* Premium coin balance stat card: large coin on the left, big number on the right. */
+.dashboard-page .profile-page .coin-stat-card {
+  align-items: center;
+  gap: 1rem;
+  border-color: rgba(251, 176, 52, 0.32);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(251, 176, 52, 0.14), transparent 55%),
+    rgba(15, 23, 39, 0.72);
+}
+
+.dashboard-page .profile-page .coin-stat-card .stat-coin {
+  filter: drop-shadow(0 4px 10px rgba(224, 122, 22, 0.4));
+}
+
+.dashboard-page .profile-page .coin-stat-value {
+  font-size: 1.9rem;
+  background: linear-gradient(180deg, #ffe7a6, #f6a31f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Coin wallet section --------------------------------------------------- */
+.dashboard-page .coin-wallet-card {
+  border-color: rgba(251, 176, 52, 0.28);
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(251, 176, 52, 0.12), transparent 55%),
+    #141d31;
+}
+
+.dashboard-page .coin-wallet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.dashboard-page .coin-wallet-balance {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboard-page .coin-wallet-icon {
+  filter: drop-shadow(0 6px 14px rgba(224, 122, 22, 0.45));
+}
+
+.dashboard-page .coin-wallet-amount {
+  font-size: 2.3rem;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffe7a6, #f6a31f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dashboard-page .coin-wallet-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
+.dashboard-page .coin-wallet-note {
+  max-width: 360px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.dashboard-page .coin-wallet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.1rem;
+}
+
+.dashboard-page .coin-wallet-heading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 0.7rem;
+}
+
+.dashboard-page .coin-earn-list,
+.dashboard-page .coin-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-page .coin-earn-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(15, 23, 39, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  font-size: 0.82rem;
+}
+
+.dashboard-page .coin-earn-reason {
+  color: var(--soft);
+}
+
+.dashboard-page .coin-earn-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 800;
+  color: #ffd784;
+  white-space: nowrap;
+}
+
+.dashboard-page .coin-earn-suffix {
+  color: var(--muted);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 0.74rem;
+}
+
+.dashboard-page .coin-activity-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(15, 23, 39, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.dashboard-page .coin-activity-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-page .coin-activity-copy strong {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.dashboard-page .coin-activity-copy span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.dashboard-page .coin-activity-amount {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dashboard-page .coin-activity-amount.is-earn {
+  color: #ffd784;
+}
+
+.dashboard-page .coin-activity-amount.is-spend {
+  color: #fca5a5;
+}
+
+.dashboard-page .coin-activity-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1.25rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .dashboard-page .coin-wallet-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1200px) {

@@ -1,20 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft, FaRedo, FaSearch, FaTachometerAlt } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import ResultSummary from "../../components/practice/ResultSummary";
 import WrongAnswerReview from "../../components/practice/WrongAnswerReview";
+import { useBadgeCelebration } from "../../context/BadgeCelebrationContext";
+import { useCoinReward } from "../../context/CoinRewardContext";
 import { getLastPracticeResult, getSavedReviewQuestions, getUser } from "../../utils/storageUtils";
 import "./PracticeResultPage.css";
 
 function PracticeResultPage() {
   const { subjectId } = useParams();
   const navigate = useNavigate();
+  const { celebrate } = useBadgeCelebration();
+  const { celebrateCoins } = useCoinReward();
   const user = getUser();
   const language = localStorage.getItem("preferredLanguage") || user.preferredLanguage;
   const result = getLastPracticeResult();
   const savedQuestions = getSavedReviewQuestions();
   const [showReview, setShowReview] = useState(false);
+
+  // Award + celebrate any badges this practice session unlocked, and show coins.
+  useEffect(() => {
+    celebrate();
+    celebrateCoins();
+  }, [celebrate, celebrateCoins]);
 
   if (!result || result.subjectId !== subjectId) {
     return (

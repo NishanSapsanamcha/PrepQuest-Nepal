@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FaBookmark, FaDoorOpen, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { FaArrowRight, FaBookmark, FaCheckCircle, FaDoorOpen, FaFire, FaRobot, FaStar, FaTimesCircle, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import AnswerFeedback from "../../components/practice/AnswerFeedback";
 import QuestionCard from "../../components/practice/QuestionCard";
@@ -34,6 +34,7 @@ function PracticeSessionPage() {
   const [answers, setAnswers] = useState([]);
   const [sessionEarnedXp, setSessionEarnedXp] = useState(() => getPracticeSessionXP(practiceSessionIdRef.current));
   const [savedQuestionIds, setSavedQuestionIds] = useState(() => getSavedReviewQuestions().map((item) => item.questionId));
+  const [hintMessage, setHintMessage] = useState("");
   const { isMuted, toggleMute, playClick, playCorrect, playWrong, playComplete, playLevelUp } = usePrepQuestSound();
   const languageMode = normalizeLanguageMode(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
   const isRecommendedPractice = searchParams.get("recommended") === "1";
@@ -52,13 +53,21 @@ function PracticeSessionPage() {
   }
 
   const question = questions[currentIndex];
-  const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
   const correctCount = answers.filter((answer) => answer.isCorrect).length;
   const wrongCount = answers.filter((answer) => !answer.isCorrect).length;
   const answeredCount = answers.length;
   const accuracySoFar = answeredCount ? Math.round((correctCount / answeredCount) * 100) : 0;
   const subjectLevelProgress = getNextLevelProgress(progress.xp);
   const isCurrentQuestionSaved = savedQuestionIds.includes(question.id);
+  // Consecutive correct answers at the end of the session (in-session streak).
+  const sessionStreak = (() => {
+    let streak = 0;
+    for (let i = answers.length - 1; i >= 0; i -= 1) {
+      if (answers[i].isCorrect) streak += 1;
+      else break;
+    }
+    return streak;
+  })();
 
   const handleSoundToggle = () => {
     toggleMute();
@@ -153,15 +162,37 @@ function PracticeSessionPage() {
     setSavedQuestionIds((current) => current.includes(question.id) ? current : [question.id, ...current]);
   };
 
+  // DEV-ONLY: ?debugPracticeLayout=true outlines/labels major layout sections.
+  const debugLayout =
+    import.meta.env.DEV &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debugPracticeLayout") === "true";
+
   return (
     <DashboardLayout activeKey="practice">
-      <header className="dashboard-header session-header">
-        <div className="header-left">
+      <header className="dashboard-header session-header session-header-quiz">
+        <div className="session-head-left">
           <p className="eyebrow subject-pill">{subject.name}</p>
           <h1>Level {level.level}: {level.name}</h1>
-          <p>Quick Practice - Question {currentIndex + 1} of {questions.length}</p>
         </div>
-        <div className="header-right">
+
+        <div className="session-head-center">
+          <span className="session-progress-text">Question {currentIndex + 1} of {questions.length}</span>
+          <div className="step-nodes" aria-hidden="true">
+            {questions.map((item, index) => (
+              <span
+                key={item.id || index}
+                className={`step-node${index < currentIndex ? " done" : ""}${index === currentIndex ? " current" : ""}`}
+              >
+                {index + 1}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="session-head-right">
+          <span className="session-chip xp-chip"><FaStar /> +10 XP</span>
+          <span className="session-chip streak-chip"><FaFire /> {sessionStreak} Streak</span>
           <button
             className="sound-toggle"
             type="button"
@@ -184,23 +215,9 @@ function PracticeSessionPage() {
         </div>
       </header>
 
-      <section className="dashboard-content practice-session-content">
-        <div className={`practice-board${feedback ? " has-feedback" : ""}`}>
-          <div className="board-question-side">
-            <div className="board-top-strip">
-              <div className="preview-progress-row">
-                <span>Question {currentIndex + 1} of {questions.length}</span>
-                <span>{progressPercent}% complete</span>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <div className="progress-strip-footer">
-                <span className="xp-chip">+10 XP for correct answer</span>
-                <span className="practice-mode-chip">Quick Practice</span>
-              </div>
-            </div>
-
+      <section className={`dashboard-content practice-session-content${debugLayout ? " debug-practice-layout" : ""}`}>
+        <div className={`practice-board${feedback ? " has-feedback" : ""}`} data-debug="Practice Board">
+          <div className="board-question-side" data-debug="Question Side">
             <div className={`practice-question-stack${feedback?.isCorrect ? " answered-correct" : ""}`}>
               {feedback?.isCorrect && (
                 <div className="celebration-burst" aria-hidden="true">
@@ -213,97 +230,114 @@ function PracticeSessionPage() {
                 correctOptionKey={question.correctOption}
                 languageMode={languageMode}
                 isAnswered={Boolean(feedback)}
-                levelLabel={`Level ${level.level}`}
                 onSelectOption={handleOptionSelect}
                 showXpBurst={Boolean(feedback?.isCorrect)}
               />
             </div>
 
+            {feedback && (
+              <AnswerFeedback
+                question={question}
+                isCorrect={feedback.isCorrect}
+                selectedOptionKey={feedback.answer.selectedOptionKey}
+                languageMode={languageMode}
+              />
+            )}
+
             <div className={`question-actions${feedback ? " answered" : ""}`}>
               <span className="xp-preview">
-                {!feedback && "Correct answer reward: +10 XP"}
-                {feedback?.isCorrect && "+10 XP earned"}
-                {feedback && !feedback.isCorrect && "No XP earned - Review explanation"}
+                {!feedback && <><FaStar /> Correct answer reward: +10 XP</>}
+                {feedback?.isCorrect && <><FaStar /> +10 XP earned</>}
+                {feedback && !feedback.isCorrect && "Review the explanation above"}
               </span>
-              {!feedback ? (
-                <>
-                  <button className="btn btn-secondary" type="button" onClick={handleSkip}>Skip</button>
-                  <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>Submit Answer</button>
-                </>
-              ) : (
-                <>
-                  <button className="btn btn-secondary" type="button" disabled={isCurrentQuestionSaved} onClick={handleSaveReview}>
-                    <FaBookmark /> {isCurrentQuestionSaved ? "Saved" : "Save for Review"}
-                  </button>
-                  <button className="btn" type="button" onClick={handleNext}>{currentIndex === questions.length - 1 ? "Finish Practice" : "Next Question"}</button>
-                </>
-              )}
+              <div className="question-action-btns">
+                {!feedback ? (
+                  <>
+                    <button className="btn btn-secondary" type="button" onClick={handleSkip}>Skip</button>
+                    <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>Submit Answer</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="btn btn-secondary" type="button" disabled={isCurrentQuestionSaved} onClick={handleSaveReview}>
+                      <FaBookmark /> {isCurrentQuestionSaved ? "Saved" : "Save for Review"}
+                    </button>
+                    <button className="btn" type="button" onClick={handleNext}>{currentIndex === questions.length - 1 ? "Finish Practice" : "Next Question"}</button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          <aside className="board-coach-panel" aria-label="Practice coach panel">
-            <section className="coach-section mini-session-stats">
-              <div className="coach-section-heading">
-                <span>Session</span>
-                <strong>{currentIndex + 1}/{questions.length}</strong>
+          <aside className="board-coach-panel" aria-label="Practice session panel">
+            <section className="session-panel" data-debug="Session Panel">
+              <div className="panel-section">
+                <span className="panel-kicker">Your Progress</span>
+                <div className="progress-panel-top">
+                  <div className="panel-level-badge">{level.level}</div>
+                  <div className="progress-panel-meta">
+                    <strong>Level {level.level}: {level.name}</strong>
+                  </div>
+                </div>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${subjectLevelProgress.percent}%` }} />
+                </div>
+                <div className="panel-xp-line">
+                  <span>{progress.xp} / {subjectLevelProgress.nextLevelXp} XP</span>
+                </div>
+                <span className="panel-sub">
+                  {subjectLevelProgress.nextLevel
+                    ? `${subjectLevelProgress.remainingXp} XP to reach Level ${subjectLevelProgress.nextLevel.level}: ${subjectLevelProgress.nextLevel.name}`
+                    : "Highest subject level reached."}
+                </span>
               </div>
-              <div className="summary-grid">
-                <div>
-                  <span>Correct</span>
-                  <strong>{correctCount}</strong>
-                </div>
-                <div>
-                  <span>Wrong</span>
-                  <strong>{wrongCount}</strong>
-                </div>
-                <div>
-                  <span>Accuracy</span>
-                  <strong>{accuracySoFar}%</strong>
-                </div>
-                <div>
-                  <span>Question</span>
+
+              <div className="panel-divider" />
+
+              <div className="panel-section">
+                <div className="panel-head">
+                  <span className="panel-kicker">Session</span>
                   <strong>{currentIndex + 1}/{questions.length}</strong>
                 </div>
-              </div>
-            </section>
-
-            <section className="coach-section subject-mini-progress">
-              <div className="subject-progress-hero">
-                <span>{subject.name}</span>
-                <strong>Level {level.level}: {level.name}</strong>
-              </div>
-              <div className="subject-xp-row">
-                <span>{progress.xp} / {subjectLevelProgress.nextLevelXp} XP</span>
-                <strong>{subjectLevelProgress.percent}%</strong>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${subjectLevelProgress.percent}%` }} />
-              </div>
-              <p className="subject-progress-copy">
-                {subjectLevelProgress.nextLevel
-                  ? `${subjectLevelProgress.remainingXp} XP needed for Level ${subjectLevelProgress.nextLevel.level}: ${subjectLevelProgress.nextLevel.name}`
-                  : "Highest subject level reached."}
-              </p>
-              <p className="subject-progress-copy">This session: +{sessionEarnedXp} XP</p>
-            </section>
-
-            <section className="coach-feedback-shell">
-              {feedback ? (
-                <AnswerFeedback
-                  question={question}
-                  isCorrect={feedback.isCorrect}
-                  selectedOptionKey={feedback.answer.selectedOptionKey}
-                  languageMode={languageMode}
-                />
-              ) : (
-                <div className="coach-placeholder">
-                  <span>Coach</span>
-                  <strong>Choose an answer</strong>
-                  <p>Select one option and submit to see the explanation.</p>
-                  <small>Correct answer gives +10 XP.</small>
+                <div className="session-score-row">
+                  <span>Score</span>
+                  <strong>+{sessionEarnedXp} XP</strong>
                 </div>
-              )}
+                <div className="session-stat-grid">
+                  <div>
+                    <span className="session-stat-label"><FaCheckCircle className="ok" /> Correct</span>
+                    <strong>{correctCount}</strong>
+                  </div>
+                  <div>
+                    <span className="session-stat-label"><FaTimesCircle className="bad" /> Wrong</span>
+                    <strong>{wrongCount}</strong>
+                  </div>
+                  <div>
+                    <span className="session-stat-label">Accuracy</span>
+                    <strong>{accuracySoFar}%</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="panel-divider" />
+
+              <div className="panel-section">
+                <span className="panel-kicker">Streak</span>
+                <div className="streak-panel-body">
+                  <FaFire />
+                  <span>{sessionStreak} {sessionStreak === 1 ? "question" : "questions"} in a row</span>
+                  <span className="streak-hex">{sessionStreak}</span>
+                </div>
+              </div>
             </section>
+
+            <button className="hint-card" type="button" onClick={() => setHintMessage("Hints are coming soon.")}>
+              <span className="hint-icon"><FaRobot /></span>
+              <div className="hint-copy">
+                <strong>Need a Hint?</strong>
+                <span>{hintMessage || "Get a small hint to help you out."}</span>
+              </div>
+              <FaArrowRight className="hint-arrow" />
+            </button>
           </aside>
         </div>
       </section>

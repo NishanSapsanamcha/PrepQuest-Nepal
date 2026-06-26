@@ -16,6 +16,7 @@ import {
   FaStar,
 } from "react-icons/fa";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import { CoinValue, RewardDisplay } from "../../components/common/Coin";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { mockTestRules } from "../../data/mockTestMockData";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
@@ -154,8 +155,8 @@ function MockTestsPage() {
               <div className="mock-launch-section">
                 <span>Rewards</span>
                 <div className="mock-reward-row">
-                  <strong>Complete: +100 XP +40 coins</strong>
-                  <strong>80%+: +50 XP +30 coins</strong>
+                  <strong>Complete <RewardDisplay coins={40} xp={100} /></strong>
+                  <strong>80%+ <RewardDisplay coins={30} xp={50} /></strong>
                   <strong>90%+: Badge progress</strong>
                 </div>
               </div>
@@ -197,7 +198,7 @@ function MockTestsPage() {
             </div>
             <div className="mock-access-details">
               <div><span>Extra attempt</span><strong>{canUseFree ? `${EXTRA_MOCK_COST} coins after free limit` : `${EXTRA_MOCK_COST} coins`}</strong></div>
-              <div><span>Your coins</span><strong>{userCoins.toLocaleString()} coins</strong></div>
+              <div><span>Your coins</span><strong><CoinValue amount={userCoins} /></strong></div>
             </div>
             <p className="muted-copy">Free attempts reset daily. Extra attempts use coins but basic practice remains free.</p>
             <button className="btn btn-full btn-secondary" type="button" onClick={() => document.querySelector(".mock-section-heading")?.scrollIntoView({ behavior: "smooth" })}>
@@ -229,7 +230,7 @@ function MockTestsPage() {
                       <p className="mock-card-empty">Not Ready Yet. Only {readiness.available} of {readiness.required} reviewed questions are available. Add {readiness.missing} more reviewed questions to unlock this mock.</p>
                     )}
                     {mockType.type === "full" && readiness.ready && <p className="mock-card-empty ready-copy">Balanced mixed mock ready.</p>}
-                    <div className="mock-card-reward">Reward: +100 XP +40 coins</div>
+                    <div className="mock-card-reward">Reward <RewardDisplay coins={40} xp={100} /></div>
                     <button className="action-btn" type="button" disabled={!readiness.ready || (!canUseFree && !canUseCoins)} onClick={() => handleStart(mockType.id)}>
                       {!readiness.ready ? "Not Ready Yet" : mockTypeButtonText}
                     </button>
@@ -254,7 +255,7 @@ function MockTestsPage() {
                       </div>
                       <div className="history-result">
                         <strong>{attempt.readinessLabel}</strong>
-                        <span>+{attempt.xpEarned} XP +{attempt.coinsEarned} coins</span>
+                        <RewardDisplay coins={attempt.coinsEarned} xp={attempt.xpEarned} />
                         <button className="btn btn-secondary" type="button" onClick={() => { playClick(); navigate("/mock-tests/result", { state: { resultId: attempt.id } }); }}>
                           Review Result
                         </button>

@@ -1,0 +1,161 @@
+/* Badge-earned toast. Self-contained (fixed position); colours follow the
+   same rarity ramp as BadgeIcon. Celebratory tiers add confetti + a pop. */
+.badge-unlock-toast {
+  --rc: #2dd4bf;
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  width: min(360px, calc(100vw - 3rem));
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--rc) 55%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--rc) 14%, #0d1526), #0b1220);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--rc) 22%, transparent);
+  color: #f8fafc;
+  overflow: hidden;
+  animation: toast-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.badge-unlock-toast.rarity-common { --rc: #2dd4bf; }
+.badge-unlock-toast.rarity-rare { --rc: #38bdf8; }
+.badge-unlock-toast.rarity-epic { --rc: #a855f7; }
+.badge-unlock-toast.rarity-legendary { --rc: #fbbf24; }
+.badge-unlock-toast.rarity-mythic { --rc: #ff7a59; }
+
+/* Celebratory tiers pop in larger with a coloured halo. */
+.badge-unlock-toast.celebratory {
+  animation: toast-pop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5), 0 0 26px color-mix(in srgb, var(--rc) 45%, transparent);
+}
+
+.badge-unlock-toast.leaving {
+  animation: toast-out 0.34s ease-in forwards;
+}
+
+.badge-unlock-emblem {
+  position: relative;
+  z-index: 2;
+}
+
+.badge-unlock-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.badge-unlock-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rc);
+}
+
+.badge-unlock-name {
+  font-size: 1.02rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Self-contained rarity pill (the toast mounts at the app root, outside the
+   .dashboard-page scope where the page-level pill styles live). */
+.badge-unlock-toast .rarity-pill {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--rc);
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.badge-unlock-close {
+  z-index: 2;
+  align-self: start;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.badge-unlock-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* CSS-only confetti burst (celebratory tiers only). */
+.badge-unlock-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -10%;
+  left: var(--x, 50%);
+  width: 7px;
+  height: 11px;
+  border-radius: 1px;
+  opacity: 0;
+  animation: confetti-fall 1.5s ease-in forwards;
+  animation-delay: var(--d, 0s);
+}
+
+.confetti-0 { --x: 8%; --d: 0s; background: #ff7a59; }
+.confetti-1 { --x: 22%; --d: 0.12s; background: #fbbf24; }
+.confetti-2 { --x: 35%; --d: 0.05s; background: #38bdf8; }
+.confetti-3 { --x: 50%; --d: 0.18s; background: #a855f7; }
+.confetti-4 { --x: 64%; --d: 0.08s; background: #5eead4; }
+.confetti-5 { --x: 78%; --d: 0.15s; background: #ff5a5f; }
+.confetti-6 { --x: 91%; --d: 0.02s; background: #f8fafc; }
+
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(120px) rotate(320deg); opacity: 0; }
+}
+
+@keyframes toast-in {
+  from { transform: translateX(28px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-pop {
+  0% { transform: scale(0.82) translateY(14px); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes toast-out {
+  to { transform: translateX(28px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-unlock-toast,
+  .badge-unlock-toast.celebratory {
+    animation: toast-in 0.2s ease both;
+  }
+  .confetti-piece {
+    display: none;
+  }
+}

@@ -1,0 +1,87 @@
+/* Reusable gem-style badge emblem. Geometry/colors are drawn in the SVG
+   (see BadgeIcon.jsx); this file only handles container glow, locked state,
+   and the Mythic shimmer animation. */
+.badge-icon {
+  --badge-ring: #2dd4bf;
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  isolation: isolate;
+}
+
+.badge-icon-svg {
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
+/* Accent glow keyed to rarity ring colour. */
+.badge-icon::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--badge-ring), transparent 62%);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.badge-icon.is-earned::before {
+  opacity: 0.6;
+}
+
+/* Earned badges read a touch brighter and lifted. */
+.badge-icon.is-earned .badge-icon-svg {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 0 8px color-mix(in srgb, var(--badge-ring) 55%, transparent));
+}
+
+/* Locked: desaturated and dimmed until unlocked, but still clearly visible
+   so the badge graphic stays the focus rather than looking empty. */
+.badge-icon.is-locked .badge-icon-svg {
+  filter: grayscale(0.82) brightness(0.86) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+  opacity: 0.66;
+}
+.badge-icon.is-locked::before {
+  opacity: 0.12;
+}
+
+/* Mythic stands out with a stronger, warmer halo. */
+.badge-icon.is-mythic::before {
+  inset: -28%;
+  opacity: 0.5;
+  background: radial-gradient(circle, var(--badge-ring), rgba(255, 90, 95, 0.35) 45%, transparent 70%);
+}
+
+/* Mythic shimmer: a light band sweeps across the gem, subtle and looping. */
+.badge-icon-shimmer {
+  animation: badge-shimmer 3.4s ease-in-out infinite;
+}
+
+@keyframes badge-shimmer {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  45% {
+    transform: translateX(170px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(170px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-icon-shimmer {
+    animation: none;
+    opacity: 0;
+  }
+}

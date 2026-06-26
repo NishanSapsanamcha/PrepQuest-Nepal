@@ -372,7 +372,8 @@
 .dashboard-page .hall-table .leaderboard-table-row,
 .dashboard-page .tournament-table .leaderboard-table-head,
 .dashboard-page .tournament-table .leaderboard-table-row {
-  grid-template-columns: 72px minmax(210px, 1.35fr) minmax(130px, 0.85fr) minmax(112px, 0.7fr) minmax(92px, 0.55fr) minmax(112px, 0.7fr) minmax(150px, 0.95fr) minmax(72px, 0.4fr);
+  grid-template-columns: 72px minmax(210px, 1.35fr) minmax(130px, 0.85fr) minmax(112px, 0.7fr) repeat(3, minmax(92px, 0.55fr)) minmax(112px, 0.7fr) minmax(190px, 1fr);
+  min-width: 1180px;
 }
 
 .dashboard-page .leaderboard-table-head {
@@ -540,6 +541,9 @@
 }
 
 .dashboard-page .tournament-rewards span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 0.6rem;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: var(--radius);

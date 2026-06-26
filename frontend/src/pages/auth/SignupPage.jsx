@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   FaBookOpen,
   FaChartLine,
-  FaCoins,
   FaExclamationCircle,
   FaFire,
   FaLock,
@@ -13,6 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { CoinIcon } from "../../components/common/Coin";
 import { registerUser } from "../../services/authService";
 import "./SignupPage.css";
 
@@ -146,7 +146,7 @@ function SignupPage() {
             </div>
             <div className="mini-card">
               <div className="mini-card-icon streak">
-                <FaCoins aria-hidden="true" />
+                <CoinIcon size="sm" />
               </div>
               <div className="mini-card-title">XP &amp; Coins</div>
             </div>

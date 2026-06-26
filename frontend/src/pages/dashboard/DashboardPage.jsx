@@ -19,7 +19,6 @@ import {
   Circle,
   CircleHelp,
   ClipboardList,
-  Coins,
   FileCheck,
   FileText,
   Flame,
@@ -49,8 +48,11 @@ import { rankThresholds } from "../../data/gamificationMockData";
 import { getCurrentStreak, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
-import { getUser as getStoredUser } from "../../utils/storageUtils";
 import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress, getXPTransactions } from "../../utils/xpUtils";
+import { getNextBadge, syncBadges } from "../../utils/badgeUtils";
+import BadgeIcon from "../../components/badges/BadgeIcon";
+import { CoinIcon } from "../../components/common/Coin";
+import { getUserCoinBalance } from "../../services/coinService";
 import "./DashboardPage.css";
 
 const examNames = {
@@ -120,7 +122,6 @@ function DashboardPage() {
 
   const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
-  const storedUser = getStoredUser();
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
   const totalXp = calculateTotalXPFromTransactions();
   const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
@@ -137,6 +138,9 @@ function DashboardPage() {
   const subjectCards = getExamSubjects(selectedExam).map((subject) =>
     buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExam)
   );
+  // Closest-to-earn badge, computed from real activity, for the Next Badge card.
+  const nextBadge = getNextBadge(syncBadges());
+  const nextBadgeMasked = nextBadge?.isSecret && nextBadge.status !== "earned";
   const weeklyXpData = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => ({
     day,
     xp: xpTransactions
@@ -275,10 +279,10 @@ function DashboardPage() {
                   <div className="stat-helper">{totalXp.toLocaleString()} XP earned</div>
                 </div>
               </article>
-              <article className="stat-card">
-                <div className="stat-icon"><Coins /></div>
+              <article className="stat-card coin-stat-card">
+                <CoinIcon size="lg" className="stat-coin" />
                 <div>
-                  <div className="stat-value">{(storedUser.coins || 0).toLocaleString()}</div>
+                  <div className="stat-value coin-stat-value">{getUserCoinBalance().toLocaleString()}</div>
                   <div className="stat-label">Coins</div>
                   <div className="stat-helper">Earned from eligible activities</div>
                 </div>
@@ -558,15 +562,32 @@ function DashboardPage() {
                 {/* Next Badge */}
                 <section className="dashboard-card">
                   <h2 className="card-title"><Star /> Next Badge</h2>
-                  <div className="badge-container">
-                    <div className="badge-item"><Medal /></div>
-                    <h3>7-Day Warrior</h3>
-                    <p>4/7 days completed</p>
-                    <div className="progress-bar">
-                      <div className="progress-fill gold-fill" style={{ width: "57%" }} />
+                  {nextBadge ? (
+                    <div className="badge-container">
+                      <div style={{ display: "flex", justifyContent: "center" }}>
+                        <BadgeIcon
+                          shape={nextBadge.shape}
+                          iconKind={nextBadge.iconKind}
+                          rarity={nextBadge.rarity}
+                          size="lg"
+                          isSecret={nextBadge.isSecret}
+                          locked={nextBadgeMasked}
+                        />
+                      </div>
+                      <h3>{nextBadgeMasked ? "???" : nextBadge.name}</h3>
+                      <p>{nextBadgeMasked ? "??? / ???" : `${nextBadge.progress}/${nextBadge.target} completed`}</p>
+                      <div className="progress-bar">
+                        <div className="progress-fill gold-fill" style={{ width: `${nextBadge.percent}%` }} />
+                      </div>
+                      <span>{nextBadgeMasked ? "Hidden achievement" : `${nextBadge.rarity} · ${nextBadge.reward}`}</span>
                     </div>
-                    <span>Progress milestone</span>
-                  </div>
+                  ) : (
+                    <div className="badge-container">
+                      <div className="badge-item"><Medal /></div>
+                      <h3>All badges earned</h3>
+                      <p>You've unlocked everything available.</p>
+                    </div>
+                  )}
                   <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("badges")}>
                     View Badges
                   </button>
