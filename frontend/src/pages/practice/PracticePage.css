@@ -63,8 +63,8 @@
   --summary-glow: 0 0 32px rgba(45, 212, 191, 0.18);
   --summary-border: rgba(45, 212, 191, 0.35);
   --summary-bg: linear-gradient(135deg, rgba(15, 31, 54, 0.96), rgba(8, 18, 34, 0.98));
-  --summary-icon-size: 4.6rem;   /* TUNE: premium image icon size in the strip */
-  --summary-subject-icon: 68px;  /* TUNE: premium image icon size on subject cards */
+  --summary-icon-size: 5.6rem;   /* TUNE: premium icon size in the strip (~90px) — XP/coin/streak/badges all use this */
+  --summary-subject-icon: 76px;  /* TUNE: premium image icon size on subject cards */
 }
 
 .dashboard-page.practice-dashboard-page {
@@ -240,6 +240,25 @@
   filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.4));
 }
 
+/* Badges Earned has no photographic asset yet, so make its CSS gem large +
+   premium so it matches the other (image) badges in size and presence.
+   Drop a badge-earned.png into assets/gamification to replace it. */
+.dashboard-page .summary-stat-icon.badges:not(.has-img) {
+  width: var(--summary-icon-size);
+  height: var(--summary-icon-size);
+  background:
+    radial-gradient(120% 120% at 50% 18%, rgba(255, 255, 255, 0.35), transparent 45%),
+    linear-gradient(150deg, #d8b4fe, #7c3aed 70%, #5b21b6);
+  filter: drop-shadow(0 0 18px rgba(168, 85, 247, 0.5));
+}
+
+.dashboard-page .summary-stat-icon.badges:not(.has-img) svg {
+  width: 2.4rem;
+  height: 2.4rem;
+  color: #faf5ff;
+  filter: drop-shadow(0 1px 1px rgba(76, 29, 149, 0.7));
+}
+
 .dashboard-page .summary-stat-icon.coin {
   filter: drop-shadow(0 4px 12px rgba(251, 176, 52, 0.35));
 }
@@ -261,6 +280,12 @@
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.15;
+}
+
+/* Coins block shows only the value (no label/helper) — make it the highlight. */
+.dashboard-page .summary-stat-value-solo {
+  font-size: 1.95rem;
+  line-height: 1;
 }
 
 .dashboard-page .summary-stat-helper {
@@ -293,18 +318,33 @@
   display: block;
 }
 
-/* When real art is present, drop the hex clip/gradient so the badge art shows
-   cleanly, and give it a soft glow that matches the reference. */
+/* When real (transparent) art is present: NO square box. Drop the hex
+   clip/gradient/border; the wrapper stays invisible except for a soft radial
+   glow behind the emblem, so the badge floats and blends into the card. */
 .dashboard-page .summary-stat-icon.has-img,
 .dashboard-page .subject-card-icon.has-img {
-  background: none !important;
   clip-path: none !important;
-  filter: drop-shadow(0 4px 14px rgba(45, 212, 191, 0.28));
+  border: none !important;
+  box-shadow: none !important;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.18), transparent 62%) !important;
+  filter: drop-shadow(0 0 16px rgba(45, 212, 191, 0.32));
 }
 
 .dashboard-page .summary-stat-icon.has-img::before,
 .dashboard-page .subject-card-icon.has-img::before {
   display: none;
+}
+
+/* Warm glow for the streak badge so the teal halo doesn't fight the flame. */
+.dashboard-page .summary-stat-icon.streak.has-img {
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.2), transparent 62%) !important;
+  filter: drop-shadow(0 0 16px rgba(249, 115, 22, 0.34));
+}
+
+/* Warm gold glow for the coin badge. */
+.dashboard-page .summary-stat-icon.coin.has-img {
+  background: radial-gradient(circle, rgba(251, 176, 52, 0.2), transparent 62%) !important;
+  filter: drop-shadow(0 0 16px rgba(251, 176, 52, 0.32));
 }
 
 /* TUNE: premium image icon sizes (larger than the CSS fallback badges) */

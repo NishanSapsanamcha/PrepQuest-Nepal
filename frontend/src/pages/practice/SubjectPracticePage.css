@@ -878,3 +878,219 @@
     border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   }
 }
+
+/* ============================================================
+   Premium hero header (mountain decoration + short title)
+   ============================================================ */
+.dashboard-page .subject-modes-hero {
+  position: relative !important;
+  top: auto;
+  z-index: 2;
+  min-height: 0;
+  overflow: hidden;
+  margin: clamp(1rem, 2.2vw, 1.6rem) clamp(1.5rem, 3vw, 2.2rem) 0;
+  padding: clamp(1.3rem, 2.6vw, 1.9rem) clamp(1.4rem, 3vw, 2.1rem);
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 150% at 0% 0%, rgba(45, 212, 191, 0.12), transparent 55%),
+    linear-gradient(180deg, #122036, #0d182a);
+  backdrop-filter: none;
+  animation: none;
+}
+
+/* Right-side decorative mountain image. */
+.dashboard-page .subject-modes-hero .hero-mountain {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(58%, 720px);
+  background-image: var(--hero-mountain, none);
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: cover;
+  opacity: 0.5;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 55%);
+  mask-image: linear-gradient(90deg, transparent, #000 55%);
+  pointer-events: none;
+}
+
+/* Top bar inside the hero: brand left, sound + exit right. */
+.dashboard-page .subject-modes-hero .hero-topbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(1rem, 2.4vw, 1.7rem);
+}
+
+.dashboard-page .hero-brand {
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-page .hero-brand strong {
+  color: var(--teal);
+  font-weight: 800;
+}
+
+.dashboard-page .hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.dashboard-page .hero-volume-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 50%;
+  background: rgba(13, 24, 42, 0.55);
+  color: var(--soft);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .hero-volume-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-teal);
+  color: var(--teal);
+  box-shadow: 0 0 16px rgba(24, 224, 194, 0.25);
+}
+
+.dashboard-page .hero-volume-btn.is-muted {
+  color: #94a3b8;
+}
+
+.dashboard-page .hero-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0 1.05rem;
+  border: 1px solid rgba(24, 224, 194, 0.45);
+  border-radius: 999px;
+  background: rgba(13, 24, 42, 0.5);
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .hero-exit-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-teal);
+  background: rgba(24, 224, 194, 0.12);
+  box-shadow: 0 0 18px rgba(24, 224, 194, 0.28);
+}
+
+.dashboard-page .subject-modes-hero-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.4rem;
+  max-width: 620px;
+}
+
+.dashboard-page .hero-subject-tag {
+  color: var(--teal);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.dashboard-page .subject-modes-hero-body h1 {
+  margin: 0.1rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+  line-height: 1.08;
+}
+
+.dashboard-page .subject-modes-hero-body p {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.dashboard-page .hero-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.dashboard-page .hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 32px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
+.dashboard-page .hero-pill.exam {
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--teal);
+}
+
+.dashboard-page .hero-pill.lang {
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+}
+
+/* Level badge artwork in the progress summary — transparent PNG, no frame. */
+.dashboard-page .hero-level-art {
+  width: 74px;
+  height: 74px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  filter: drop-shadow(0 6px 18px rgba(24, 224, 194, 0.3));
+}
+
+/* PNG mode icons inside practice cards — blended, no white/box wrapper. */
+.dashboard-page .ptc-icon-img {
+  width: clamp(82px, 6.4vw, 104px);
+  height: clamp(82px, 6.4vw, 104px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: 0;
+  clip-path: none;
+  mix-blend-mode: normal;
+}
+
+.dashboard-page .ptc-icon-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .dashboard-page .subject-modes-hero {
+    margin: 1rem 1rem 0;
+  }
+
+  .dashboard-page .subject-modes-hero .hero-mountain {
+    width: 100%;
+    opacity: 0.22;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 70%);
+    mask-image: linear-gradient(180deg, transparent, #000 70%);
+  }
+}

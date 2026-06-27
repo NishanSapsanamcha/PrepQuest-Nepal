@@ -114,9 +114,7 @@ function PracticePage() {
           <div className="summary-stat">
             <PremiumBadge src={STAT_ICON_ASSETS.coin} alt="Coins" className="summary-stat-icon coin" imgClassName="practice-summary-icon"><CoinIcon size="md" /></PremiumBadge>
             <div className="summary-stat-body">
-              <span className="summary-stat-label">Coins</span>
-              <strong className="summary-stat-value">{coinBalance.toLocaleString()}</strong>
-              <span className="summary-stat-helper">Earned from activities</span>
+              <strong className="summary-stat-value summary-stat-value-solo">{coinBalance.toLocaleString()}</strong>
             </div>
           </div>
           <div className="summary-stat">
@@ -132,7 +130,6 @@ function PracticePage() {
             <div className="summary-stat-body">
               <span className="summary-stat-label">Badges Earned</span>
               <strong className="summary-stat-value">{badgesEarned}</strong>
-              <span className="summary-stat-helper">{badgesEarned > 0 ? "View your collection" : "Start earning badges"}</span>
             </div>
           </div>
         </section>

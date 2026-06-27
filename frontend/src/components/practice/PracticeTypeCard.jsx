@@ -27,6 +27,7 @@ function PracticeTypeCard({
   unlockPercent,
   validationMessage,
   questionCount,
+  iconSrc,
   onStart,
 }) {
   const Icon = practiceIcons[type.name] || FaQuestionCircle;
@@ -40,12 +41,18 @@ function PracticeTypeCard({
       style={unlocked ? { "--mode-accent": accent } : undefined}
     >
       <div className="ptc-top">
-        <span
-          className="ptc-icon hex-badge"
-          style={{ color: accent, background: `linear-gradient(150deg, ${accent}, ${accent}66)`, filter: `drop-shadow(0 5px 14px ${accent}50)` }}
-        >
-          <Icon />
-        </span>
+        {iconSrc ? (
+          <span className="ptc-icon ptc-icon-img" style={{ filter: `drop-shadow(0 5px 14px ${accent}55)` }}>
+            <img src={iconSrc} alt="" loading="lazy" />
+          </span>
+        ) : (
+          <span
+            className="ptc-icon hex-badge"
+            style={{ color: accent, background: `linear-gradient(150deg, ${accent}, ${accent}66)`, filter: `drop-shadow(0 5px 14px ${accent}50)` }}
+          >
+            <Icon />
+          </span>
+        )}
         {!unlocked && <span className="ptc-lock-pill"><FaLock /> Locked</span>}
       </div>
 
