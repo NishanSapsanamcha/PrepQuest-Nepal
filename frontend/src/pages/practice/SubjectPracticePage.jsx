@@ -118,14 +118,9 @@ function SubjectPracticePage() {
 
   return (
     <DashboardLayout activeKey="practice">
-      {/* Premium hero header — mountain decoration, brand, volume + Exit Practice. */}
-      <header
-        className="dashboard-header subject-modes-hero"
-        style={heroMountain ? { "--hero-mountain": `url(${heroMountain})` } : undefined}
-      >
-        <div className="hero-mountain" aria-hidden="true" />
-
-        <div className="hero-topbar">
+      <section className={`dashboard-content subject-detail-page${debugLayout ? " debug-practice-layout" : ""}`}>
+        {/* Separate top bar — sits ABOVE the hero, no mountain behind it. */}
+        <div className="practice-topbar">
           <span className="hero-brand">PrepQuest <strong>Nepal</strong></span>
           <div className="hero-actions">
             <button
@@ -144,14 +139,19 @@ function SubjectPracticePage() {
           </div>
         </div>
 
-        <div className="subject-modes-hero-body">
-          <span className="hero-subject-tag">{subject.name}</span>
-          <h1>{subject.name} Practice Modes</h1>
-          <p>Level up your knowledge with smart, gamified practice</p>
-        </div>
-      </header>
+        {/* Hero banner — mountain decoration + subject heading only. */}
+        <header
+          className="subject-modes-hero"
+          style={heroMountain ? { "--hero-mountain": `url(${heroMountain})` } : undefined}
+        >
+          <div className="hero-mountain" aria-hidden="true" />
+          <div className="subject-modes-hero-body">
+            <span className="hero-subject-tag">{subject.name}</span>
+            <h1>{subject.name} Practice Modes</h1>
+            <p>Level up your knowledge with smart, gamified practice</p>
+          </div>
+        </header>
 
-      <section className={`dashboard-content subject-detail-page${debugLayout ? " debug-practice-layout" : ""}`}>
         {/* Compact progress summary: level, XP, validated questions, next unlock. */}
         <section className="subject-hero" data-debug="Progress Summary">
           <div className="hero-cell hero-level-cell">
