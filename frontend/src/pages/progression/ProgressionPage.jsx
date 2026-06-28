@@ -23,6 +23,7 @@ import {
   FaWaveSquare,
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import PathImage from "../../assets/level/path.png";
 import { examTracks } from "../../data/examTracks";
 import { subjectLevels } from "../../data/subjectLevels";
 import {
@@ -427,11 +428,12 @@ function ProgressionPage() {
               <span className="snapshot-pulse"><FaChartLine /> Real Data</span>
             </div>
             <div className="snapshot-primary">
-              <div>
+              <div className="snapshot-xp">
                 <span>Total XP</span>
                 <strong>{totalXp.toLocaleString()} XP</strong>
                 <p>{getSnapshotMessage(totalAttempted, overallAccuracy)}</p>
               </div>
+              <img className="path-illustration" src={PathImage} alt="" aria-hidden="true" />
               <div className="accuracy-ring" style={{ "--accuracy": `${overallAccuracy || 0}%` }}>
                 <strong>{formatPercent(overallAccuracy)}</strong>
                 <span>Accuracy</span>

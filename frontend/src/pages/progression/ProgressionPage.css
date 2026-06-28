@@ -139,13 +139,29 @@
 
 .dashboard-page .snapshot-primary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 132px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr) 132px;
   align-items: center;
   gap: 1rem;
   padding: 1rem;
   border: 1px solid rgba(58, 76, 112, 0.46);
   border-radius: 8px;
   background: rgba(9, 15, 28, 0.42);
+}
+
+/* Decorative learning-path illustration (path.png). Its dark-navy background is
+   faded with a radial mask so it blends into the card with no hard rectangle/box
+   edge, while keeping the Total XP text and accuracy ring fully readable. */
+.dashboard-page .path-illustration {
+  width: 100%;
+  max-width: 280px;
+  height: 150px;
+  object-fit: contain;
+  justify-self: center;
+  opacity: 0.95;
+  pointer-events: none;
+  filter: drop-shadow(0 0 24px rgba(45, 212, 191, 0.2));
+  -webkit-mask-image: radial-gradient(ellipse 72% 82% at 50% 50%, #000 40%, transparent 80%);
+  mask-image: radial-gradient(ellipse 72% 82% at 50% 50%, #000 40%, transparent 80%);
 }
 
 .dashboard-page .snapshot-primary span,
@@ -783,6 +799,11 @@
   .dashboard-page .insight-grid,
   .dashboard-page .review-progress-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Decorative only — drop it on small screens to keep the snapshot compact. */
+  .dashboard-page .path-illustration {
+    display: none;
   }
 
   .dashboard-page .accuracy-ring {

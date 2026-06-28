@@ -6,6 +6,7 @@ import SubjectCard from "../../components/practice/SubjectCard";
 import PremiumBadge from "../../components/practice/PremiumBadge";
 import { CoinIcon } from "../../components/common/Coin";
 import { STAT_ICON_ASSETS } from "../../data/practiceIconAssets";
+import badgeStatIcon from "../../assets/level/bages.png";
 import { examTracks } from "../../data/examTracks";
 import { getCurrentStreak } from "../../utils/dailyQuizUtils";
 import { getEarnedBadges, syncBadges } from "../../utils/badgeUtils";
@@ -126,7 +127,7 @@ function PracticePage() {
             </div>
           </div>
           <div className="summary-stat">
-            <PremiumBadge src={STAT_ICON_ASSETS.badges} alt="Badges" className="summary-stat-icon badges" imgClassName="practice-summary-icon"><FaMedal /></PremiumBadge>
+            <PremiumBadge src={badgeStatIcon} alt="Badges" className="summary-stat-icon badges" imgClassName="practice-summary-icon"><FaMedal /></PremiumBadge>
             <div className="summary-stat-body">
               <span className="summary-stat-label">Badges Earned</span>
               <strong className="summary-stat-value">{badgesEarned}</strong>

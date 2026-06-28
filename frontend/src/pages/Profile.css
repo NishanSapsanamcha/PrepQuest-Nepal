@@ -5,21 +5,34 @@
   max-width: none;
 }
 
-/* --- Compact profile identity header --------------------------------------- */
+/* --- Profile identity header (not a card — reads as part of the page) ------- */
 .dashboard-page .profile-identity-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 1.5rem;
-  padding: 1.25rem 2rem;
-  border-color: rgba(45, 212, 191, 0.2);
-  background: linear-gradient(135deg, rgba(15, 29, 52, 0.96), rgba(10, 21, 39, 0.96));
+  padding: 0.5rem 0.75rem 1.25rem;
+  margin-bottom: 0.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(45, 212, 191, 0.1);
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* No hover lift — it's a header, not an interactive card. */
+.dashboard-page .profile-identity-card:hover {
+  transform: none;
+  border-color: transparent;
+  border-bottom-color: rgba(45, 212, 191, 0.1);
+  box-shadow: none;
 }
 
 /* Circular avatar: uploaded photo (object-fit: cover) or initials fallback. */
 .dashboard-page .profile-avatar {
-  width: 92px;
-  height: 92px;
+  width: 86px;
+  height: 86px;
   flex-shrink: 0;
   overflow: hidden;
   display: inline-flex;

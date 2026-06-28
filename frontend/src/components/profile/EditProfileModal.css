@@ -28,7 +28,7 @@
   font-weight: 800;
 }
 
-.edit-profile-close {
+.edit-profile-modal .edit-profile-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +42,7 @@
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.edit-profile-close:hover {
+.edit-profile-modal .edit-profile-close:hover {
   color: #f8fafc;
   border-color: rgba(45, 212, 191, 0.4);
 }
@@ -90,8 +90,9 @@
   min-width: 0;
 }
 
-.edit-avatar-btn,
-.edit-avatar-remove {
+/* Scoped under .edit-profile-modal to out-specify `.dashboard-page button`. */
+.edit-profile-modal .edit-avatar-btn,
+.edit-profile-modal .edit-avatar-remove {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -104,29 +105,29 @@
   transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.edit-avatar-btn {
+.edit-profile-modal .edit-avatar-btn {
   border: 1px solid rgba(45, 212, 191, 0.4);
   background: rgba(45, 212, 191, 0.12);
   color: #2dd4bf;
 }
 
-.edit-avatar-btn:hover:not(:disabled) {
+.edit-profile-modal .edit-avatar-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   background: rgba(45, 212, 191, 0.2);
 }
 
-.edit-avatar-btn:disabled {
+.edit-profile-modal .edit-avatar-btn:disabled {
   opacity: 0.6;
   cursor: progress;
 }
 
-.edit-avatar-remove {
+.edit-profile-modal .edit-avatar-remove {
   border: 1px solid rgba(251, 113, 133, 0.32);
   background: rgba(251, 113, 133, 0.1);
   color: #fb7185;
 }
 
-.edit-avatar-remove:hover {
+.edit-profile-modal .edit-avatar-remove:hover {
   transform: translateY(-1px);
   background: rgba(251, 113, 133, 0.18);
 }
@@ -191,41 +192,49 @@
   margin-top: 0.2rem;
 }
 
-.edit-btn {
-  min-height: 40px;
-  padding: 0 1.25rem;
+/* Buttons are scoped under .edit-profile-modal so they out-specify the global
+   `.dashboard-page button { background: transparent }` rule — otherwise the
+   primary button renders transparent (dark text on dark = invisible). */
+.edit-profile-modal .edit-btn {
+  min-height: 42px;
+  padding: 0 1.4rem;
   border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
-.edit-btn-ghost {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(15, 23, 39, 0.7);
+.edit-profile-modal .edit-btn-ghost {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(8, 18, 34, 0.55);
   color: #cbd5e1;
 }
 
-.edit-btn-ghost:hover {
-  border-color: rgba(148, 163, 184, 0.45);
+.edit-profile-modal .edit-btn-ghost:hover {
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.08);
   color: #f8fafc;
 }
 
-.edit-btn-primary {
-  border: 1px solid transparent;
-  background: linear-gradient(135deg, #2dd4bf, #22c55e);
-  color: #031014;
+.edit-profile-modal .edit-btn-primary {
+  border: none;
+  background: linear-gradient(135deg, #22e6c1, #22c55e);
+  color: #02131f;
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.25);
 }
 
-.edit-btn-primary:hover:not(:disabled) {
+.edit-profile-modal .edit-btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 0 24px rgba(45, 212, 191, 0.3);
+  box-shadow: 0 0 26px rgba(45, 212, 191, 0.4);
 }
 
-.edit-btn-primary:disabled {
-  opacity: 0.6;
-  cursor: progress;
+/* Disabled = clearly muted but still visible (never invisible). */
+.edit-profile-modal .edit-btn-primary:disabled {
+  background: rgba(148, 163, 184, 0.18);
+  color: rgba(203, 213, 225, 0.55);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 @media (max-width: 480px) {

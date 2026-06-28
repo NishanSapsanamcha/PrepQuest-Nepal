@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaBookOpen, FaCalendarAlt, FaFire, FaLock, FaMedal, FaPen, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { MdTrackChanges } from "react-icons/md";
 import BadgeIcon from "../components/badges/BadgeIcon";
+import AchievementBadge from "../components/common/AchievementBadge";
 import EditProfileModal from "../components/profile/EditProfileModal";
 import { rankJourney } from "../data/rankBadges";
 import { getInitials, getProfileOverrides, saveProfileOverrides } from "../utils/profileUtils";
@@ -152,7 +153,7 @@ function Profile() {
   return (
     <DashboardLayout activeKey="profile">
       <section className="dashboard-content profile-page">
-        <header className="dashboard-card profile-identity-card">
+        <header className="profile-identity-card">
           <div className="profile-avatar" aria-hidden="true">
             {avatarImage ? <img src={avatarImage} alt="" /> : <span>{getInitials(realName)}</span>}
           </div>
@@ -235,7 +236,7 @@ function Profile() {
           <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{currentStreak} Days</div><div className="stat-label">Current Streak</div><div className="stat-helper">Daily habit status</div></div></article>
           <article className="stat-card"><div className="stat-icon"><MdTrackChanges /></div><div><div className="stat-value">{overallAccuracy}%</div><div className="stat-label">Overall Accuracy</div><div className="stat-helper">{totalCorrect} correct answers</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaBookOpen /></div><div><div className="stat-value">{totalQuestionsAttempted}</div><div className="stat-label">Questions Attempted</div><div className="stat-helper">Across all practice sessions</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{earnedBadges.length}</div><div className="stat-label">Badges Earned</div><div className="stat-helper">Achievement showcase</div></div></article>
+          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earnedBadges.length}</div><div className="stat-label">Badges Earned</div><div className="stat-helper">Achievement showcase</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaUser /></div><div><div className="stat-value">{subjectsPracticed}</div><div className="stat-label">Subjects Practiced</div><div className="stat-helper">Study breadth</div></div></article>
         </section>
 
