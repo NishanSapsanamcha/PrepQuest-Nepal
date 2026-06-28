@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaBookOpen, FaCalendarAlt, FaChevronDown, FaChevronUp, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { FaBookOpen, FaCalendarAlt, FaChevronDown, FaChevronUp, FaFire, FaLock, FaMedal, FaPen, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { MdTrackChanges } from "react-icons/md";
 import BadgeIcon from "../components/badges/BadgeIcon";
 import AchievementBadge from "../components/common/AchievementBadge";
