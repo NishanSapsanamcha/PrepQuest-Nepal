@@ -80,9 +80,9 @@
 
 .dashboard-page .subject-detail-page {
   display: grid;
-  gap: 1.45rem;
+  gap: 1.25rem;
   width: min(1440px, 100%);
-  padding-top: 1.5rem;
+  padding-top: 1.25rem;
   padding-bottom: 3rem;
 }
 
@@ -305,13 +305,13 @@
 
 .dashboard-page .practice-type-card.locked {
   opacity: 1;
-  border-color: rgba(148, 163, 184, 0.14);
+  border-color: rgba(96, 132, 172, 0.28);
 }
 
 .dashboard-page .practice-type-card.locked:hover {
-  transform: none;
-  border-color: rgba(148, 163, 184, 0.24);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+  transform: translateY(-2px);
+  border-color: rgba(120, 156, 196, 0.4);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-page .practice-card-top {
@@ -557,21 +557,26 @@
 /* Horizontal hero summary */
 .dashboard-page .subject-hero {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1.25fr 1.25fr 1.1fr 1.1fr;
+  align-items: center;
   gap: 0;
-  padding: 1.25rem 1.4rem;
-  border: 1px solid rgba(45, 212, 191, 0.2);
+  min-height: 0;
+  margin-top: 0;
+  padding: 1.25rem 1.75rem;
+  border: 1px solid rgba(45, 212, 191, 0.16);
   border-radius: 18px;
   background:
-    radial-gradient(130% 160% at 0% 0%, rgba(45, 212, 191, 0.08), transparent 55%),
-    #111c31;
+    radial-gradient(130% 160% at 0% 0%, rgba(45, 212, 191, 0.07), transparent 55%),
+    linear-gradient(145deg, rgba(17, 33, 56, 0.96), rgba(13, 25, 45, 0.98));
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
 }
 
 .dashboard-page .hero-cell {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.1rem 1.25rem;
+  gap: 0.95rem;
+  min-height: 0;
+  padding: 0 1.35rem;
 }
 
 .dashboard-page .hero-cell + .hero-cell {
@@ -581,20 +586,20 @@
 .dashboard-page .hero-cell-body {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.28rem;
   min-width: 0;
   flex: 1;
 }
 
 .dashboard-page .hero-level-badge {
-  width: 56px;
-  height: 56px;
+  width: 62px;
+  height: 62px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #07111f;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 900;
   background: linear-gradient(135deg, #18e0c2, #22c55e);
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
@@ -602,13 +607,19 @@
 }
 
 .dashboard-page .hero-icon {
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.7rem;
+  height: 2.7rem;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 13px;
+  font-size: 1.2rem;
+}
+
+.dashboard-page .hero-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .dashboard-page .hero-icon.xp { background: rgba(56, 189, 248, 0.14); color: #38bdf8; }
@@ -617,23 +628,24 @@
 
 .dashboard-page .hero-label {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .dashboard-page .hero-value {
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1.15rem;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .dashboard-page .hero-value-big {
-  font-size: 1.5rem;
+  font-size: 1.7rem;
 }
 
 .dashboard-page .hero-cell .progress-bar {
   height: 7px;
+  margin: 0.1rem 0;
   border-radius: 999px;
   background: #14243a;
   overflow: hidden;
@@ -647,12 +659,12 @@
 
 .dashboard-page .hero-sub {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 
 .dashboard-page .hero-need {
   color: var(--teal);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
@@ -674,18 +686,34 @@
   font-size: 0.82rem;
 }
 
-/* Simplified mode cards */
+/* Simplified mode cards — every card is a visible dark panel. */
 .dashboard-page .practice-type-card {
-  min-height: 0;
+  min-height: 215px;
   gap: 0.85rem;
-  padding: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(80, 120, 160, 0.22);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(15, 31, 53, 0.92), rgba(10, 18, 34, 0.96));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dashboard-page .ptc-top {
+.dashboard-page .ptc-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.dashboard-page .ptc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-page .ptc-title-row {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 /* TUNE: practice mode card hexagon icon size */
@@ -715,13 +743,15 @@
   font-weight: 800;
 }
 
-.dashboard-page .ptc-body h3 {
+.dashboard-page .ptc-body h3,
+.dashboard-page .ptc-info h3 {
   margin: 0;
   color: var(--text);
   font-size: 1.05rem;
 }
 
-.dashboard-page .ptc-body p {
+.dashboard-page .ptc-body p,
+.dashboard-page .ptc-info p {
   margin: 0.4rem 0 0;
   color: var(--muted);
   font-size: 0.82rem;
@@ -815,13 +845,39 @@
 /* Learn row: how-it-works + validated bank note */
 .dashboard-page .subject-learn-row {
   display: grid;
-  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   gap: 1.2rem;
   align-items: stretch;
 }
 
+/* Left "How It Works" becomes a single panel so it matches the bank card height. */
 .dashboard-page .subject-learn-row .how-it-works-section {
   margin-top: 0;
+  height: 100%;
+  padding: 1.35rem;
+  border: 1px solid rgba(80, 120, 160, 0.2);
+  border-radius: 16px;
+  background: rgba(15, 23, 39, 0.55);
+}
+
+/* Steps read as plain columns inside the panel — no nested card boxes. */
+.dashboard-page .subject-learn-row .info-step-card {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dashboard-page .subject-learn-row .info-step-card:hover {
+  transform: none;
+  border: 0;
+  background: transparent;
+}
+
+.dashboard-page .subject-learn-row .validation-notice-card {
+  height: 100%;
+  margin: 0;
 }
 
 .dashboard-page .how-it-works-section h2,
@@ -876,5 +932,245 @@
     border-left: 0 !important;
     padding: 0.6rem 0;
     border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  }
+}
+
+/* ============================================================
+   Premium hero header (mountain decoration + short title)
+   ============================================================ */
+/* Compact, card-less title area — blends into the page; faint mountain on the right. */
+.dashboard-page .subject-modes-hero {
+  position: relative;
+  z-index: 2;
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  margin: 0;
+  padding: 1.4rem 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  animation: none;
+}
+
+/* Right-side decorative mountain image. */
+.dashboard-page .subject-modes-hero .hero-mountain {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(52%, 720px);
+  background-image: var(--hero-mountain, none);
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: cover;
+  opacity: 0.45;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 62%);
+  mask-image: linear-gradient(90deg, transparent, #000 62%);
+  pointer-events: none;
+}
+
+/* Separate top bar ABOVE the hero: brand left, sound + exit right. */
+.dashboard-page .practice-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 44px;
+}
+
+.dashboard-page .hero-brand {
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-page .hero-brand strong {
+  color: var(--teal);
+  font-weight: 800;
+}
+
+.dashboard-page .hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.dashboard-page .hero-volume-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 50%;
+  background: rgba(13, 24, 42, 0.55);
+  color: var(--soft);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .hero-volume-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-teal);
+  color: var(--teal);
+  box-shadow: 0 0 16px rgba(24, 224, 194, 0.25);
+}
+
+.dashboard-page .hero-volume-btn.is-muted {
+  color: #94a3b8;
+}
+
+.dashboard-page .hero-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0 1.05rem;
+  border: 1px solid rgba(24, 224, 194, 0.45);
+  border-radius: 999px;
+  background: rgba(13, 24, 42, 0.5);
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-page .hero-exit-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-teal);
+  background: rgba(24, 224, 194, 0.12);
+  box-shadow: 0 0 18px rgba(24, 224, 194, 0.28);
+}
+
+.dashboard-page .subject-modes-hero-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.15rem;
+  max-width: 640px;
+}
+
+.dashboard-page .hero-subject-tag {
+  justify-self: start;
+  display: inline-block;
+  padding: 0.28rem 0.6rem;
+  border-radius: 7px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--teal);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dashboard-page .subject-modes-hero-body h1 {
+  margin: 0.45rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.25rem, 1.9vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.dashboard-page .subject-modes-hero-body p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: clamp(0.82rem, 1vw, 0.95rem);
+  line-height: 1.4;
+}
+
+.dashboard-page .hero-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.dashboard-page .hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 32px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
+.dashboard-page .hero-pill.exam {
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--teal);
+}
+
+.dashboard-page .hero-pill.lang {
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+}
+
+/* Level badge artwork in the progress summary — transparent PNG, no frame.
+   Dedicated class: ONLY the level badge uses this size, no other icon. */
+.dashboard-page .hero-level-art {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  filter: drop-shadow(0 0 18px rgba(45, 212, 191, 0.26));
+}
+
+/* PNG mode icons inside practice cards — blended, no white/box wrapper. */
+.dashboard-page .ptc-icon-img {
+  width: clamp(76px, 5.4vw, 92px);
+  height: clamp(76px, 5.4vw, 92px);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: 0;
+  clip-path: none;
+  mix-blend-mode: normal;
+}
+
+.dashboard-page .ptc-icon-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+}
+
+/* Fallback hexagon badge (e.g. Weak Area Practice has no PNG) matches PNG size. */
+.dashboard-page .ptc-icon.hex-badge {
+  width: clamp(76px, 5.4vw, 92px);
+  height: clamp(76px, 5.4vw, 92px);
+  flex-shrink: 0;
+}
+
+.dashboard-page .ptc-icon.hex-badge svg {
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+@media (max-width: 760px) {
+  .dashboard-page .subject-modes-hero {
+    margin: 0;
+  }
+
+  .dashboard-page .practice-topbar {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-page .subject-modes-hero .hero-mountain {
+    width: 100%;
+    opacity: 0.22;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 70%);
+    mask-image: linear-gradient(180deg, transparent, #000 70%);
   }
 }

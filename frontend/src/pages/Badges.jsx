@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaCrown, FaFire, FaMedal, FaShieldAlt } from "react-icons/fa";
+import { FaCrown, FaFire, FaShieldAlt } from "react-icons/fa";
+import AchievementBadge from "../components/common/AchievementBadge";
 import BadgeIcon from "../components/badges/BadgeIcon";
 import { RewardText } from "../components/common/Coin";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
@@ -58,7 +59,7 @@ function Badges() {
         </header>
 
         <section className="stats-grid">
-          <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{earned.length}</div><div className="stat-label">Earned Badges</div><div className="stat-helper">Your achievement showcase</div></div></article>
+          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earned.length}</div><div className="stat-label">Earned Badges</div><div className="stat-helper">Your achievement showcase</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaShieldAlt /></div><div><div className="stat-value">{locked.length}</div><div className="stat-label">Locked Badges</div><div className="stat-helper">Visible unlock goals</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{masked(nextBadge) ? "???" : nextBadge.name}</div><div className="stat-label">Next Badge</div><div className="stat-helper">Closest to unlocking</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaCrown /></div><div><div className="stat-value">{badges.filter((badge) => RARE_TIERS.includes(badge.rarity)).length}</div><div className="stat-label">Rare Badges Available</div><div className="stat-helper">Premium achievement paths</div></div></article>

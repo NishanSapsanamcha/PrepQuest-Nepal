@@ -1,0 +1,245 @@
+/* Edit Profile modal — reuses the global .pq-modal-overlay backdrop. */
+.edit-profile-modal {
+  width: min(440px, 100%);
+  color-scheme: dark;
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.4rem;
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(45, 212, 191, 0.12), transparent 55%),
+    #141d31;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  color: #f8fafc;
+}
+
+.edit-profile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.edit-profile-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.edit-profile-modal .edit-profile-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 39, 0.7);
+  color: #9badc7;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.edit-profile-modal .edit-profile-close:hover {
+  color: #f8fafc;
+  border-color: rgba(45, 212, 191, 0.4);
+}
+
+.edit-profile-form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.edit-avatar-block {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.edit-avatar-preview {
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  background: linear-gradient(135deg, #2dd4bf, #22c55e);
+  box-shadow: 0 0 26px rgba(45, 212, 191, 0.22);
+}
+
+.edit-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-avatar-preview span {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #031014;
+}
+
+.edit-avatar-actions {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* Scoped under .edit-profile-modal to out-specify `.dashboard-page button`. */
+.edit-profile-modal .edit-avatar-btn,
+.edit-profile-modal .edit-avatar-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.edit-profile-modal .edit-avatar-btn {
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  background: rgba(45, 212, 191, 0.12);
+  color: #2dd4bf;
+}
+
+.edit-profile-modal .edit-avatar-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(45, 212, 191, 0.2);
+}
+
+.edit-profile-modal .edit-avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.edit-profile-modal .edit-avatar-remove {
+  border: 1px solid rgba(251, 113, 133, 0.32);
+  background: rgba(251, 113, 133, 0.1);
+  color: #fb7185;
+}
+
+.edit-profile-modal .edit-avatar-remove:hover {
+  transform: translateY(-1px);
+  background: rgba(251, 113, 133, 0.18);
+}
+
+.edit-avatar-hint {
+  margin: 0;
+  color: #9badc7;
+  font-size: 0.72rem;
+}
+
+.edit-file-input {
+  display: none;
+}
+
+.edit-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.edit-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.edit-field-label svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.edit-field-input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(8, 13, 24, 0.7);
+  color: #f8fafc;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-field-input:focus {
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+}
+
+.edit-profile-error {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.edit-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.2rem;
+}
+
+/* Buttons are scoped under .edit-profile-modal so they out-specify the global
+   `.dashboard-page button { background: transparent }` rule — otherwise the
+   primary button renders transparent (dark text on dark = invisible). */
+.edit-profile-modal .edit-btn {
+  min-height: 42px;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.edit-profile-modal .edit-btn-ghost {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(8, 18, 34, 0.55);
+  color: #cbd5e1;
+}
+
+.edit-profile-modal .edit-btn-ghost:hover {
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.08);
+  color: #f8fafc;
+}
+
+.edit-profile-modal .edit-btn-primary {
+  border: none;
+  background: linear-gradient(135deg, #22e6c1, #22c55e);
+  color: #02131f;
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.25);
+}
+
+.edit-profile-modal .edit-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 26px rgba(45, 212, 191, 0.4);
+}
+
+/* Disabled = clearly muted but still visible (never invisible). */
+.edit-profile-modal .edit-btn-primary:disabled {
+  background: rgba(148, 163, 184, 0.18);
+  color: rgba(203, 213, 225, 0.55);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .edit-avatar-block {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
