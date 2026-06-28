@@ -38,6 +38,7 @@ const PER_ACCOUNT_KEYS = [
   "prepquest_earned_badges",
   "prepquest_badge_unseen",
   "prepquest_badge_rewards",
+  "prepquest_daily_login_reward",
   "selectedExam",
   "preferredLanguage",
   "onboardingCompleted",

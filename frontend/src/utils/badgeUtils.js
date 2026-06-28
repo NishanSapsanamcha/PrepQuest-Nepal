@@ -9,6 +9,7 @@
 import { mockBadges } from "../data/gamificationMockData";
 import { calculateTotalXPFromTransactions } from "./xpUtils";
 import { getCurrentStreak, getDailyQuizAttempts, getLocalDateKey } from "./dailyQuizUtils";
+import { getBestDailyLoginStreak } from "./dailyRewardUtils";
 import { getCompletedMockAttempts } from "./mockTestUtils";
 import { getTournamentAttempts } from "./tournamentUtils";
 import {
@@ -150,6 +151,7 @@ function buildBadgeStats() {
       (a) => a.totalParticipants > 0 && a.rank > 0 && a.rank / a.totalParticipants <= 0.01
     ),
     anyActivity: dailyAttempts.length > 0 || mockAttempts.length > 0 || practiceHistory.length > 0,
+    dailyLoginBestStreak: getBestDailyLoginStreak(),
     constitutionSolved: subjectCards.find((c) => c.id === "constitution")?.progress.questionsSolved || 0,
     gkAccuracy: subjectAccuracy("general-knowledge"),
     constitutionAccuracy: subjectAccuracy("constitution"),
@@ -195,6 +197,7 @@ const EVALUATORS = {
   streak_centurion: (s) => s.longestStreak,
   omnischolar: (s) => s.masteredCount,
   tournament_apex: (s) => (s.tournamentTopOnePercent ? 1 : 0),
+  daily_login_streak_30: (s) => s.dailyLoginBestStreak,
 };
 
 // Extra unlock gates for badges whose requirement is more than "value >= target".

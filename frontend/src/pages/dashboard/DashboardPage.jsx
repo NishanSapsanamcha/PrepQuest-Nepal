@@ -1,4 +1,4 @@
-﻿import { useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -26,7 +26,7 @@ import {
   GraduationCap,
   Languages,
   LayoutDashboard,
-  Lightbulb,
+  Lock,
   LogOut,
   Medal,
   Newspaper,
@@ -43,11 +43,10 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { rankJourney } from "../../data/rankBadges";
-import gamificationIcons from "../../assets/gamification";
-import missionImg from "../../assets/level/mission.png";
-import { getCurrentStreak, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
-import { hasCompletedMockToday } from "../../utils/mockTestUtils";
+import { rankThresholds } from "../../data/gamificationMockData";
+import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
+import { canClaimDailyReward, DAILY_REWARD_CLAIMED_EVENT, getDailyRewardState, getNepalRewardDate } from "../../utils/dailyRewardUtils";
+import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
 import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress } from "../../utils/xpUtils";
 import { CoinIcon } from "../../components/common/Coin";
@@ -108,7 +107,6 @@ const sidebarItems = [
   { key: "tournament", label: "Tournament", Icon: Trophy },
   { key: "leaderboard", label: "Leaderboard", Icon: Award },
   { key: "badges", label: "Badges", Icon: Medal },
-  { key: "suggestions", label: "Suggestions", Icon: Lightbulb },
   { key: "profile", label: "Profile", Icon: UserRound },
 ];
 
@@ -123,8 +121,18 @@ function DashboardPage() {
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
   const totalXp = calculateTotalXPFromTransactions();
-  const coins = getUserCoinBalance();
-  const dailyQuizCompleted = Boolean(getTodayDailyQuizAttempt());
+  const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
+  const dailyQuizCompleted = Boolean(todayDailyQuizAttempt);
+  const [, forceRefresh] = useState(0);
+  useEffect(() => {
+    const handleClaimed = () => forceRefresh((tick) => tick + 1);
+    window.addEventListener(DAILY_REWARD_CLAIMED_EVENT, handleClaimed);
+    return () => window.removeEventListener(DAILY_REWARD_CLAIMED_EVENT, handleClaimed);
+  }, []);
+
+  const dailyRewardState = getDailyRewardState();
+  const dailyRewardClaimedToday = !canClaimDailyReward(dailyRewardState, getNepalRewardDate());
+  const mockStats = getMockDashboardStats();
   const mockCompletedToday = hasCompletedMockToday();
   const currentStreak = getCurrentStreak();
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
@@ -170,6 +178,7 @@ function DashboardPage() {
 
   const handleNavClick = (key) => {
     if (key === "dashboard") { navigate("/dashboard"); return; }
+    if (key === "logout") { handleLogout(); return; }
     navigateIfAvailable(key);
   };
 
@@ -225,20 +234,18 @@ function DashboardPage() {
                 <span>{label}</span>
               </button>
             ))}
-          </nav>
-
-          <div className="nav-logout">
             <button
-              className="nav-item logout"
               type="button"
+              className="nav-item logout"
+              data-nav="logout"
               title="Logout"
               aria-label="Logout"
-              onClick={handleLogout}
+              onClick={() => handleNavClick("logout")}
             >
               <LogOut />
               <span>Logout</span>
             </button>
-          </div>
+          </nav>
         </aside>
 
         <div className="main-content">
@@ -295,9 +302,12 @@ function DashboardPage() {
                   <div className="stat-icon"><Flame /></div>
                 )}
                 <div>
-                  <div className="stat-value">{currentStreak} {currentStreak === 1 ? "Day" : "Days"}</div>
+                  <div className="stat-value">{dailyRewardState.currentStreak} {dailyRewardState.currentStreak === 1 ? "Day" : "Days"}</div>
                   <div className="stat-label">Current Streak</div>
-                  <div className="stat-helper">{currentStreak > 0 ? "Keep going!" : "Complete a daily quiz to start"}</div>
+                  <div className="stat-helper">
+                    {dailyRewardClaimedToday ? "Streak protected for today." : "Claim today's reward to keep your streak."}
+                    {dailyRewardState.bestStreak > 0 ? ` Best: ${dailyRewardState.bestStreak} ${dailyRewardState.bestStreak === 1 ? "Day" : "Days"}` : ""}
+                  </div>
                 </div>
               </article>
             </section>

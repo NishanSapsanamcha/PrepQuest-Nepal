@@ -13,7 +13,7 @@ import {
   FiTarget,
   FiUser,
 } from "react-icons/fi";
-import { FaLightbulb, FaMedal, FaTrophy } from "react-icons/fa";
+import { FaMedal, FaTrophy } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import "../../pages/dashboard/DashboardPage.css";
 
@@ -40,7 +40,6 @@ const sidebarItems = [
   { key: "tournament", label: "Tournament", Icon: FaTrophy },
   { key: "leaderboard", label: "Leaderboard", Icon: FiAward },
   { key: "badges", label: "Badges", Icon: FaMedal },
-  { key: "suggestions", label: "Suggestions", Icon: FaLightbulb },
   { key: "profile", label: "Profile", Icon: FiUser },
 ];
 
@@ -66,6 +65,10 @@ function DashboardLayout({ activeKey, children }) {
   };
 
   const handleNavClick = (key) => {
+    if (key === "logout") {
+      handleLogout();
+      return;
+    }
     const target = routeTargets[key];
     if (target && connectedRoutes.has(target)) {
       navigate(target);
@@ -122,14 +125,18 @@ function DashboardLayout({ activeKey, children }) {
                 <span>{label}</span>
               </button>
             ))}
-          </nav>
-
-          <div className="nav-logout">
-            <button className="nav-item logout" type="button" title="Logout" aria-label="Logout" onClick={handleLogout}>
+            <button
+              type="button"
+              className="nav-item logout"
+              data-nav="logout"
+              title="Logout"
+              aria-label="Logout"
+              onClick={() => handleNavClick("logout")}
+            >
               <FiLogOut />
               <span>Logout</span>
             </button>
-          </div>
+          </nav>
         </aside>
 
         <div className="main-content">{children}</div>
