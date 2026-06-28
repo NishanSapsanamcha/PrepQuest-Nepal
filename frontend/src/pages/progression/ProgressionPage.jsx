@@ -6,6 +6,7 @@ import {
   FaBookmark,
   FaBolt,
   FaBullseye,
+  FaChartBar,
   FaChartLine,
   FaCheck,
   FaCheckCircle,
@@ -18,6 +19,7 @@ import {
   FaLock,
   FaRegClock,
   FaRoute,
+  FaShieldAlt,
   FaStar,
   FaUnlock,
   FaWaveSquare,
@@ -49,6 +51,9 @@ const languageLabels = {
   english: "English",
   both: "Both",
 };
+
+// Circumference of the accuracy donut (r = 52 in a 120 viewBox).
+const ACCURACY_CIRCUMFERENCE = 2 * Math.PI * 52;
 
 const subjectFilters = [
   { key: "all", label: "All" },
@@ -163,10 +168,10 @@ function buildNextBestAction({ activeWrongAnswers, weakestSubject, notStartedSub
   if (activeWrongAnswers.length) {
     return {
       title: "Review wrong answers",
-      reason: `${activeWrongAnswers.length} active ${activeWrongAnswers.length === 1 ? "mistake needs" : "mistakes need"} review.`,
+      reason: `${activeWrongAnswers.length} active ${activeWrongAnswers.length === 1 ? "mistake needs" : "mistakes need"} your review to strengthen your understanding.`,
       actionLabel: "Open Review Center",
       path: "/practice/review?tab=wrong",
-      icon: FaExclamationTriangle,
+      icon: FaBullseye,
     };
   }
 
@@ -420,10 +425,13 @@ function ProgressionPage() {
       <section className="dashboard-content progression-content">
         <section className="analytics-hero-grid">
           <article className="progression-panel learning-snapshot-card">
-            <div className="progression-section-heading">
-              <div>
-                <p className="eyebrow">Learning Snapshot</p>
-                <h2>Overall Progress</h2>
+            <div className="progression-section-heading snapshot-heading">
+              <div className="snapshot-heading-left">
+                <span className="snapshot-heading-icon"><FaChartBar /></span>
+                <div>
+                  <p className="eyebrow">Learning Snapshot</p>
+                  <h2>Overall Progress</h2>
+                </div>
               </div>
               <span className="snapshot-pulse"><FaChartLine /> Real Data</span>
             </div>
@@ -434,9 +442,21 @@ function ProgressionPage() {
                 <p>{getSnapshotMessage(totalAttempted, overallAccuracy)}</p>
               </div>
               <img className="path-illustration" src={PathImage} alt="" aria-hidden="true" />
-              <div className="accuracy-ring" style={{ "--accuracy": `${overallAccuracy || 0}%` }}>
-                <strong>{formatPercent(overallAccuracy)}</strong>
-                <span>Accuracy</span>
+              <div className="accuracy-ring">
+                <svg className="accuracy-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+                  <circle className="accuracy-track" cx="60" cy="60" r="52" />
+                  <circle
+                    className="accuracy-arc"
+                    cx="60"
+                    cy="60"
+                    r="52"
+                    style={{ strokeDasharray: ACCURACY_CIRCUMFERENCE, strokeDashoffset: ACCURACY_CIRCUMFERENCE * (1 - (overallAccuracy || 0) / 100) }}
+                  />
+                </svg>
+                <div className="accuracy-ring-center">
+                  <strong>{overallAccuracy ?? 0}%</strong>
+                  <span>Accuracy</span>
+                </div>
               </div>
             </div>
             <div className="snapshot-metrics">
@@ -449,13 +469,19 @@ function ProgressionPage() {
           </article>
 
           <article className="progression-panel next-action-card">
-            <div className="next-action-icon"><NextActionIcon /></div>
-            <p className="eyebrow">Next Best Action</p>
-            <h2>{nextBestAction.title}</h2>
-            <p>{nextBestAction.reason}</p>
-            <button className="btn" type="button" onClick={() => navigate(nextBestAction.path)}>
-              {nextBestAction.actionLabel} <FaArrowRight />
-            </button>
+            <div className="next-action-top">
+              <div className="next-action-icon"><NextActionIcon /></div>
+              <p className="eyebrow">Next Best Action</p>
+              <h2>{nextBestAction.title}</h2>
+              <p className="next-action-reason">{nextBestAction.reason}</p>
+            </div>
+            <div className="next-action-bottom">
+              <div className="next-action-divider" />
+              <button className="btn review-action-btn" type="button" onClick={() => navigate(nextBestAction.path)}>
+                <FaArrowRight /> {nextBestAction.actionLabel}
+              </button>
+              <p className="next-action-footer"><FaShieldAlt /> Consistency builds mastery. Keep going!</p>
+            </div>
           </article>
         </section>
 

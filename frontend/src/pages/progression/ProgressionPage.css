@@ -14,11 +14,17 @@
   padding: 1.15rem;
 }
 
-.dashboard-page .analytics-hero-grid,
 .dashboard-page .progression-split-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
   gap: 1rem;
+}
+
+.dashboard-page .analytics-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(340px, 0.85fr);
+  gap: 1.5rem;
+  align-items: stretch;
 }
 
 .dashboard-page .progression-panel,
@@ -110,9 +116,14 @@
   line-height: 1.5;
 }
 
-.dashboard-page .learning-snapshot-card {
+.dashboard-page .learning-snapshot-card,
+.dashboard-page .next-action-card {
   overflow: hidden;
   position: relative;
+  padding: 1.4rem;
+  border-color: rgba(45, 212, 191, 0.2);
+  background: linear-gradient(145deg, rgba(13, 27, 50, 0.96), rgba(7, 18, 34, 0.98));
+  box-shadow: 0 0 30px rgba(45, 212, 191, 0.06);
 }
 
 .dashboard-page .learning-snapshot-card::before {
@@ -121,6 +132,35 @@
   inset: 0 auto 0 0;
   width: 5px;
   background: linear-gradient(180deg, #18e0c2, rgba(24, 224, 194, 0));
+}
+
+/* Header icon box (bar-chart) like the target. */
+.dashboard-page .snapshot-heading-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.dashboard-page .snapshot-heading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(45, 212, 191, 0.12);
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  color: #18e0c2;
+}
+
+.dashboard-page .snapshot-heading-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.dashboard-page .snapshot-heading h2 {
+  font-size: 1.3rem;
 }
 
 .dashboard-page .snapshot-pulse,
@@ -139,29 +179,43 @@
 
 .dashboard-page .snapshot-primary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr) 132px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.25rem;
+  padding: 1.4rem;
   border: 1px solid rgba(58, 76, 112, 0.46);
-  border-radius: 8px;
+  border-radius: 14px;
   background: rgba(9, 15, 28, 0.42);
 }
 
-/* Decorative learning-path illustration (path.png). Its dark-navy background is
-   faded with a radial mask so it blends into the card with no hard rectangle/box
-   edge, while keeping the Total XP text and accuracy ring fully readable. */
+.dashboard-page .snapshot-primary .accuracy-ring {
+  justify-self: end;
+}
+
+/* Subtle vertical divider drawn in the gap to the LEFT of the ring, so it never
+   widens the ring box (keeps the % text perfectly centred in the donut). */
+.dashboard-page .snapshot-primary .accuracy-ring::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -0.85rem;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 80%;
+  background: rgba(58, 76, 112, 0.5);
+}
+
+/* Decorative learning-path illustration (path.png), larger & centered. The PNG
+   now ships with a baked alpha vignette (edges faded to transparent), so it
+   blends seamlessly into the card with NO rectangle/box — no CSS mask needed. */
 .dashboard-page .path-illustration {
   width: 100%;
-  max-width: 280px;
-  height: 150px;
+  max-width: 330px;
+  height: 200px;
   object-fit: contain;
   justify-self: center;
-  opacity: 0.95;
   pointer-events: none;
-  filter: drop-shadow(0 0 24px rgba(45, 212, 191, 0.2));
-  -webkit-mask-image: radial-gradient(ellipse 72% 82% at 50% 50%, #000 40%, transparent 80%);
-  mask-image: radial-gradient(ellipse 72% 82% at 50% 50%, #000 40%, transparent 80%);
+  filter: drop-shadow(0 0 22px rgba(45, 212, 191, 0.2));
 }
 
 .dashboard-page .snapshot-primary span,
@@ -185,36 +239,75 @@
   line-height: 1.1;
 }
 
+/* Clean single donut ring (SVG) — no conic/radial double-circle artifact.
+   Container is exactly the donut size so the centred text lines up perfectly. */
 .dashboard-page .accuracy-ring {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 118px;
-  height: 118px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at center, #111c31 58%, transparent 59%),
-    conic-gradient(#18e0c2 var(--accuracy), rgba(58, 76, 112, 0.7) 0);
+  width: 148px;
+  height: 148px;
+  flex-shrink: 0;
+}
+
+.dashboard-page .accuracy-ring-svg {
+  width: 148px;
+  height: 148px;
+  transform: rotate(-90deg);
+}
+
+.dashboard-page .accuracy-track {
+  fill: none;
+  stroke: rgba(58, 76, 112, 0.55);
+  stroke-width: 10;
+}
+
+.dashboard-page .accuracy-arc {
+  fill: none;
+  stroke: #18e0c2;
+  stroke-width: 10;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.55));
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+.dashboard-page .accuracy-ring-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.15rem;
   text-align: center;
 }
 
-.dashboard-page .accuracy-ring strong {
+.dashboard-page .accuracy-ring-center strong {
   margin: 0;
-  font-size: 1.2rem;
+  color: #f8fafc;
+  font-size: 1.75rem;
+  line-height: 1;
 }
 
-.dashboard-page .accuracy-ring span {
-  margin-top: -1.1rem;
-  font-size: 0.65rem;
+.dashboard-page .accuracy-ring-center span {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
+/* One shared panel with vertical dividers (not 5 isolated boxes). */
 .dashboard-page .snapshot-metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.65rem;
-  margin-top: 0.75rem;
+  gap: 0;
+  margin-top: 1rem;
+  border: 1px solid rgba(58, 76, 112, 0.46);
+  border-radius: 14px;
+  background: rgba(9, 15, 28, 0.42);
+  overflow: hidden;
 }
 
-.dashboard-page .snapshot-metrics div,
 .dashboard-page .latest-source,
 .dashboard-page .activity-item,
 .dashboard-page .review-progress-grid div,
@@ -226,52 +319,128 @@
 
 .dashboard-page .snapshot-metrics div {
   display: grid;
-  gap: 0.35rem;
-  min-height: 98px;
-  padding: 0.85rem;
+  justify-items: center;
+  gap: 0.4rem;
+  min-height: 104px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  border: none;
+  border-right: 1px solid rgba(58, 76, 112, 0.32);
+  border-radius: 0;
+  background: transparent;
+}
+
+.dashboard-page .snapshot-metrics div:last-child {
+  border-right: none;
 }
 
 .dashboard-page .snapshot-metrics svg {
+  width: 1.2rem;
+  height: 1.2rem;
   color: #18e0c2;
 }
 
 .dashboard-page .snapshot-metrics strong {
   overflow-wrap: anywhere;
   color: #f8fafc;
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.25;
+}
+
+.dashboard-page .snapshot-metrics div:nth-child(3) svg {
+  color: #fb7185;
 }
 
 .dashboard-page .next-action-card {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 1.5rem;
   min-height: 100%;
 }
 
+.dashboard-page .next-action-top {
+  display: flex;
+  flex-direction: column;
+}
+
 .dashboard-page .next-action-card h2 {
-  margin: 0.25rem 0 0;
+  margin: 0.5rem 0 0;
   color: #f8fafc;
-  font-size: 1.55rem;
+  font-size: 1.7rem;
   line-height: 1.2;
 }
 
-.dashboard-page .next-action-card .btn {
-  align-self: flex-start;
-  margin-top: 1rem;
+.dashboard-page .next-action-card .eyebrow {
+  margin-top: 0.4rem;
 }
 
+.dashboard-page .next-action-reason {
+  margin-top: 0.6rem;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* Glowing target/mission icon ring (top-left). */
 .dashboard-page .next-action-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 0.85rem;
-  border-radius: 8px;
-  background: rgba(24, 224, 194, 0.12);
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.16), transparent 72%);
   color: #18e0c2;
-  font-size: 1.15rem;
+  box-shadow: 0 0 26px rgba(45, 212, 191, 0.28);
+}
+
+.dashboard-page .next-action-icon svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.dashboard-page .next-action-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-page .next-action-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.3), rgba(58, 76, 112, 0.2), transparent);
+}
+
+/* Large glowing primary action button (target look). */
+.dashboard-page .review-action-btn.btn {
+  align-self: stretch;
+  width: 100%;
+  min-height: 60px;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #22e6c1, #22c55e) !important;
+  color: #02131f !important;
+  box-shadow: 0 0 28px rgba(45, 212, 191, 0.32);
+}
+
+.dashboard-page .review-action-btn.btn:hover {
+  box-shadow: 0 0 36px rgba(45, 212, 191, 0.45);
+  filter: brightness(1.05);
+}
+
+.dashboard-page .next-action-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.84rem;
+}
+
+.dashboard-page .next-action-footer svg {
+  color: #18e0c2;
 }
 
 .dashboard-page .matrix-heading {
@@ -768,7 +937,6 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-page .snapshot-metrics,
   .dashboard-page .insight-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -795,10 +963,24 @@
   }
 
   .dashboard-page .snapshot-primary,
-  .dashboard-page .snapshot-metrics,
   .dashboard-page .insight-grid,
   .dashboard-page .review-progress-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Metrics: two columns on mobile, with simple borders instead of the
+     desktop single-row dividers. */
+  .dashboard-page .snapshot-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page .snapshot-metrics div {
+    border-right: 1px solid rgba(58, 76, 112, 0.32);
+    border-bottom: 1px solid rgba(58, 76, 112, 0.32);
+  }
+
+  .dashboard-page .snapshot-metrics div:nth-child(2n) {
+    border-right: none;
   }
 
   /* Decorative only — drop it on small screens to keep the snapshot compact. */
@@ -806,10 +988,12 @@
     display: none;
   }
 
-  .dashboard-page .accuracy-ring {
-    width: 108px;
-    height: 108px;
+  .dashboard-page .snapshot-primary .accuracy-ring {
     justify-self: start;
+  }
+
+  .dashboard-page .snapshot-primary .accuracy-ring::before {
+    display: none;
   }
 
   .dashboard-page .next-action-card .btn,
