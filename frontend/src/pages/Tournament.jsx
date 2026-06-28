@@ -19,6 +19,7 @@ import {
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { CoinIcon, RewardDisplay } from "../components/common/Coin";
 import { getCurrentTournaments, registerForTournament } from "../services/tournamentService";
+import TournamentCup from "../assets/level/tournamentcup-transparent.png";
 import "./Tournament.css";
 
 const examLabels = {
@@ -162,6 +163,11 @@ function Tournament() {
             <button className="tournament-secondary-btn" type="button" onClick={handleViewRules}>
               <FaListAlt /> View Rules
             </button>
+          </div>
+
+          <div className="tournament-header-cup" aria-hidden="true">
+            <span className="cup-glow" />
+            <img className="tournament-cup-img" src={TournamentCup} alt="" />
           </div>
         </header>
 

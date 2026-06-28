@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaBookOpen, FaCalendarAlt, FaChevronDown, FaChevronUp, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { FaBookOpen, FaCalendarAlt, FaChevronDown, FaChevronUp, FaFire, FaLock, FaMedal, FaPen, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { MdTrackChanges } from "react-icons/md";
 import BadgeIcon from "../components/badges/BadgeIcon";
 import AchievementBadge from "../components/common/AchievementBadge";
@@ -16,12 +16,13 @@ import {
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
-import { mockProfileActivity, mockTournamentHistory } from "../data/gamificationMockData";
+import { mockProfileActivity } from "../data/gamificationMockData";
 import { getEarnedBadges, syncBadges } from "../utils/badgeUtils";
 import { getCurrentStreak } from "../utils/dailyQuizUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../utils/practiceUtils";
 import { getUser } from "../utils/storageUtils";
-import { getTournamentAttempts } from "../utils/tournamentUtils";
+import { mirrorTournamentResult } from "../utils/tournamentUtils";
+import { getLatestTournamentResults } from "../services/tournamentService";
 import { calculateTotalXPFromTransactions, getOverallRankProgress, getXPTransactions } from "../utils/xpUtils";
 import "./Profile.css";
 
@@ -120,16 +121,41 @@ function Profile() {
     }));
   const recentActivity = realActivity.length ? realActivity : mockProfileActivity;
 
-  const realTournamentHistory = getTournamentAttempts().map((attempt) => ({
-    id: attempt.id,
-    title: "Friday Loksewa Battle",
-    date: attempt.weekKey,
-    rank: attempt.rank,
-    participants: attempt.totalParticipants,
-    points: attempt.totalScore,
-    reward: `${attempt.rankLabel ? `${attempt.rankLabel} - ` : ""}+${attempt.xpEarned} XP, +${attempt.coinsEarned} coins`,
-  }));
-  const tournamentHistory = realTournamentHistory.length ? realTournamentHistory : mockTournamentHistory;
+  // Tournament history comes from the real backend results (the live system),
+  // never from the legacy local attempts or mock data. Shows the current user's
+  // completed Friday battles; empty state when they have not played.
+  const [tournamentHistory, setTournamentHistory] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    getLatestTournamentResults()
+      .then((data) => {
+        if (cancelled) return;
+        // Mirror real backend result into the badge store (award tournament badges).
+        if (mirrorTournamentResult(data)) syncBadges();
+        const result = data?.currentUserResult;
+        if (!result) {
+          setTournamentHistory([]);
+          return;
+        }
+        const questionCount = data?.tournament?.questionCount || 20;
+        setTournamentHistory([
+          {
+            id: `${data.tournament?.id || "tournament"}-${result.userId || "me"}`,
+            title: data.tournament?.title || data.tournament?.name || "Friday Loksewa Battle",
+            date: data.tournament?.startAt ? new Date(data.tournament.startAt).toLocaleDateString() : "Latest battle",
+            rank: result.finalRank,
+            participants: data.leaderboard?.length || 0,
+            points: result.finalScore,
+            accuracy: Math.round(((result.correctAnswers || 0) / questionCount) * 100),
+            reward: `+${result.rewardXp || 0} XP, +${result.rewardCoins || 0} coins${result.badgeEarned ? ` - ${result.badgeEarned}` : ""}`,
+          },
+        ]);
+      })
+      .catch(() => !cancelled && setTournamentHistory([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSaveProfile = ({ displayName, avatarImage: nextImage }) => {
     setProfileOverrides(saveProfileOverrides({ displayName, avatarImage: nextImage }));
@@ -371,13 +397,17 @@ function Profile() {
             <section className="dashboard-card">
               <h2 className="card-title"><FaTrophy /> Tournament History</h2>
               <div className="profile-list">
-                {tournamentHistory.map((item) => (
-                  <div className="tournament-history-row" key={item.id}>
-                    <div><strong>{item.title}</strong><span>{item.date} - Rank {item.rank}/{item.participants}</span></div>
-                    <strong>{item.points} pts</strong>
-                    <span><RewardText text={item.reward} /></span>
-                  </div>
-                ))}
+                {tournamentHistory.length ? (
+                  tournamentHistory.map((item) => (
+                    <div className="tournament-history-row" key={item.id}>
+                      <div><strong>{item.title}</strong><span>{item.date} - Rank {item.rank}/{item.participants}</span></div>
+                      <strong>{item.points} pts</strong>
+                      <span><RewardText text={item.reward} /></span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="muted-copy">No tournament history yet. Play the Friday Loksewa Battle to build your record.</p>
+                )}
               </div>
             </section>
 

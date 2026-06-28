@@ -95,6 +95,45 @@ export function saveLatestTournamentResult(result) {
   writeJson(RESULT_KEY, result);
 }
 
+// Mirror the REAL backend tournament result (from /tournaments/results/latest)
+// into the local badge store so the badge engine can award tournament badges
+// (Friday Fighter / Champion / Top 10 ...). The backend remains the source of
+// truth — this is a derived cache fed FROM the backend, upserted per tournament
+// id and never invented. Returns true if the local mirror changed.
+export function mirrorTournamentResult(data) {
+  const result = data?.currentUserResult;
+  if (!result || !Number.isFinite(Number(result.finalRank))) return false;
+
+  const backendId = String(data?.tournament?.id || "latest");
+  const existing = getTournamentAttempts();
+  const prior = existing.find((a) => a.backendId === backendId);
+
+  // Idempotent: skip if we already mirrored this exact result.
+  if (prior && prior.rank === result.finalRank && prior.totalScore === result.finalScore) {
+    return false;
+  }
+
+  const attempt = {
+    id: `backend-${backendId}`,
+    backendId,
+    weekKey: getLocalWeekKey(),
+    selectedExam: data?.tournament?.selectedExam || "",
+    rank: result.finalRank,
+    totalScore: result.finalScore || 0,
+    correctAnswers: result.correctAnswers || 0,
+    totalParticipants: data?.leaderboard?.length || 0,
+    rankLabel: result.finalRank <= 3 ? ["", "1st Place", "2nd Place", "3rd Place"][result.finalRank] : null,
+    xpEarned: result.rewardXp || 0,
+    coinsEarned: result.rewardCoins || 0,
+    completedAt: new Date().toISOString(),
+    source: "backend",
+  };
+
+  const next = [attempt, ...existing.filter((a) => a.backendId !== backendId)];
+  saveTournamentAttempts(next);
+  return true;
+}
+
 function examMatches(question, selectedExamLabel) {
   return !question.examTracks?.length || question.examTracks.includes(selectedExamLabel);
 }

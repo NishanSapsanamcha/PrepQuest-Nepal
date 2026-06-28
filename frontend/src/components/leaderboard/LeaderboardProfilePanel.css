@@ -1,31 +1,30 @@
-/* Leaderboard profile preview — centered modal overlay (responsive, never
-   squeezes the table). Hidden by default; parent renders it on demand. */
-.lb-profile-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem;
-  background: rgba(3, 7, 18, 0.72);
-  backdrop-filter: blur(8px);
-}
-
+/* Leaderboard profile preview — inline side panel (NOT a modal). The parent
+   `.leaderboard-shell.profile-open` grid docks this on the right; the table
+   stays visible on the left. Slides in smoothly and sticks while scrolling. */
 .leaderboard-profile-panel {
-  position: relative;
-  width: min(380px, 100%);
-  max-height: 90vh;
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  width: 100%;
+  max-height: calc(100vh - 2rem);
   overflow-y: auto;
   display: grid;
   gap: 1.1rem;
-  padding: 1.6rem;
+  padding: 1.5rem 1.4rem;
   border-radius: 22px;
-  border: 1px solid rgba(45, 212, 191, 0.6);
+  border: 1px solid rgba(45, 212, 191, 0.5);
   background:
-    radial-gradient(circle at 20% 0%, rgba(45, 212, 191, 0.14), transparent 36%),
-    linear-gradient(145deg, rgba(8, 18, 34, 0.98), rgba(13, 27, 50, 0.97));
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(45, 212, 191, 0.16);
+    radial-gradient(circle at 22% -5%, rgba(45, 212, 191, 0.16), transparent 42%),
+    linear-gradient(160deg, rgba(10, 22, 40, 0.98), rgba(11, 24, 44, 0.97));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42), 0 0 32px rgba(45, 212, 191, 0.14);
   color: #f8fafc;
+  animation: lb-profile-slide 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  scrollbar-width: thin;
+}
+
+@keyframes lb-profile-slide {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .leaderboard-profile-panel .profile-close-btn {
@@ -55,14 +54,15 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding-right: 2rem;
+  padding-right: 2.4rem;
 }
 
 .lb-profile-avatar {
-  width: 78px;
-  height: 78px;
+  position: relative;
+  width: 76px;
+  height: 76px;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -75,13 +75,26 @@
 .lb-profile-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
 }
 
-.lb-profile-avatar span {
+.lb-profile-avatar span:not(.lb-profile-online) {
   color: #02131f;
   font-size: 1.6rem;
   font-weight: 900;
+}
+
+.lb-profile-online {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #0b182c;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
 }
 
 .lb-profile-identity h3 {
@@ -100,9 +113,18 @@
 }
 
 .lb-profile-identity p {
-  margin: 0.25rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.3rem 0 0;
   color: #9badc7;
   font-size: 0.85rem;
+}
+
+.lb-profile-identity p svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: #2dd4bf;
 }
 
 .lb-profile-stats {
@@ -113,8 +135,8 @@
 
 .lb-profile-stats div {
   display: grid;
-  gap: 0.25rem;
-  padding: 0.7rem 0.5rem;
+  gap: 0.3rem;
+  padding: 0.75rem 0.5rem;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(8, 18, 34, 0.6);
@@ -123,7 +145,7 @@
 
 .lb-profile-stats span {
   color: #9badc7;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 800;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -131,11 +153,11 @@
 
 .lb-profile-stats strong {
   color: #2dd4bf;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
 }
 
 .lb-profile-label {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.6rem;
   color: #9badc7;
   font-size: 0.68rem;
   font-weight: 800;
@@ -181,36 +203,105 @@
 .lb-profile-rank {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.9rem 1rem;
-  border-radius: 14px;
-  border: 1px solid rgba(251, 191, 36, 0.4);
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(13, 27, 50, 0.9));
+  gap: 0.95rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 191, 36, 0.38);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(251, 191, 36, 0.18), transparent 60%),
+    linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(13, 27, 50, 0.9));
 }
 
-.lb-profile-rank-icon {
+.lb-profile-rank-shield {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
-  border-radius: 12px;
-  background: rgba(251, 191, 36, 0.16);
+  border-radius: 14px;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  background: radial-gradient(circle at 50% 35%, rgba(251, 191, 36, 0.32), rgba(120, 80, 8, 0.45));
   color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
 }
 
-.lb-profile-rank strong {
-  display: block;
+.lb-profile-rank-shield svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.lb-profile-rank-shield em {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 50%;
+  background: #fbbf24;
+  border: 2px solid #0b182c;
+  color: #2a1c02;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.lb-profile-rank-shield.rank-2 {
+  border-color: rgba(203, 213, 225, 0.5);
+  background: radial-gradient(circle at 50% 35%, rgba(203, 213, 225, 0.3), rgba(71, 85, 105, 0.45));
+  color: #e2e8f0;
+  box-shadow: 0 0 18px rgba(203, 213, 225, 0.22);
+}
+
+.lb-profile-rank-shield.rank-2 em { background: #e2e8f0; }
+
+.lb-profile-rank-shield.rank-3 {
+  border-color: rgba(251, 146, 60, 0.5);
+  background: radial-gradient(circle at 50% 35%, rgba(251, 146, 60, 0.3), rgba(124, 58, 14, 0.45));
+  color: #fdba74;
+  box-shadow: 0 0 18px rgba(251, 146, 60, 0.22);
+}
+
+.lb-profile-rank-shield.rank-3 em { background: #fdba74; }
+
+.lb-profile-rank-shield.rank-default {
+  border-color: rgba(45, 212, 191, 0.5);
+  background: radial-gradient(circle at 50% 35%, rgba(45, 212, 191, 0.28), rgba(13, 27, 50, 0.6));
+  color: #2dd4bf;
+  box-shadow: 0 0 18px rgba(45, 212, 191, 0.2);
+}
+
+.lb-profile-rank-shield.rank-default em { background: #2dd4bf; }
+
+.lb-profile-rank-meta { display: grid; gap: 0.18rem; }
+
+.lb-profile-rank-meta strong {
   color: #f8fafc;
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
-.lb-profile-rank span {
-  display: block;
-  margin-top: 0.15rem;
+.lb-profile-rank-meta > span {
   color: #9badc7;
   font-size: 0.78rem;
+}
+
+.lb-profile-points {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+  color: #fbbf24 !important;
+  font-weight: 800;
+}
+
+.lb-profile-points svg {
+  width: 0.8rem;
+  height: 0.8rem;
 }
 
 .lb-profile-about p:last-child {
@@ -218,4 +309,11 @@
   color: #cbd5e1;
   font-size: 0.86rem;
   line-height: 1.55;
+}
+
+@media (max-width: 1100px) {
+  .leaderboard-profile-panel {
+    position: static;
+    max-height: none;
+  }
 }

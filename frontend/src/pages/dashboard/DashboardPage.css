@@ -748,16 +748,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  align-self: center;
+  gap: 0.4rem;
+  align-self: flex-end;
   margin: 0;
-  padding: 0.65rem 1.1rem;
+  padding: 0.42rem 0.8rem;
   border-radius: 999px;
   border: 1px solid rgba(45, 212, 191, 0.35);
   background: rgba(20, 184, 166, 0.1);
   color: #9fffd7;
-  font-size: 0.84rem;
-  font-weight: 800;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.dashboard-page .mission-reward svg {
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 /* Quick Actions */
@@ -1475,6 +1480,139 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* ============== Connected gamified stats banner (one strip) ==============
+   One wide container — Level · Coins · Streak — separated only by thin glowing
+   teal dividers. No individual card boxes; large glowing icons; real data. */
+/* Open cinematic strip — no card box: no border, no shadow, no solid fill.
+   Just a very soft central glow that blends into the dashboard background. */
+.dashboard-page .stats-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+  padding: 1.9rem 2.4rem;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  /* One neutral, uniform ambient across the whole strip — no per-section colour
+     tint. Each icon supplies its own coloured glow, so the left no longer reads
+     greener than the coin/streak zones. */
+  background: radial-gradient(ellipse 70% 150% at 50% 50%, rgba(148, 163, 184, 0.05), transparent 75%);
+}
+
+.dashboard-page .stat-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* Large glowing icon — transparent art, no box. Soft coloured radial behind. */
+.dashboard-page .stat-art {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.4rem;
+  height: 6.4rem;
+}
+
+.dashboard-page .stat-art::before {
+  content: "";
+  position: absolute;
+  inset: -16%;
+  border-radius: 50%;
+  filter: blur(11px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Clean, controlled teal halo behind the badge — same design family as the
+   coin/streak glows (the banner background itself is now neutral, so this no
+   longer reads as a colored patch). Toned a touch below the warm icons since
+   teal is more luminous, keeping the three zones visually balanced. */
+.dashboard-page .stat-art.level::before {
+  inset: -10%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.22), transparent 64%);
+}
+.dashboard-page .stat-art.coin::before { background: radial-gradient(circle, rgba(251, 176, 52, 0.34), transparent 66%); }
+.dashboard-page .stat-art.streak::before { background: radial-gradient(circle, rgba(251, 113, 64, 0.34), transparent 66%); }
+
+.dashboard-page .stat-art img,
+.dashboard-page .stat-art svg,
+.dashboard-page .stat-art .coin-icon {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Scaled down a touch for clean margin (like the coin/streak icons), with a
+   soft teal edge glow so the badge stays highlighted — controlled, not harsh. */
+.dashboard-page .stat-art.level img {
+  transform: scale(0.92);
+  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.32));
+}
+.dashboard-page .stat-art.coin img,
+.dashboard-page .stat-art.coin .coin-icon { filter: drop-shadow(0 0 14px rgba(251, 176, 52, 0.5)); }
+.dashboard-page .stat-art.streak img { filter: drop-shadow(0 0 14px rgba(251, 113, 64, 0.5)); }
+.dashboard-page .stat-art.streak svg { width: 60%; height: 60%; color: #fb7140; }
+
+.dashboard-page .stat-info {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.dashboard-page .stats-banner .stat-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.dashboard-page .stats-banner .stat-label {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.dashboard-page .stats-banner .stat-label.accent-level { color: var(--teal); }
+.dashboard-page .stats-banner .stat-label.accent-streak { color: #fb923c; }
+
+.dashboard-page .stats-banner .stat-helper {
+  font-size: 0.8rem;
+}
+
+/* Tall, clearly glowing teal vertical separator with a bright node in the
+   middle — a premium light beam, not a CSS border. */
+.dashboard-page .stat-divider {
+  position: relative;
+  width: 2px;
+  height: 104px;
+  align-self: center;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, transparent, rgba(94, 234, 212, 0.85) 50%, transparent);
+  box-shadow: 0 0 16px rgba(45, 212, 191, 0.6);
+}
+
+.dashboard-page .stat-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ccfbf1;
+  box-shadow: 0 0 12px 3px rgba(94, 234, 212, 0.8);
+}
+
 /* Level card uses the real rank badge art (transparent, no box) — large/premium. */
 .dashboard-page .level-stat-card .rank-badge-icon {
   width: 6rem;
@@ -1559,23 +1697,61 @@
 }
 
 .dashboard-page .mission-visual {
+  position: relative;
   width: 100%;
-  max-width: 188px;
-  height: 172px;
+  max-width: 224px;
+  height: 224px;
   display: grid;
   place-items: center;
   overflow: visible;
-  background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.14), transparent 65%);
+  background: none;
 }
 
-/* mission.png — only the logo is enlarged (+20px over the box), centred and
-   allowed to overflow so the wrapper/layout size stays the same. */
+/* Soft radial light pooling behind the icon so it reads as ambient card
+   lighting — the icon feels lit from within the card, not pasted on top. */
+.dashboard-page .mission-visual::before {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.34) 0%, rgba(34, 211, 238, 0.15) 38%, transparent 68%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 0;
+  animation: mission-glow-pulse 4.5s ease-in-out infinite;
+}
+
+@keyframes mission-glow-pulse {
+  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* key_arrow-transparent.png — true transparent-background icon (its white
+   background was keyed out at source), so no rectangle can show. The square
+   icon is contained fully (no clipping/mask) and the teal drop-shadow blends
+   its glow into the navy panel. */
 .dashboard-page .mission-image {
-  width: calc(100% + 20px);
-  height: calc(100% + 20px);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 224px;
+  height: auto;
+  max-height: 100%;
   object-fit: contain;
   background: transparent;
-  filter: drop-shadow(0 0 28px rgba(45, 212, 191, 0.35));
+  filter: drop-shadow(0 8px 26px rgba(45, 212, 191, 0.4));
+}
+
+.dashboard-page .mission-image-fallback {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  color: var(--teal);
+  filter: drop-shadow(0 8px 24px rgba(45, 212, 191, 0.45));
 }
 
 .dashboard-page .mission-tasks {
@@ -1587,18 +1763,19 @@
 .dashboard-page .mission-cta {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 1rem;
+  align-items: flex-end;
+  gap: 0.75rem;
 }
 
 .dashboard-page .mission-start-btn {
-  width: 100%;
-  min-height: 64px;
-  border-radius: 14px;
-  font-size: 1.15rem;
-  font-weight: 900;
-  gap: 0.75rem;
-  box-shadow: 0 0 24px rgba(34, 197, 94, 0.22);
+  width: auto;
+  min-height: 46px;
+  padding: 0 1.5rem;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  gap: 0.55rem;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.2);
 }
 
 .dashboard-page .mission-start-btn:hover {
@@ -1798,6 +1975,16 @@
 
   .dashboard-page .mission-visual {
     margin: 0 auto;
+    max-width: 200px;
+    height: 180px;
+  }
+
+  .dashboard-page .mission-cta {
+    align-items: center;
+  }
+
+  .dashboard-page .mission-reward {
+    align-self: center;
   }
 
   .dashboard-page .your-progress-card {
@@ -1810,8 +1997,66 @@
   }
 }
 
+@media (max-width: 560px) {
+  .dashboard-page .mission-visual {
+    max-width: 168px;
+    height: 150px;
+  }
+
+  .dashboard-page .mission-visual::before {
+    width: 190px;
+    height: 190px;
+  }
+
+  .dashboard-page .mission-image {
+    max-width: 150px;
+  }
+}
+
 @media (max-width: 720px) {
   .dashboard-page .stats-grid-3 {
     grid-template-columns: 1fr;
+  }
+
+  /* Stack the banner; dividers become horizontal glowing separators. */
+  .dashboard-page .stats-banner {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+    padding: 1.4rem 1.5rem;
+  }
+
+  .dashboard-page .stat-block {
+    justify-content: flex-start;
+  }
+
+  .dashboard-page .stat-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(45, 212, 191, 0.5) 50%, transparent);
+  }
+}
+
+@media (max-width: 980px) {
+  /* Slightly smaller icons so three sections still fit comfortably. */
+  .dashboard-page .stat-art {
+    width: 5.4rem;
+    height: 5.4rem;
+  }
+
+  .dashboard-page .stats-banner {
+    padding: 1.5rem 1.4rem;
+    gap: 1.2rem;
+  }
+
+  .dashboard-page .stat-block {
+    gap: 1.1rem;
+  }
+
+  .dashboard-page .stats-banner .stat-value {
+    font-size: 1.55rem;
+  }
+
+  .dashboard-page .stat-divider {
+    height: 92px;
   }
 }
