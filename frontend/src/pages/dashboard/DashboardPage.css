@@ -229,13 +229,8 @@
   color: var(--teal);
 }
 
-.dashboard-page .nav-logout {
-  margin-top: auto;
-  padding: 1rem 0.85rem 1.25rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
-}
-
 .dashboard-page .nav-item.logout {
+  margin-top: 0.4rem;
   color: #fca5a5;
 }
 
@@ -282,8 +277,7 @@
   pointer-events: none;
 }
 
-.dashboard-page.sidebar-collapsed .sidebar-nav,
-.dashboard-page.sidebar-collapsed .nav-logout {
+.dashboard-page.sidebar-collapsed .sidebar-nav {
   padding-inline: 0.65rem;
 }
 
@@ -1358,8 +1352,7 @@
     pointer-events: none;
   }
 
-  .dashboard-page .sidebar-nav,
-  .dashboard-page .nav-logout {
+  .dashboard-page .sidebar-nav {
     padding-inline: 0.6rem;
   }
 

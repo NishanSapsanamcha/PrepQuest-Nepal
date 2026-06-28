@@ -10,6 +10,7 @@ const VALID_XP_TYPES = new Set([
   "mock_test_score_bonus",
   "tournament_participation",
   "tournament_rank_bonus",
+  "daily_login_bonus",
 ]);
 
 export const XP_REWARDS = {

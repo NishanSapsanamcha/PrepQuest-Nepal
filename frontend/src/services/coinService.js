@@ -14,8 +14,6 @@
  * Idempotency: every reward carries a deterministic `idempotencyKey`. Awarding
  * the same key twice is a no-op, so refreshing a result page, reopening an old
  * result, or double-submitting can never duplicate coins.
- *
- * NOTE: daily-login coins are intentionally NOT implemented yet (future work).
  */
 import {
   getActiveAccountId,
@@ -52,6 +50,7 @@ export const COIN_SOURCES = new Set([
   "streak_milestone",
   "friday_tournament",
   "badge_reward",
+  "daily_login_reward",
   // spend (already in the app)
   "extra_mock_unlock",
   "detailed_report_unlock",
@@ -274,6 +273,7 @@ export const COIN_SOURCE_LABELS = {
   streak_milestone: "Streak Milestone",
   friday_tournament: "Friday Tournament",
   badge_reward: "Badge Reward",
+  daily_login_reward: "Daily Login Reward",
   extra_mock_unlock: "Extra Mock Unlock",
   detailed_report_unlock: "Detailed Report",
 };

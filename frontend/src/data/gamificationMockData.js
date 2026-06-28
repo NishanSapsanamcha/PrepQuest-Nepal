@@ -139,6 +139,7 @@ export const mockBadges = [
   { id: "streak_centurion", name: "Centurion", description: "Maintain a 100-day study streak.", category: "Streak", rarity: "Mythic", target: 100, icon: "fire", shape: "starburst", iconKind: "flame", isSecret: false, reward: "Eternal Flame frame" },
   { id: "omnischolar", name: "Omnischolar", description: "Complete every subject's mastery track.", category: "Subject Mastery", rarity: "Mythic", target: 8, icon: "book", shape: "starburst", iconKind: "book", isSecret: false, reward: "Omnischolar title + theme" },
   { id: "tournament_apex", name: "Tournament Apex", description: "Finish in the top 1% of a Friday tournament.", category: "Tournament", rarity: "Mythic", target: 1, icon: "trophy", shape: "starburst", iconKind: "trophy", isSecret: true, reward: "Apex Champion crown" },
+  { id: "daily_login_streak_30", name: "30-Day Streak Champion", description: "Claim the daily login reward for 30 consecutive reward days.", category: "Streak", rarity: "Epic", target: 30, icon: "calendar", shape: "hexagon", iconKind: "calendar", isSecret: false, reward: "30-Day Streak Champion title" },
 ];
 
 export const mockProfileActivity = [

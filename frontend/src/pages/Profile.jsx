@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaBookOpen, FaCalendarAlt, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { FaBookOpen, FaCalendarAlt, FaChevronDown, FaChevronUp, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { MdTrackChanges } from "react-icons/md";
 import BadgeIcon from "../components/badges/BadgeIcon";
 import { CoinIcon, CoinValue, RewardText } from "../components/common/Coin";
@@ -57,6 +58,7 @@ function Profile() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const soundMuted = localStorage.getItem("prepquest_sound_muted") === "true";
+  const [isCoinWalletOpen, setIsCoinWalletOpen] = useState(false);
 
   const realName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
   const storedUser = getUser();
@@ -173,8 +175,14 @@ function Profile() {
           <article className="stat-card"><div className="stat-icon"><FaUser /></div><div><div className="stat-value">{subjectsPracticed}</div><div className="stat-label">Subjects Practiced</div><div className="stat-helper">Study breadth</div></div></article>
         </section>
 
-        <section className="dashboard-card coin-wallet-card">
-          <div className="coin-wallet-top">
+        <section className={`dashboard-card coin-wallet-card${isCoinWalletOpen ? " is-open" : ""}`}>
+          <button
+            type="button"
+            className="coin-wallet-top coin-wallet-toggle"
+            aria-expanded={isCoinWalletOpen}
+            aria-controls="coin-wallet-details"
+            onClick={() => setIsCoinWalletOpen((open) => !open)}
+          >
             <div className="coin-wallet-balance">
               <CoinIcon size="xl" className="coin-wallet-icon" />
               <div>
@@ -186,54 +194,59 @@ function Profile() {
               Coins are earned from real completed activities. Spend them later on optional extras like
               additional mock tests after your 3 free daily mocks.
             </p>
-          </div>
+            <span className="coin-wallet-chevron" aria-hidden="true">
+              {isCoinWalletOpen ? <FaChevronUp /> : <FaChevronDown />}
+            </span>
+          </button>
 
-          <div className="coin-wallet-grid">
-            <div className="coin-wallet-panel">
-              <h3 className="coin-wallet-heading">How to Earn Coins</h3>
-              <ul className="coin-earn-list">
-                {COIN_EARN_GUIDE.map((item) => (
-                  <li key={item.label}>
-                    <span className="coin-earn-reason">{item.label}</span>
-                    <span className="coin-earn-amount">
-                      <CoinIcon size="xs" />
-                      {typeof item.amount === "number" ? `+${item.amount}` : item.amount}
-                      {item.suffix ? <em className="coin-earn-suffix"> {item.suffix}</em> : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="coin-wallet-panel">
-              <h3 className="coin-wallet-heading">Recent Coin Activity</h3>
-              {recentCoinTransactions.length ? (
-                <ul className="coin-activity-list">
-                  {recentCoinTransactions.map((transaction) => {
-                    const isSpend = Number(transaction.amount) < 0;
-                    return (
-                      <li className="coin-activity-row" key={transaction.id || transaction.idempotencyKey}>
-                        <CoinIcon size="sm" />
-                        <div className="coin-activity-copy">
-                          <strong>{transaction.reason || getCoinSourceLabel(transaction.source)}</strong>
-                          <span>{getCoinSourceLabel(transaction.source)} · {formatTransactionTime(transaction)}</span>
-                        </div>
-                        <span className={`coin-activity-amount ${isSpend ? "is-spend" : "is-earn"}`}>
-                          {isSpend ? "−" : "+"}
-                          {Math.abs(Number(transaction.amount)).toLocaleString()}
-                        </span>
-                      </li>
-                    );
-                  })}
+          {isCoinWalletOpen && (
+            <div className="coin-wallet-grid" id="coin-wallet-details">
+              <div className="coin-wallet-panel">
+                <h3 className="coin-wallet-heading">How to Earn Coins</h3>
+                <ul className="coin-earn-list">
+                  {COIN_EARN_GUIDE.map((item) => (
+                    <li key={item.label}>
+                      <span className="coin-earn-reason">{item.label}</span>
+                      <span className="coin-earn-amount">
+                        <CoinIcon size="xs" />
+                        {typeof item.amount === "number" ? `+${item.amount}` : item.amount}
+                        {item.suffix ? <em className="coin-earn-suffix"> {item.suffix}</em> : null}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
-              ) : (
-                <div className="coin-activity-empty">
-                  <CoinValue amount={0} size="md" />
-                  <p>No coin activity yet. Complete a daily quick challenge or practice session to start earning coins.</p>
-                </div>
-              )}
+              </div>
+
+              <div className="coin-wallet-panel">
+                <h3 className="coin-wallet-heading">Recent Coin Activity</h3>
+                {recentCoinTransactions.length ? (
+                  <ul className="coin-activity-list">
+                    {recentCoinTransactions.map((transaction) => {
+                      const isSpend = Number(transaction.amount) < 0;
+                      return (
+                        <li className="coin-activity-row" key={transaction.id || transaction.idempotencyKey}>
+                          <CoinIcon size="sm" />
+                          <div className="coin-activity-copy">
+                            <strong>{transaction.reason || getCoinSourceLabel(transaction.source)}</strong>
+                            <span>{getCoinSourceLabel(transaction.source)} · {formatTransactionTime(transaction)}</span>
+                          </div>
+                          <span className={`coin-activity-amount ${isSpend ? "is-spend" : "is-earn"}`}>
+                            {isSpend ? "−" : "+"}
+                            {Math.abs(Number(transaction.amount)).toLocaleString()}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="coin-activity-empty">
+                    <CoinValue amount={0} size="md" />
+                    <p>No coin activity yet. Complete a daily quick challenge or practice session to start earning coins.</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         <div className="profile-main-grid">
