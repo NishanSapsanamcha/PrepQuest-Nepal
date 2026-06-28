@@ -44,6 +44,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { rankThresholds } from "../../data/gamificationMockData";
+import { rankJourney } from "../../data/rankBadges";
+import gamificationIcons from "../../assets/gamification";
+import missionImg from "../../assets/level/mission.png";
 import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { canClaimDailyReward, DAILY_REWARD_CLAIMED_EVENT, getDailyRewardState, getNepalRewardDate } from "../../utils/dailyRewardUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
@@ -121,6 +124,7 @@ function DashboardPage() {
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
   const totalXp = calculateTotalXPFromTransactions();
+  const coins = getUserCoinBalance();
   const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
   const dailyQuizCompleted = Boolean(todayDailyQuizAttempt);
   const [, forceRefresh] = useState(0);
@@ -134,7 +138,6 @@ function DashboardPage() {
   const dailyRewardClaimedToday = !canClaimDailyReward(dailyRewardState, getNepalRewardDate());
   const mockStats = getMockDashboardStats();
   const mockCompletedToday = hasCompletedMockToday();
-  const currentStreak = getCurrentStreak();
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
   const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
   const xpProgress = getNextLevelProgress(totalXp);
