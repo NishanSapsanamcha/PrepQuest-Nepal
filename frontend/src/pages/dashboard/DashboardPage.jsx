@@ -304,38 +304,32 @@ function DashboardPage() {
 
             {/* Today's Mission — the hero / main action section */}
             <section className="dashboard-card mission-card hero-mission">
-              <div className="mission-head">
-                <p className="eyebrow"><Target /> Today&apos;s Mission</p>
-                <span className="status-chip">{missionCompletedCount}/3 Complete</span>
-              </div>
-              <div className="mission-body">
+              <div className="mission-left">
+                <p className="mission-title">Today&apos;s Mission</p>
                 <div className="mission-visual" aria-hidden="true">
                   <img className="mission-image" src={missionImg} alt="" />
                 </div>
-                <div className="mission-tasks">
-                  <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
-                    {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
-                  </div>
-                  <div className={`mission-item${mockCompletedToday ? " completed" : ""}`}>
-                    {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>Take 1 mock test</span>
-                  </div>
-                  <div className="mission-item">
-                    <Circle /><span>Practice your weak subject</span>
-                  </div>
+              </div>
+              <div className="mission-tasks">
+                <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
+                  {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
                 </div>
-                <div className="mission-cta">
-                  <span className="mission-reward"><Gift /> Complete all to earn bonus coins!</span>
-                  <button
-                    className="btn mission-start-btn"
-                    type="button"
-                    onClick={() => navigate(dailyQuizCompleted ? "/daily-quiz/result" : "/daily-quiz")}
-                  >
-                    {dailyQuizCompleted ? "Review Daily Quiz" : "Start Daily Quiz"} <ChevronRight />
-                  </button>
+                <div className={`mission-item${mockCompletedToday ? " completed" : ""}`}>
+                  {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>Take 1 mock test</span>
+                </div>
+                <div className="mission-item">
+                  <Circle /><span>Practice your weak subject</span>
                 </div>
               </div>
-              <div className="mission-progress-bar progress-bar">
-                <div className="progress-fill" style={{ width: `${missionProgressPercent}%` }} />
+              <div className="mission-cta">
+                <span className="mission-reward"><Gift /> Complete all to earn bonus coins!</span>
+                <button
+                  className="btn mission-start-btn"
+                  type="button"
+                  onClick={() => navigate(dailyQuizCompleted ? "/daily-quiz/result" : "/daily-quiz")}
+                >
+                  {dailyQuizCompleted ? "Review Daily Quiz" : "Start Daily Quiz"} <ChevronRight />
+                </button>
               </div>
             </section>
 
