@@ -157,7 +157,6 @@ function Profile() {
             {avatarImage ? <img src={avatarImage} alt="" /> : <span>{getInitials(realName)}</span>}
           </div>
           <div className="profile-identity-copy">
-            <p className="eyebrow">◆ Gamified Identity ◆</p>
             <h1>{realName}</h1>
             <div className="profile-chip-row">
               <span className="chip"><FaUser /> {examLabel}</span>
