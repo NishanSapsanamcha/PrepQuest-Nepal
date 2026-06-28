@@ -43,6 +43,7 @@ const PER_ACCOUNT_KEYS = [
   "preferredLanguage",
   "onboardingCompleted",
   "userName",
+  "prepquest_profile",
 ];
 
 const defaultUser = {

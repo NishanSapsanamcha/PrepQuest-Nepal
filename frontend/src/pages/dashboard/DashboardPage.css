@@ -711,22 +711,33 @@
 .dashboard-page .mission-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.62rem;
-  border-radius: 8px;
-  background: rgba(15, 23, 39, 0.74);
-  color: var(--soft);
-  transition: background 0.22s ease, transform 0.22s ease;
+  gap: 0.9rem;
+  min-height: 54px;
+  padding: 0 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(7, 17, 33, 0.62);
+  color: #e5e7eb;
+  font-size: 0.98rem;
+  font-weight: 600;
+  transition: background 0.22s ease, border-color 0.22s ease;
 }
 
-.dashboard-page .mission-item:hover,
+.dashboard-page .mission-item:hover {
+  border-color: rgba(45, 212, 191, 0.32);
+  background: rgba(45, 212, 191, 0.06);
+}
+
 .dashboard-page .activity-item:hover {
   background: rgba(45, 212, 191, 0.08);
   transform: translateX(2px);
 }
 
 .dashboard-page .mission-item svg {
-  color: var(--muted);
+  width: 1.4rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+  color: #cbd5e1;
 }
 
 .dashboard-page .mission-item.completed svg {
@@ -736,13 +747,16 @@
 .dashboard-page .mission-reward {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding: 0.58rem 0.75rem;
+  align-self: center;
+  margin: 0;
+  padding: 0.65rem 1.1rem;
   border-radius: 999px;
-  background: rgba(45, 212, 191, 0.11);
-  color: #a7f3d0;
-  font-size: 0.82rem;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  background: rgba(20, 184, 166, 0.1);
+  color: #9fffd7;
+  font-size: 0.84rem;
   font-weight: 800;
 }
 
@@ -1448,5 +1462,356 @@
 
   .dashboard-page .activity-item {
     align-items: flex-start;
+  }
+}
+
+/* =========================================================================
+   Simplified dashboard (rebuilt): 3 stats · hero mission · progress ·
+   quick actions + focus area. Appended last so source order wins.
+   ========================================================================= */
+
+/* Top stats — 3 columns */
+.dashboard-page .stats-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Level card uses the real rank badge art (transparent, no box) — large/premium. */
+.dashboard-page .level-stat-card .rank-badge-icon {
+  width: 6rem;
+  height: 6rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.dashboard-page .level-stat-card .rank-badge-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(45, 212, 191, 0.45));
+}
+
+/* Coin & streak cards: premium image icons (same art as the practice UI),
+   transparent wrapper + object-fit: contain — never a box/checker/frame. */
+.dashboard-page .dashboard-stat-icon {
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.dashboard-page .dashboard-stat-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  display: block;
+}
+
+.dashboard-page .dashboard-stat-icon.coin .dashboard-stat-icon-img {
+  filter: drop-shadow(0 0 16px rgba(251, 176, 52, 0.4));
+}
+
+.dashboard-page .dashboard-stat-icon.streak .dashboard-stat-icon-img {
+  filter: drop-shadow(0 0 16px rgba(251, 113, 64, 0.4));
+}
+
+/* --- Today's Mission (hero) ------------------------------------------------ */
+/* Today's Mission — 3-column hero: [title + image] · [tasks] · [bonus + button].
+   Tighter, premium, stronger teal glow border (no 0/3 chip, no bottom bar). */
+.dashboard-page .hero-mission {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) minmax(300px, 360px);
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+  padding: 1.75rem 2rem;
+  border-radius: 18px;
+  border-color: rgba(45, 212, 191, 0.5);
+  box-shadow:
+    0 0 26px rgba(45, 212, 191, 0.16),
+    inset 0 0 30px rgba(45, 212, 191, 0.04);
+  background:
+    radial-gradient(circle at 8% 50%, rgba(45, 212, 191, 0.14), transparent 30%),
+    linear-gradient(135deg, rgba(8, 22, 42, 0.98), rgba(13, 27, 50, 0.96));
+}
+
+.dashboard-page .mission-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.dashboard-page .mission-title {
+  margin: 0;
+  color: var(--teal);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dashboard-page .mission-visual {
+  width: 100%;
+  max-width: 188px;
+  height: 172px;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.14), transparent 65%);
+}
+
+/* mission.png — only the logo is enlarged (+20px over the box), centred and
+   allowed to overflow so the wrapper/layout size stays the same. */
+.dashboard-page .mission-image {
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  object-fit: contain;
+  background: transparent;
+  filter: drop-shadow(0 0 28px rgba(45, 212, 191, 0.35));
+}
+
+.dashboard-page .mission-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dashboard-page .mission-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.dashboard-page .mission-start-btn {
+  width: 100%;
+  min-height: 64px;
+  border-radius: 14px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  gap: 0.75rem;
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.22);
+}
+
+.dashboard-page .mission-start-btn:hover {
+  box-shadow: 0 0 30px rgba(45, 212, 191, 0.32);
+}
+
+/* --- Your Progress -------------------------------------------------------- */
+.dashboard-page .your-progress-card {
+  display: grid;
+  grid-template-columns: minmax(170px, auto) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-page .your-progress-info .eyebrow {
+  margin-bottom: 0.3rem;
+}
+
+.dashboard-page .your-progress-info h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--teal);
+}
+
+.dashboard-page .your-progress-xp {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.dashboard-page .your-progress-xp strong {
+  color: var(--teal);
+}
+
+.dashboard-page .your-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.dashboard-page .your-progress-track .progress-bar {
+  flex: 1;
+  height: 0.6rem;
+}
+
+.dashboard-page .your-progress-percent {
+  color: var(--soft);
+  font-weight: 800;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.dashboard-page .your-progress-next {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.dashboard-page .your-progress-next span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.dashboard-page .your-progress-next strong {
+  color: var(--teal);
+  font-size: 0.95rem;
+}
+
+/* --- Quick Actions + Focus Area ------------------------------------------- */
+.dashboard-page .dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 1.25rem;
+}
+
+.dashboard-page .qa-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.3rem 0.9rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 39, 0.72);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-page .qa-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(45, 212, 191, 0.34);
+  background: rgba(45, 212, 191, 0.06);
+}
+
+.dashboard-page .qa-icon {
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+}
+
+.dashboard-page .qa-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.dashboard-page .qa-teal { background: rgba(45, 212, 191, 0.14); color: var(--teal); }
+.dashboard-page .qa-blue { background: rgba(96, 165, 250, 0.14); color: #60a5fa; }
+.dashboard-page .qa-purple { background: rgba(168, 85, 247, 0.14); color: #c084fc; }
+
+.dashboard-page .qa-label {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.dashboard-page .focus-area-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-page .focus-area-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 0.25rem 0 1.1rem;
+}
+
+.dashboard-page .focus-icon {
+  width: 3.2rem;
+  height: 3.2rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--teal);
+}
+
+.dashboard-page .focus-icon svg {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.dashboard-page .focus-copy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dashboard-page .focus-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-page .focus-name {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.dashboard-page .focus-accuracy {
+  color: var(--teal);
+  font-weight: 800;
+}
+
+.dashboard-page .focus-meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.dashboard-page .focus-cta {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+/* Responsive: stack the hero, progress row, and bottom grid before squeezing. */
+@media (max-width: 1100px) {
+  .dashboard-page .hero-mission {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .dashboard-page .mission-left {
+    align-items: center;
+  }
+
+  .dashboard-page .mission-visual {
+    margin: 0 auto;
+  }
+
+  .dashboard-page .your-progress-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .dashboard-page .dashboard-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-page .stats-grid-3 {
+    grid-template-columns: 1fr;
   }
 }

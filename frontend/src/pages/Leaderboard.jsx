@@ -1,382 +1,300 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  FaArrowDown,
-  FaArrowUp,
-  FaEquals,
-  FaFire,
-  FaMedal,
-  FaShieldAlt,
-  FaTrophy,
-} from "react-icons/fa";
+import { FaArrowRight, FaFire, FaMedal, FaShieldAlt } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import LeaderboardProfilePanel from "../components/leaderboard/LeaderboardProfilePanel";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
 import { mockLeaderboardUsers } from "../data/gamificationMockData";
-import { getUser } from "../utils/storageUtils";
+import { getLatestTournamentResults } from "../services/tournamentService";
+import { getCurrentStreak } from "../utils/dailyQuizUtils";
+import { getEarnedBadges, syncBadges } from "../utils/badgeUtils";
+import {
+  buildSubjectCardData,
+  getExamSubjects,
+  getNormalizedSubjectProgress,
+  normalizeExamId,
+} from "../utils/practiceUtils";
+import { getProfileOverrides } from "../utils/profileUtils";
+import { getTournamentAttempts } from "../utils/tournamentUtils";
+import { calculateTotalXPFromTransactions, getOverallRankProgress, getXPTransactions } from "../utils/xpUtils";
+import CupImage from "../assets/level/cup.png";
 import "./Leaderboard.css";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function getInitials(name) {
-  return name.trim().split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "ME";
-}
-
-const rankingTypes = [
-  { id: "tournament", label: "Tournament", description: "Ranking based on the latest Friday Loksewa Battle performance." },
-  { id: "weekly", label: "Weekly", description: "Ranks reset every week so every learner gets a fresh chance." },
-  { id: "monthly", label: "Monthly", description: "Compare consistent learners across the month." },
-  { id: "subject", label: "Subject-wise", description: "Compare learners by selected subject accuracy and XP." },
-  { id: "examTrack", label: "Exam Track", description: "Compare learners preparing for the same exam track." },
-  { id: "hallOfFame", label: "Hall of Fame", description: "Lifetime ranking based on all-time XP and long-term consistency." },
-];
-
-const tournamentFilters = ["Latest Friday Battle", "Previous Battle", "All Tournament History"];
-const weeklyFilters = ["This Week", "Last Week"];
-const monthlyFilters = ["This Month", "Last Month"];
-const hallOfFameFilters = ["Lifetime XP", "Lifetime Tournament Wins", "Lifetime Badges"];
-const subjectFilters = [
-  "Constitution of Nepal",
-  "General Knowledge",
-  "Current Affairs",
-  "IQ / Mental Ability",
-  "Nepali",
-  "English",
-  "Governance Basics",
-  "Public Administration Basics",
-];
-
-function normalizeExamTrack(value) {
-  if (!value) return "Sakha Adhikrit";
-  if (examTracks[value]?.name) return examTracks[value].name;
-
-  const normalized = String(value).trim().toLowerCase();
-  const match = Object.values(examTracks).find((track) => track.name.toLowerCase() === normalized || track.id === normalized);
-  return match?.name || value;
-}
-
-function getSelectedExamTrack() {
-  const user = getUser();
-  const storedPreferences = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("prepquest_user_preferences") || "{}");
-    } catch {
-      return {};
-    }
-  })();
-
-  return normalizeExamTrack(
-    localStorage.getItem("selectedExam")
-      || localStorage.getItem("prepquest_selected_exam")
-      || storedPreferences.selectedExam
-      || user.selectedExam
-      || user.examTrack
-      || "sakha-adhikrit"
-  );
-}
-
-function getSubjectStats(user, subject) {
-  return user.subjectStats?.[subject] || {
-    xp: Math.max(120, Math.round((user.weeklyXP || 0) * 0.45)),
-    accuracy: user.accuracy || 0,
-    questionsSolved: Math.max(30, Math.round((user.badges || 1) * 11)),
-  };
-}
-
-function metricFor(user, rankingType, context = {}) {
-  if (rankingType === "weekly") return user.weeklyXP || 0;
-  if (rankingType === "monthly") return user.monthlyXP || 0;
-  if (rankingType === "subject") return getSubjectStats(user, context.subjectFilter).xp;
-  if (rankingType === "hallOfFame") {
-    if (context.hallOfFameFilter === "Lifetime Tournament Wins") return user.tournamentWins || 0;
-    if (context.hallOfFameFilter === "Lifetime Badges") return user.badges || 0;
-    return user.lifetimeXP || 0;
-  }
-  if (rankingType === "examTrack") return user.examXP || user.weeklyXP || 0;
-  return user.tournamentPoints || 0;
-}
-
-function buildRankedUsers(users, rankingType, context = {}) {
-  return [...users]
-    .sort((a, b) => metricFor(b, rankingType, context) - metricFor(a, rankingType, context) || a.name.localeCompare(b.name))
-    .map((user, index) => ({ ...user, rank: index + 1 }));
-}
-
-function applyTimeFilter(user, rankingType, activeFilter) {
-  if (rankingType === "weekly" && activeFilter === "Last Week") return { ...user, weeklyXP: Math.round(user.weeklyXP * 0.78) };
-  if (rankingType === "monthly" && activeFilter === "Last Month") return { ...user, monthlyXP: Math.round(user.monthlyXP * 0.86) };
-  if (rankingType === "tournament" && activeFilter === "Previous Battle") return { ...user, tournamentPoints: Math.round(user.tournamentPoints * 0.88) };
-  if (rankingType === "tournament" && activeFilter === "All Tournament History") {
-    return { ...user, tournamentPoints: user.tournamentPoints + (user.tournamentWins || 0) * 1200 };
-  }
-  return user;
-}
-
-function TrendIcon({ trend }) {
-  if (trend === "up") return <FaArrowUp />;
-  if (trend === "down") return <FaArrowDown />;
-  return <FaEquals />;
-}
-
-function rewardForRank(user) {
-  if (user.reward) return user.reward;
-  if (user.rank === 1) return "500 coins + 500 XP";
-  if (user.rank === 2) return "300 coins + 300 XP";
-  if (user.rank === 3) return "150 coins + 200 XP";
-  return "50 coins + 100 XP";
+  return String(name || "").trim().split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "ME";
 }
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString();
 }
 
+// Account "Level" derived from lifetime XP (no separate level field exists).
+function deriveLevel(xp) {
+  return Math.max(1, Math.floor((Number(xp) || 0) / 1300) + 1);
+}
+
+const rankingTypes = [
+  { id: "tournament", label: "Tournament", description: "Ranking based on Friday Loksewa Battle performance." },
+  { id: "weekly", label: "Weekly", description: "Ranking by XP earned over the last 7 days." },
+  { id: "monthly", label: "Monthly", description: "Ranking by XP earned over the last 30 days." },
+  { id: "subject", label: "Subject-wise", description: "Ranking by subject XP, accuracy, and solved questions." },
+  { id: "examTrack", label: "Exam Track", description: "Ranking by total XP within the exam track." },
+  { id: "hallOfFame", label: "Hall of Fame", description: "Lifetime XP, badges, and long-term consistency." },
+];
+
+const weeklyFilters = ["This Week", "Last Week"];
+const monthlyFilters = ["This Month", "Last Month"];
+const hallOfFameFilters = ["Lifetime XP", "Lifetime Tournament Wins", "Lifetime Badges"];
+
+function xpInWindow(transactions, fromDaysAgo, toDaysAgo) {
+  const now = Date.now();
+  const olderBound = now - fromDaysAgo * DAY_MS;
+  const newerBound = now - toDaysAgo * DAY_MS;
+  return transactions.reduce((sum, transaction) => {
+    const ts = new Date(transaction.createdAt).getTime();
+    if (Number.isNaN(ts) || ts <= olderBound || ts > newerBound) return sum;
+    return sum + (Number(transaction.amount) || 0);
+  }, 0);
+}
+
 function Leaderboard() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const realName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
-  const selectedExam = useMemo(() => getSelectedExamTrack(), []);
+
   const [selectedRankingType, setSelectedRankingType] = useState("tournament");
-  const [tournamentFilter, setTournamentFilter] = useState("Latest Friday Battle");
   const [weeklyFilter, setWeeklyFilter] = useState("This Week");
   const [monthlyFilter, setMonthlyFilter] = useState("This Month");
-  const [subjectFilter, setSubjectFilter] = useState("Constitution of Nepal");
   const [hallOfFameFilter, setHallOfFameFilter] = useState("Lifetime XP");
-  const [tournamentType, setTournamentType] = useState(`${selectedExam} Friday Battle`);
   const [tournamentData, setTournamentData] = useState(null);
-  const [tournamentError, setTournamentError] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState(null);
+
+  // ---- Real current-user profile from local progress (your row is always real)
+  const me = useMemo(() => {
+    const realName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "You";
+    const examId = normalizeExamId(localStorage.getItem("selectedExam") || "sakha-adhikrit");
+    const examLabel = examTracks[examId]?.name || "Sakha Adhikrit";
+    const subjectProgress = getNormalizedSubjectProgress();
+    const subjectCards = getExamSubjects(examId).map((subject) =>
+      buildSubjectCardData(subject, subjectProgress, examId)
+    );
+    const totalCorrect = subjectCards.reduce((sum, s) => sum + (s.progress.correctAnswers || 0), 0);
+    const totalWrong = subjectCards.reduce((sum, s) => sum + (s.progress.wrongAnswers || 0), 0);
+    const totalAttempted = totalCorrect + totalWrong;
+    const overallAccuracy = totalAttempted ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+    const transactions = getXPTransactions();
+    const totalXp = calculateTotalXPFromTransactions();
+    const rankProgress = getOverallRankProgress(totalXp);
+
+    const subjectStats = {};
+    subjectCards.forEach((card) => {
+      subjectStats[card.name] = {
+        xp: card.progress.xp || 0,
+        accuracy: Number.isFinite(card.accuracy) ? card.accuracy : null,
+        questionsSolved: card.progress.questionsSolved || 0,
+      };
+    });
+
+    const attempts = getTournamentAttempts();
+    const bestAttempt = [...attempts].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))[0] || null;
+
+    return {
+      id: "me",
+      isCurrentUser: true,
+      name: realName,
+      initials: getInitials(realName),
+      examTrack: examLabel,
+      avatarUrl: getProfileOverrides().avatarImage || "",
+      weeklyXP: xpInWindow(transactions, 7, 0),
+      lastWeekXP: xpInWindow(transactions, 14, 7),
+      monthlyXP: xpInWindow(transactions, 30, 0),
+      lastMonthXP: xpInWindow(transactions, 60, 30),
+      lifetimeXP: totalXp,
+      totalXP: totalXp,
+      examXP: totalXp,
+      tournamentPoints: bestAttempt?.totalScore || 0,
+      tournamentAccuracy: bestAttempt && bestAttempt.totalQuestions
+        ? Math.round(((bestAttempt.correctAnswers || 0) / bestAttempt.totalQuestions) * 100)
+        : overallAccuracy,
+      accuracy: overallAccuracy,
+      streak: getCurrentStreak(),
+      badges: getEarnedBadges(syncBadges()).length,
+      earnedBadges: getEarnedBadges(syncBadges()),
+      tournamentWins: attempts.filter((a) => a.rank === 1).length,
+      level: deriveLevel(totalXp),
+      rankTitle: rankProgress.currentRank,
+      hasPlayedTournament: attempts.length > 0,
+      bestAttempt,
+      subjectStats,
+      subjects: subjectCards.map((c) => c.name),
+      about: `Dedicated ${examLabel} learner building progress on PrepQuest Nepal.`,
+    };
+  }, [authUser]);
+
+  const selectedExam = me.examTrack;
+  const [subjectFilter, setSubjectFilter] = useState(() => me.subjects[0] || "");
+  useEffect(() => {
+    if (!me.subjects.includes(subjectFilter)) setSubjectFilter(me.subjects[0] || "");
+  }, [me.subjects, subjectFilter]);
 
   const activeRanking = rankingTypes.find((type) => type.id === selectedRankingType);
-  // Replace the mock "isCurrentUser" placeholder's identity with the real
-  // logged-in account so this leaderboard never shows a fake person's name
-  // as "you" - the other rows stay as flavor/seed competitors.
-  const leaderboardUsers = useMemo(
+  const isTournament = selectedRankingType === "tournament";
+
+  // The current user's row is real; competitors are the project's seeded demo
+  // learners (intentional). The seeded "isCurrentUser" placeholder is replaced
+  // by the real account so no fake person is ever shown as "you".
+  const everyone = useMemo(
     () =>
       mockLeaderboardUsers.map((user) =>
-        user.isCurrentUser ? { ...user, name: realName, initials: getInitials(realName), examTrack: selectedExam } : user
+        user.isCurrentUser
+          ? me
+          : {
+              ...user,
+              totalXP: user.lifetimeXP,
+              level: deriveLevel(user.lifetimeXP),
+              avatarUrl: "",
+              about: "This learner is building progress on PrepQuest Nepal.",
+            }
       ),
-    [realName, selectedExam]
-  );
-  const examFilteredUsers = useMemo(
-    () => leaderboardUsers.filter((user) => user.examTrack === selectedExam),
-    [leaderboardUsers, selectedExam]
+    [me]
   );
 
   useEffect(() => {
-    if (selectedRankingType !== "tournament") return;
+    if (!isTournament) return;
+    let cancelled = false;
     getLatestTournamentResults()
-      .then((data) => {
-        setTournamentData(data);
-        setTournamentError("");
-      })
-      .catch((err) => {
-        setTournamentData(null);
-        setTournamentError(err.response?.data?.message || "Results will appear after the tournament finishes.");
-      });
-  }, [selectedRankingType, tournamentFilter]);
+      .then((data) => !cancelled && setTournamentData(data))
+      .catch(() => !cancelled && setTournamentData(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [isTournament]);
+
+  const metricFor = (user) => {
+    if (!user) return 0;
+    if (selectedRankingType === "weekly") return weeklyFilter === "Last Week" ? user.lastWeekXP || 0 : user.weeklyXP || 0;
+    if (selectedRankingType === "monthly") return monthlyFilter === "Last Month" ? user.lastMonthXP || 0 : user.monthlyXP || 0;
+    if (selectedRankingType === "subject") return user.subjectStats?.[subjectFilter]?.xp || 0;
+    if (selectedRankingType === "examTrack") return user.examXP || user.lifetimeXP || 0;
+    if (selectedRankingType === "hallOfFame") {
+      if (hallOfFameFilter === "Lifetime Tournament Wins") return user.tournamentWins || 0;
+      if (hallOfFameFilter === "Lifetime Badges") return user.badges || 0;
+      return user.lifetimeXP || 0;
+    }
+    return user.tournamentPoints || 0; // tournament
+  };
 
   const rows = useMemo(() => {
-    if (selectedRankingType === "tournament") {
-      if (!tournamentData?.leaderboard?.length) return [];
+    // Live backend tournament results take priority when connected.
+    if (isTournament && tournamentData?.leaderboard?.length) {
       return tournamentData.leaderboard.map((row) => ({
         id: row.userId,
         rank: row.rank,
         name: row.displayName,
-        initials: row.displayName?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "PQ",
-        examTrack: normalizeExamTrack(row.selectedExam),
-        tournamentPoints: row.score,
-        tournamentAccuracy: Math.round(((row.correctAnswers || 0) / 20) * 100),
-        tournamentCorrectAnswers: row.correctAnswers,
-        wrongAnswers: row.wrongAnswers,
-        unanswered: row.unanswered,
-        speedBonus: row.speedBonusTotal || 0,
-        reward: row.result
-          ? `${row.result.rewardCoins} coins + ${row.result.rewardXp} XP${row.result.badgeEarned ? ` + ${row.result.badgeEarned}` : ""}`
-          : row.reward
-            ? `${row.reward.rewardCoins} coins + ${row.reward.rewardXp} XP${row.reward.badgeEarned ? ` + ${row.reward.badgeEarned}` : ""}`
-            : "Pending",
+        initials: getInitials(row.displayName),
+        examTrack: examTracks[normalizeExamId(row.selectedExam)]?.name || "Sakha Adhikrit",
+        tournamentPoints: row.score || 0,
+        accuracy: Math.round(((row.correctAnswers || 0) / 20) * 100),
+        level: deriveLevel(row.score),
+        badges: 0,
+        totalXP: row.score || 0,
+        lifetimeXP: row.score || 0,
         isCurrentUser: row.isCurrentUser,
-        trend: "same"
+        avatarUrl: "",
+        about: "This learner is building progress on PrepQuest Nepal.",
       }));
     }
 
-    const context = { subjectFilter, hallOfFameFilter };
-    const filteredUsers = examFilteredUsers.map((user) => {
-      if (selectedRankingType === "weekly") return applyTimeFilter(user, "weekly", weeklyFilter);
-      if (selectedRankingType === "monthly") return applyTimeFilter(user, "monthly", monthlyFilter);
-      if (selectedRankingType === "tournament") return applyTimeFilter(user, "tournament", tournamentFilter);
-      return user;
-    });
+    const ranked = [...everyone]
+      .sort((a, b) => metricFor(b) - metricFor(a) || a.name.localeCompare(b.name))
+      .map((user, index) => ({ ...user, rank: index + 1 }));
+    const total = ranked.length || 1;
+    return ranked.map((user) => ({
+      ...user,
+      displayPoints: metricFor(user),
+      topPercent: Math.max(1, Math.round((user.rank / total) * 100)),
+    }));
+  }, [isTournament, tournamentData, everyone, selectedRankingType, weeklyFilter, monthlyFilter, subjectFilter, hallOfFameFilter]);
 
-    return buildRankedUsers(filteredUsers, selectedRankingType, context);
-  }, [examFilteredUsers, hallOfFameFilter, monthlyFilter, selectedRankingType, subjectFilter, tournamentData, weeklyFilter]);
+  const myRow = rows.find((user) => user.isCurrentUser);
+  // Podium reordered so #1 sits in the centre (#2 left, #1 centre, #3 right).
+  const podium = (() => {
+    const top = rows.slice(0, 3);
+    if (top.length < 3) return top;
+    return [top[1], top[0], top[2]];
+  })();
 
-  const currentUser = rows.find((user) => user.isCurrentUser);
-  const podium = rows.slice(0, 3);
-  const isTournament = selectedRankingType === "tournament";
-
-  const handlePrimaryCta = () => {
-    navigate(isTournament ? "/tournament" : "/practice");
-  };
+  const handleViewProfile = (user) => setSelectedProfile(user);
+  const closeProfile = () => setSelectedProfile(null);
+  const goToTournament = () => navigate("/tournament");
 
   const renderSecondaryFilters = () => {
-    if (selectedRankingType === "tournament") {
-      return (
-        <div className="secondary-filter-grid tournament-filter-grid">
-          <div className="secondary-filter-row" aria-label="Tournament filters">
-            {tournamentFilters.map((filter) => (
-              <button className={`filter-option${tournamentFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setTournamentFilter(filter)}>
-                {filter}
-              </button>
-            ))}
-          </div>
-          <label>
-            <span>Tournament Type</span>
-            <select value={tournamentType} onChange={(event) => setTournamentType(event.target.value)}>
-              <option>{selectedExam} Friday Battle</option>
-              <option>{selectedExam === "Sakha Adhikrit" ? "Nayab Subba" : "Sakha Adhikrit"} Friday Battle</option>
-              <option>Mixed Loksewa Battle</option>
-            </select>
-          </label>
-        </div>
-      );
-    }
-
     if (selectedRankingType === "weekly") {
       return (
         <div className="secondary-filter-row" aria-label="Weekly filters">
           {weeklyFilters.map((filter) => (
-            <button className={`filter-option${weeklyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setWeeklyFilter(filter)}>
-              {filter}
-            </button>
+            <button className={`filter-option${weeklyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setWeeklyFilter(filter)}>{filter}</button>
           ))}
         </div>
       );
     }
-
     if (selectedRankingType === "monthly") {
       return (
         <div className="secondary-filter-row" aria-label="Monthly filters">
           {monthlyFilters.map((filter) => (
-            <button className={`filter-option${monthlyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setMonthlyFilter(filter)}>
-              {filter}
-            </button>
+            <button className={`filter-option${monthlyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setMonthlyFilter(filter)}>{filter}</button>
           ))}
         </div>
       );
     }
-
     if (selectedRankingType === "subject") {
       return (
         <div className="secondary-filter-grid subject-filter-grid">
           <label>
             <span>Subject</span>
             <select value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
-              {subjectFilters.map((subject) => <option key={subject}>{subject}</option>)}
+              {me.subjects.map((subject) => <option key={subject}>{subject}</option>)}
             </select>
           </label>
         </div>
       );
     }
-
     if (selectedRankingType === "hallOfFame") {
       return (
         <div className="secondary-filter-row" aria-label="Hall of Fame filters">
           {hallOfFameFilters.map((filter) => (
-            <button className={`filter-option${hallOfFameFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setHallOfFameFilter(filter)}>
-              {filter}
-            </button>
+            <button className={`filter-option${hallOfFameFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setHallOfFameFilter(filter)}>{filter}</button>
           ))}
         </div>
       );
     }
-
     return (
       <div className="scope-note">
-        <strong>{selectedExam} Ranking</strong>
-        <span>Current exam track ranking only by default.</span>
+        <strong>{activeRanking.label} Ranking</strong>
+        <span>{activeRanking.description}</span>
       </div>
     );
   };
 
-  const renderSummaryStats = () => {
-    if (isTournament) {
-      const correctAnswers = currentUser?.tournamentCorrectAnswers || Math.round(((currentUser?.tournamentAccuracy || currentUser?.accuracy || 0) / 100) * 25);
-      return (
-        <>
-          <span>Tournament Points <strong>{formatNumber(currentUser?.tournamentPoints)}</strong></span>
-          <span>Correct Answers <strong>{correctAnswers}</strong></span>
-          <span>Accuracy <strong>{currentUser?.tournamentAccuracy || currentUser?.accuracy || 0}%</strong></span>
-          <span>Speed Bonus <strong>+{formatNumber(currentUser?.speedBonus)}</strong></span>
-          <span>Reward <strong><RewardText text={rewardForRank(currentUser || {})} /></strong></span>
-        </>
-      );
-    }
+  const ViewButton = ({ user }) => (
+    <button className="view-profile-btn" type="button" onClick={() => handleViewProfile(user)}>View Profile</button>
+  );
 
-    if (selectedRankingType === "hallOfFame") {
-      return (
-        <>
-          <span>Lifetime XP <strong>{formatNumber(currentUser?.lifetimeXP)}</strong></span>
-          <span>Badges <strong>{currentUser?.badges || 0}</strong></span>
-          <span>Tournament Wins <strong>{currentUser?.tournamentWins || 0}</strong></span>
-          <span>Longest Streak <strong>{currentUser?.longestStreak || currentUser?.streak || 0} days</strong></span>
-        </>
-      );
-    }
-
-    const subjectStats = currentUser ? getSubjectStats(currentUser, subjectFilter) : null;
-    if (selectedRankingType === "subject") {
-      return (
-        <>
-          <span>Subject XP <strong>{formatNumber(subjectStats?.xp)} XP</strong></span>
-          <span>Accuracy <strong>{subjectStats?.accuracy || 0}%</strong></span>
-          <span>Questions Solved <strong>{subjectStats?.questionsSolved || 0}</strong></span>
-          <span>Badges <strong>{currentUser?.badges || 0}</strong></span>
-        </>
-      );
-    }
-
-    const xpLabel = selectedRankingType === "monthly" ? "Monthly XP" : selectedRankingType === "examTrack" ? "Exam XP" : "Weekly XP";
-    return (
-      <>
-        <span>{xpLabel} <strong>{formatNumber(metricFor(currentUser || {}, selectedRankingType))} XP</strong></span>
-        <span>Accuracy <strong>{currentUser?.accuracy || 0}%</strong></span>
-        <span>Streak <strong>{currentUser?.streak || 0} days</strong></span>
-        <span>Badges <strong>{currentUser?.badges || 0}</strong></span>
-      </>
-    );
-  };
+  const LearnerCell = ({ user }) => (
+    <span className="learner-cell">
+      <span className="mini-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.initials}</span>
+      <span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span>
+    </span>
+  );
 
   const renderTable = () => {
     if (!rows.length) {
       return (
         <div className="leaderboard-empty-state">
-          <p>
-            {isTournament
-              ? tournamentError || "Results will appear after the tournament finishes."
-              : "No ranking data yet for this filter. Start practicing to appear on the leaderboard."}
-          </p>
-          <button className="btn" type="button" onClick={handlePrimaryCta}>{isTournament ? "View Tournament" : "Start Practice"}</button>
-        </div>
-      );
-    }
-
-    if (isTournament) {
-      return (
-        <div className="leaderboard-table tournament-table">
-          <div className="leaderboard-table-head">
-            <span>Rank</span><span>Learner</span><span>Exam Track</span><span>Points</span><span>Correct</span><span>Wrong</span><span>Unanswered</span><span>Speed Bonus</span><span>Reward</span>
-          </div>
-          {rows.map((user) => (
-            <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
-              <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
-              <span className="learner-cell"><span className="mini-avatar">{user.initials}</span><span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span></span>
-              <span>{user.examTrack}</span>
-              <strong>{formatNumber(user.tournamentPoints)}</strong>
-              <span>{user.tournamentCorrectAnswers || 0}</span>
-              <span>{user.wrongAnswers || 0}</span>
-              <span>{user.unanswered || 0}</span>
-              <span>+{formatNumber(user.speedBonus)}</span>
-              <span><RewardText text={rewardForRank(user)} /></span>
-            </div>
-          ))}
+          <p>No ranking data yet. Start practicing to build your real stats.</p>
+          <button className="btn" type="button" onClick={() => navigate("/practice")}>Start Practice</button>
         </div>
       );
     }
@@ -385,19 +303,19 @@ function Leaderboard() {
       return (
         <div className="leaderboard-table subject-table">
           <div className="leaderboard-table-head">
-            <span>Rank</span><span>Learner</span><span>Subject</span><span>Subject XP</span><span>Accuracy</span><span>Questions Solved</span><span>Trend</span>
+            <span>Rank</span><span>Learner</span><span>Subject</span><span>Subject XP</span><span>Accuracy</span><span>Solved</span><span>View</span>
           </div>
           {rows.map((user) => {
-            const stats = getSubjectStats(user, subjectFilter);
+            const stats = user.subjectStats?.[subjectFilter] || { xp: 0, accuracy: null, questionsSolved: 0 };
             return (
               <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
                 <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
-                <span className="learner-cell"><span className="mini-avatar">{user.initials}</span><span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span></span>
+                <LearnerCell user={user} />
                 <span>{subjectFilter}</span>
                 <strong>{formatNumber(stats.xp)} XP</strong>
-                <span>{stats.accuracy}%</span>
+                <span>{Number.isFinite(stats.accuracy) ? `${stats.accuracy}%` : "Not Started"}</span>
                 <span>{stats.questionsSolved}</span>
-                <span className={`trend ${user.trend}`}><TrendIcon trend={user.trend} /></span>
+                <span><ViewButton user={user} /></span>
               </div>
             );
           })}
@@ -409,40 +327,40 @@ function Leaderboard() {
       return (
         <div className="leaderboard-table hall-table">
           <div className="leaderboard-table-head">
-            <span>Rank</span><span>Learner</span><span>Exam Track</span><span>Lifetime XP</span><span>Badges</span><span>Tournament Wins</span><span>Streak</span><span>Trend</span>
+            <span>Rank</span><span>Learner</span><span>Exam Track</span><span>Lifetime XP</span><span>Badges</span><span>Wins</span><span>Streak</span><span>View</span>
           </div>
           {rows.map((user) => (
             <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
               <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
-              <span className="learner-cell"><span className="mini-avatar">{user.initials}</span><span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span></span>
+              <LearnerCell user={user} />
               <span>{user.examTrack}</span>
               <strong>{formatNumber(user.lifetimeXP)} XP</strong>
               <span>{user.badges}</span>
               <span>{user.tournamentWins || 0}</span>
-              <span>{user.longestStreak || user.streak} days</span>
-              <span className={`trend ${user.trend}`}><TrendIcon trend={user.trend} /></span>
+              <span>{user.streak || 0}d</span>
+              <span><ViewButton user={user} /></span>
             </div>
           ))}
         </div>
       );
     }
 
-    const xpHeading = selectedRankingType === "monthly" ? "Monthly XP" : selectedRankingType === "examTrack" ? "Exam XP" : "XP";
+    const pointsHeading = isTournament ? "Points" : selectedRankingType === "monthly" ? "Monthly XP" : selectedRankingType === "examTrack" ? "Exam XP" : selectedRankingType === "weekly" ? "Weekly XP" : "Points";
     return (
-      <div className="leaderboard-table">
+      <div className="leaderboard-table standard-table">
         <div className="leaderboard-table-head">
-          <span>Rank</span><span>Learner</span><span>Exam Track</span><span>{xpHeading}</span><span>Accuracy</span><span>Streak</span><span>Badges</span><span>Trend</span>
+          <span>Rank</span><span>Learner</span><span>Exam Track</span><span>{pointsHeading}</span><span>Accuracy</span><span>Level</span><span>Badges</span><span>View</span>
         </div>
         {rows.map((user) => (
           <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
             <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
-            <span className="learner-cell"><span className="mini-avatar">{user.initials}</span><span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span></span>
+            <LearnerCell user={user} />
             <span>{user.examTrack}</span>
-            <strong>{formatNumber(metricFor(user, selectedRankingType))} XP</strong>
-            <span>{user.accuracy}%</span>
-            <span>{user.streak} days</span>
-            <span>{user.badges}</span>
-            <span className={`trend ${user.trend}`}><TrendIcon trend={user.trend} /></span>
+            <strong>{formatNumber(metricFor(user))}</strong>
+            <span>{user.accuracy || 0}%</span>
+            <span className="level-pill">Lv {user.level || 1}</span>
+            <span className="badge-cell"><FaMedal /> {user.badges || 0}</span>
+            <span><ViewButton user={user} /></span>
           </div>
         ))}
       </div>
@@ -455,56 +373,61 @@ function Leaderboard() {
         <header className="dashboard-header leaderboard-header">
           <div className="header-left">
             <h1>Leaderboard</h1>
-            <p>Compare Friday Battle performance, weekly progress, subjects, and lifetime consistency.</p>
+            <p>Track your ranking, earn XP, and rise to the top.</p>
           </div>
           <div className="header-right">
             <div className="header-chips">
               <span className="chip"><FaFire /> Friday Battle</span>
-              <span className="chip"><FaMedal /> {selectedExam} only</span>
+              <span className="chip"><FaMedal /> {selectedExam}</span>
               <span className="chip"><FaShieldAlt /> Privacy-safe ranking</span>
             </div>
           </div>
         </header>
 
-        <section className="dashboard-card leaderboard-rank-summary">
+        {/* My Tournament Rank banner with trophy */}
+        <section className="dashboard-card leaderboard-rank-banner">
           <div className="rank-main">
-            <p className="eyebrow">{isTournament ? "My Tournament Rank" : selectedRankingType === "hallOfFame" ? "My Hall of Fame Rank" : `My ${activeRanking.label} Rank`}</p>
-            <div className="rank-number">{currentUser ? `#${currentUser.rank}` : "-"}</div>
+            <p className="eyebrow">My Tournament Rank</p>
+            <div className="rank-number">{me.hasPlayedTournament ? `#${me.bestAttempt?.rank || "-"}` : "—"}</div>
             <div>
-              <strong>{selectedExam}</strong>
-              <span>{isTournament ? `Friday Loksewa Battle ranking for ${selectedExam} aspirants only.` : `Ranking for ${selectedExam} aspirants only.`}</span>
+              <strong>{me.hasPlayedTournament ? `${formatNumber(me.tournamentPoints)} points` : "You haven't played yet"}</strong>
+              <span>{me.hasPlayedTournament ? `${me.tournamentAccuracy}% accuracy` : "Take the Friday Loksewa Battle and start your climb!"}</span>
             </div>
           </div>
-          <div className="leaderboard-summary-grid">{renderSummaryStats()}</div>
-          <button className="btn rank-cta" type="button" onClick={handlePrimaryCta}>
-            {isTournament ? "View Tournament Details" : "Practice Weak Subject"}
-          </button>
+          <div className="rank-banner-mid">
+            <p className="eyebrow">Exam Track</p>
+            <strong className="rank-banner-exam">{selectedExam}</strong>
+            <p className="rank-banner-tagline">Every question you answer brings you closer to the top!</p>
+            <button className="btn rank-cta" type="button" onClick={goToTournament}>View Tournament Details <FaArrowRight /></button>
+          </div>
+          <div className="rank-banner-cup" aria-hidden="true">
+            <img className="tournament-cup-img" src={CupImage} alt="" />
+          </div>
         </section>
 
-        <section className="leaderboard-podium-grid" aria-label="Top 3 learners">
-          {podium.map((user) => {
-            const subjectStats = getSubjectStats(user, subjectFilter);
-            return (
+        {/* Top 3 leaders */}
+        {podium.length ? (
+          <section className="leaderboard-podium-grid" aria-label="Top learners">
+            {podium.map((user) => (
               <article className={`podium-card rank-${user.rank}`} key={user.id}>
-                <div className="podium-rank"><FaTrophy /> #{user.rank}</div>
-                <div className="leader-avatar">{user.initials}</div>
-                <div>
+                <div className={`podium-rank-circle rank-${user.rank}`}>{user.rank}</div>
+                <div className="leader-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.initials}</div>
+                <div className="podium-name">
                   <h2>{user.name}</h2>
                   <p>{user.examTrack}</p>
                 </div>
-                <strong>
-                  {isTournament
-                    ? `${formatNumber(user.tournamentPoints)} points - ${user.tournamentAccuracy || user.accuracy}%`
-                    : selectedRankingType === "subject"
-                      ? `${formatNumber(subjectStats.xp)} XP - ${subjectStats.accuracy}%`
-                      : `${formatNumber(metricFor(user, selectedRankingType, { hallOfFameFilter }))} ${selectedRankingType === "hallOfFame" ? "lifetime" : "XP"} - ${user.accuracy}%`}
-                </strong>
-                {isTournament ? <span className="podium-reward">Reward: <RewardText text={rewardForRank(user)} /></span> : null}
+                <strong className="podium-score">{formatNumber(user.tournamentPoints || metricFor(user))} points · {user.tournamentAccuracy || user.accuracy || 0}%</strong>
+                <div className="podium-rewards">
+                  <span>🪙 {user.reward ? user.reward.match(/(\d+)\s*coins/i)?.[1] || "—" : "—"}</span>
+                  <span>⭐ {user.reward ? `${user.reward.match(/(\d+)\s*XP/i)?.[1] || "—"} XP` : "—"}</span>
+                  <span>{user.rank === 1 ? "Gold" : user.rank === 2 ? "Silver" : "Bronze"} Champion</span>
+                </div>
               </article>
-            );
-          })}
-        </section>
+            ))}
+          </section>
+        ) : null}
 
+        {/* Ranking tabs */}
         <section className="dashboard-card leaderboard-controls">
           <div className="control-heading">
             <h2>Choose Ranking Type</h2>
@@ -527,32 +450,21 @@ function Leaderboard() {
           {renderSecondaryFilters()}
         </section>
 
-        {isTournament ? (
-          <section className="dashboard-card tournament-cta-card">
-            <div>
-              <h2>Friday Loksewa Battle</h2>
-              <p>Compete every Friday with learners from your exam track. Answer timed questions, earn speed bonuses, and win XP, coins, and badges.</p>
-            </div>
-            <div className="tournament-rewards">
-              <span><b>1st</b> <RewardDisplay coins={500} xp={500} /></span>
-              <span><b>2nd</b> <RewardDisplay coins={300} xp={300} /></span>
-              <span><b>3rd</b> <RewardDisplay coins={150} xp={200} /></span>
-              <span><b>Everyone</b> <RewardDisplay coins={50} xp={100} /></span>
-            </div>
-            <button className="btn tournament-cta-button" type="button" onClick={() => navigate("/tournament")}>View Tournament</button>
-          </section>
-        ) : null}
-
+        {/* Full leaderboard table */}
         <section className="dashboard-card leaderboard-table-card">
           <div className="card-heading">
             <h2 className="card-title"><FaMedal /> Full Leaderboard</h2>
-            <span className="status-chip">{selectedExam} - {selectedRankingType === "subject" ? subjectFilter : activeRanking.label}</span>
+            <span className="status-chip">{selectedRankingType === "subject" ? subjectFilter : activeRanking.label}{myRow ? ` · You are #${myRow.rank}` : ""}</span>
           </div>
           {renderTable()}
+          <p className="privacy-note">
+            Your row reflects your real saved progress. Other learners are shown for ranking context and only public,
+            privacy-safe details are displayed.
+          </p>
         </section>
-
-        <p className="privacy-note">Leaderboard shows only learners from your selected exam track. Display names are used for privacy-safe ranking.</p>
       </section>
+
+      {selectedProfile ? <LeaderboardProfilePanel user={selectedProfile} onClose={closeProfile} /> : null}
     </DashboardLayout>
   );
 }

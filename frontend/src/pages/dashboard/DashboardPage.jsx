@@ -19,9 +19,9 @@ import {
   Circle,
   CircleHelp,
   ClipboardList,
-  FileCheck,
   FileText,
   Flame,
+  Gift,
   Globe,
   GraduationCap,
   Languages,
@@ -48,9 +48,7 @@ import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { canClaimDailyReward, DAILY_REWARD_CLAIMED_EVENT, getDailyRewardState, getNepalRewardDate } from "../../utils/dailyRewardUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
-import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress, getXPTransactions } from "../../utils/xpUtils";
-import { getNextBadge, syncBadges } from "../../utils/badgeUtils";
-import BadgeIcon from "../../components/badges/BadgeIcon";
+import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress } from "../../utils/xpUtils";
 import { CoinIcon } from "../../components/common/Coin";
 import { getUserCoinBalance } from "../../services/coinService";
 import "./DashboardPage.css";
@@ -136,24 +134,21 @@ function DashboardPage() {
   const dailyRewardClaimedToday = !canClaimDailyReward(dailyRewardState, getNepalRewardDate());
   const mockStats = getMockDashboardStats();
   const mockCompletedToday = hasCompletedMockToday();
+  const currentStreak = getCurrentStreak();
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
   const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
   const xpProgress = getNextLevelProgress(totalXp);
   const rankProgress = getOverallRankProgress(totalXp);
   const { currentRank, nextRank } = rankProgress;
-  const xpTransactions = getXPTransactions();
+  const isMaxRank = rankProgress.rankIndex >= rankJourney.length - 1;
+  // Real rank badge art for the current rank (no generic icon / no white box).
+  const rankBadge = (rankJourney[rankProgress.rankIndex] || rankJourney[0]).badge;
+  // Premium image icons shared with the practice/question UI.
+  const coinIcon = gamificationIcons.coins;
+  const streakIcon = gamificationIcons.streak;
   const subjectCards = getExamSubjects(selectedExam).map((subject) =>
     buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExam)
   );
-  // Closest-to-earn badge, computed from real activity, for the Next Badge card.
-  const nextBadge = getNextBadge(syncBadges());
-  const nextBadgeMasked = nextBadge?.isSecret && nextBadge.status !== "earned";
-  const weeklyXpData = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => ({
-    day,
-    xp: xpTransactions
-      .filter((transaction) => new Date(transaction.createdAt).getDay() === index)
-      .reduce((sum, transaction) => sum + transaction.amount, 0),
-  }));
 
   const examLabel = examNames[selectedExam] || "Nayab Subba";
   const languageLabel = languageNames[preferredLanguage] || "English";
@@ -164,9 +159,7 @@ function DashboardPage() {
       .sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101))
       .slice(0, 3);
   }, [subjectCards]);
-
-  const maxWeeklyXp = Math.max(1, ...weeklyXpData.map((d) => d.xp));
-  const currentRankIndex = rankProgress.rankIndex;
+  const topWeakSubject = weakSubjects[0] || null;
 
   const handleSidebarToggle = () => {
     setSidebarCollapsed((current) => {
@@ -275,26 +268,39 @@ function DashboardPage() {
 
           <section className="dashboard-content">
 
-            {/* Stats Grid */}
-            <section className="stats-grid" aria-label="Learning stats">
-              <article className="stat-card">
-                  <div className="stat-icon"><Sparkles /></div>
+            {/* Top stats — Level/Rank, Coins, Streak only */}
+            <section className="stats-grid stats-grid-3" aria-label="Learning stats">
+              <article className="stat-card level-stat-card">
+                <span className="rank-badge-icon">
+                  <img src={rankBadge} alt={currentRank} />
+                </span>
                 <div>
                   <div className="stat-value">Level {xpProgress.currentLevel.level}</div>
-                  <div className="stat-label">XP / {currentRank}</div>
+                  <div className="stat-label">{currentRank}</div>
                   <div className="stat-helper">{totalXp.toLocaleString()} XP earned</div>
                 </div>
               </article>
               <article className="stat-card coin-stat-card">
-                <CoinIcon size="lg" className="stat-coin" />
+                {coinIcon ? (
+                  <span className="dashboard-stat-icon coin">
+                    <img className="dashboard-stat-icon-img" src={coinIcon} alt="Coins" />
+                  </span>
+                ) : (
+                  <CoinIcon size="lg" className="stat-coin" />
+                )}
                 <div>
-                  <div className="stat-value coin-stat-value">{getUserCoinBalance().toLocaleString()}</div>
+                  <div className="stat-value coin-stat-value">{coins.toLocaleString()}</div>
                   <div className="stat-label">Coins</div>
-                  <div className="stat-helper">Earned from eligible activities</div>
                 </div>
               </article>
-              <article className="stat-card">
-                <div className="stat-icon"><Flame /></div>
+              <article className="stat-card streak-stat-card">
+                {streakIcon ? (
+                  <span className="dashboard-stat-icon streak">
+                    <img className="dashboard-stat-icon-img" src={streakIcon} alt="Streak" />
+                  </span>
+                ) : (
+                  <div className="stat-icon"><Flame /></div>
+                )}
                 <div>
                   <div className="stat-value">{dailyRewardState.currentStreak} {dailyRewardState.currentStreak === 1 ? "Day" : "Days"}</div>
                   <div className="stat-label">Current Streak</div>
@@ -304,320 +310,115 @@ function DashboardPage() {
                   </div>
                 </div>
               </article>
-              <article className="stat-card">
-                <div className="stat-icon"><FileCheck /></div>
-                <div>
-                  <div className="stat-value">{mockStats.freeMocksLeft}/3</div>
-                  <div className="stat-label">Free Mocks Left</div>
-                  <div className="stat-helper">Resets daily</div>
-                </div>
-              </article>
             </section>
 
-            {/* Progression Preview */}
-            <section className="dashboard-card progression-preview">
-              <div>
+            {/* Today's Mission — the hero / main action section */}
+            <section className="dashboard-card mission-card hero-mission">
+              <div className="mission-left">
+                <p className="mission-title">Today&apos;s Mission</p>
+                <div className="mission-visual" aria-hidden="true">
+                  <img className="mission-image" src={missionImg} alt="" />
+                </div>
+              </div>
+              <div className="mission-tasks">
+                <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
+                  {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
+                </div>
+                <div className={`mission-item${mockCompletedToday ? " completed" : ""}`}>
+                  {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>Take 1 mock test</span>
+                </div>
+                <div className="mission-item">
+                  <Circle /><span>Practice your weak subject</span>
+                </div>
+              </div>
+              <div className="mission-cta">
+                <span className="mission-reward"><Gift /> Complete all to earn bonus coins!</span>
+                <button
+                  className="btn mission-start-btn"
+                  type="button"
+                  onClick={() => navigate(dailyQuizCompleted ? "/daily-quiz/result" : "/daily-quiz")}
+                >
+                  {dailyQuizCompleted ? "Review Daily Quiz" : "Start Daily Quiz"} <ChevronRight />
+                </button>
+              </div>
+            </section>
+
+            {/* Your Progress — below the mission */}
+            <section className="dashboard-card your-progress-card">
+              <div className="your-progress-info">
                 <p className="eyebrow">Your Progress</p>
                 <h2>{currentRank}</h2>
-                <p>
-                  <strong>{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong> earned. Next Rank: <strong>{nextRank}</strong>.
+                <p className="your-progress-xp">
+                  <strong>{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong> earned
                 </p>
-                <div className="preview-progress-row">
-                  <span>Current Rank: {currentRank}</span>
-                  <span>{rankProgress.percent}%</span>
-                </div>
+              </div>
+              <div className="your-progress-track">
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: `${rankProgress.percent}%` }} />
                 </div>
+                <span className="your-progress-percent">{rankProgress.percent}%</span>
+              </div>
+              <div className="your-progress-next">
+                <span>Next Rank:</span>
+                <strong>{isMaxRank ? "Top rank reached" : nextRank}</strong>
               </div>
               <button className="outline-pill view-progression-btn" type="button" onClick={() => navigate("/progression")}>
-                <Route /> View Progression
+                View Progression <ChevronRight />
               </button>
             </section>
 
-            <div className="dashboard-grid">
-              {/* Main Column */}
-              <div className="main-column">
-
-                {/* Today's Mission */}
-                <section className="dashboard-card mission-card">
-                  <div className="card-heading">
-                    <h2 className="card-title"><Target /> Today&apos;s Mission</h2>
-                    <span className="status-chip">{missionCompletedCount}/3 complete</span>
-                  </div>
-                  <div className="mission-progress">
-                    <span>Daily mission progress</span>
-                    <strong>{missionCompletedCount}/3</strong>
-                    <div className="progress-bar">
-                      <div className="progress-fill" style={{ width: `${missionProgressPercent}%` }} />
-                    </div>
-                  </div>
-                  <div className="mission-list">
-                    <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
-                      {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
-                    </div>
-                    <div className={`mission-item${mockCompletedToday ? " completed" : ""}`}>
-                      {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>Take 1 mock test</span>
-                    </div>
-                    <div className="mission-item">
-                      <Circle /><span>Practice your weak subject</span>
-                    </div>
-                  </div>
-                  <button className="btn btn-full" type="button" onClick={() => navigate(dailyQuizCompleted ? "/daily-quiz/result" : "/daily-quiz")}>
-                    {dailyQuizCompleted ? "Review Daily Quiz" : "Start Daily Quiz"}
+            {/* Quick Actions + Weak Subjects / Focus Area */}
+            <div className="dashboard-bottom-grid">
+              <section className="dashboard-card">
+                <h2 className="card-title">Quick Actions</h2>
+                <div className="quick-actions-grid">
+                  <button className="qa-card" type="button" onClick={() => navigateIfAvailable("daily-quiz")}>
+                    <span className="qa-icon qa-teal"><CircleHelp /></span>
+                    <span className="qa-label">Daily Quiz</span>
                   </button>
-                </section>
-
-                {/* Quick Actions */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><Zap /> Quick Actions</h2>
-                  <div className="quick-actions-grid">
-                    <article className="action-card">
-                      <div className="action-icon"><CircleHelp /></div>
-                      <h3>Daily Quiz</h3>
-                      <p>10 mixed questions based on your exam track.</p>
-                      <button className="action-btn" type="button" onClick={() => navigateIfAvailable("daily-quiz")}>Start</button>
-                    </article>
-                    <article className="action-card">
-                      <div className="action-icon"><ClipboardList /></div>
-                      <h3>Mock Test</h3>
-                      <p>Get score, accuracy, and weak-area feedback.</p>
-                      <button className="action-btn" type="button" onClick={() => navigateIfAvailable("mock-tests")}>Start</button>
-                    </article>
-                    <article className="action-card">
-                      <div className="action-icon"><BookOpen /></div>
-                      <h3>Subject Practice</h3>
-                      <p>Choose a subject and improve weak areas.</p>
-                      <button className="action-btn" type="button" onClick={() => navigateIfAvailable("practice")}>Choose</button>
-                    </article>
-                  </div>
-                </section>
-
-                {/* Weak Subjects */}
-                <section className="dashboard-card weak-subjects-card">
-                  <div className="card-heading">
-                    <h2 className="card-title"><AlertCircle /> Weak Subjects</h2>
-                    <span className="status-chip">Top 3</span>
-                  </div>
-                  <p className="card-copy">Focus here first to raise your mock score faster.</p>
-                  <div className="weak-subject-list">
-                    {weakSubjects.length ? weakSubjects.map(({ name, accuracy, progress, Icon = BookOpen }) => (
-                      <article className="weak-subject-item" key={name}>
-                        <div className="weak-subject-top">
-                          <div className="weak-subject-name"><Icon /> {name}</div>
-                          <strong>{accuracy}%</strong>
-                        </div>
-                        <div className="weak-subject-meta">
-                          <span>Accuracy</span>
-                          <span>{progress.questionsSolved} solved</span>
-                        </div>
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{ width: `${accuracy}%` }} />
-                        </div>
-                      </article>
-                    )) : <p className="card-copy">Complete practice sessions to generate weak subject insights.</p>}
-                  </div>
-                  <button
-                    className="btn btn-full btn-secondary"
-                    type="button"
-                    onClick={() => navigateIfAvailable("practice")}
-                  >
-                    View All Subjects / Practice Weak Areas
+                  <button className="qa-card" type="button" onClick={() => navigateIfAvailable("mock-tests")}>
+                    <span className="qa-icon qa-blue"><ClipboardList /></span>
+                    <span className="qa-label">Mock Test</span>
                   </button>
-                </section>
+                  <button className="qa-card" type="button" onClick={() => navigateIfAvailable("practice")}>
+                    <span className="qa-icon qa-purple"><BookOpen /></span>
+                    <span className="qa-label">Subject Practice</span>
+                  </button>
+                </div>
+              </section>
 
-                {/* Recent Activity */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><Activity /> Recent Activity</h2>
-                  <div className="activity-list">
-                    {xpTransactions.slice(0, 4).map((transaction) => (
-                      <article className="activity-item" key={transaction.id}>
-                        <div className="activity-icon"><CheckCircle /></div>
-                        <div><p>{transaction.subjectName || "Practice"} correct answer</p><span>+{transaction.amount} XP</span></div>
-                        <time>{new Date(transaction.createdAt).toLocaleDateString()}</time>
-                      </article>
-                    ))}
-                    {!xpTransactions.length && (
-                      <article className="activity-item">
-                        <div className="activity-icon"><BookOpen /></div>
-                        <div><p>No XP activity yet</p><span>Correct practice answers will appear here</span></div>
-                        <time>Now</time>
-                      </article>
-                    )}
-                  </div>
-                </section>
-
-                {/* Weekly XP Chart */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><Calendar /> Weekly XP Progress</h2>
-                  <div className="chart-container">
-                    {weeklyXpData.map(({ day, xp }) => (
-                      <div className="chart-bar-wrapper" key={day}>
-                        <div
-                          className="chart-bar"
-                          style={{ height: `${Math.round((xp / maxWeeklyXp) * 100)}%` }}
-                        />
-                        <div className="chart-value">{xp}</div>
-                        <div className="chart-label">{day}</div>
+              <section className="dashboard-card focus-area-card">
+                <h2 className="card-title">Weak Subjects / Focus Area</h2>
+                {topWeakSubject ? (
+                  <div className="focus-area-body">
+                    <span className="focus-icon"><GraduationCap /></span>
+                    <div className="focus-copy">
+                      <div className="focus-top">
+                        <strong className="focus-name">{topWeakSubject.name}</strong>
+                        <span className="focus-accuracy">{topWeakSubject.accuracy}%</span>
                       </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Learning Progression */}
-                <section
-                  className="dashboard-card progression-card progression-details"
-                  id="learning-progression"
-                  hidden
-                >
-                  <div className="card-heading">
-                    <h2 className="card-title"><Route /> Learning Progression</h2>
-                    <span className="status-chip">{xpProgress.percent}% complete</span>
-                  </div>
-                  <div className="progression-overview">
-                    <div className="progression-hero">
-                      <span className="progression-level">Level {xpProgress.currentLevel.level}</span>
-                      <h3>{currentRank}</h3>
-                      <p>Next Rank: <strong>{nextRank}</strong></p>
-                    </div>
-                    <div className="xp-panel">
-                      <div className="xp-row">
-                        <span>XP Progress</span>
-                        <strong>
-                          {totalXp.toLocaleString()} / {xpProgress.nextLevelXp.toLocaleString()} XP
-                        </strong>
+                      <div className="focus-meta">
+                        <span>Accuracy</span>
+                        <span>{topWeakSubject.progress.questionsSolved} solved</span>
                       </div>
-                      <div className="progress-bar xp-progress-bar">
-                        <div className="progress-fill" style={{ width: `${xpProgress.percent}%` }} />
-                      </div>
-                      <p>
-                        <strong>{xpProgress.percent}%</strong> complete to next level.{" "}
-                        <span>{xpProgress.remainingXp} XP remaining</span>.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rank-timeline" aria-label="Rank journey">
-                    {rankThresholds.map((rank, index) => {
-                      const state =
-                        index < currentRankIndex ? "completed"
-                        : index === currentRankIndex ? "current"
-                        : "locked";
-                      return (
-                        <div className={`rank-step ${state}`} key={rank.rank}>
-                          <span className="rank-node">
-                            {state === "locked" ? <Lock /> : <Check />}
-                          </span>
-                          <span className="rank-label">{rank.rank}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-
-              </div>
-
-              {/* Side Column */}
-              <aside className="side-column">
-
-                {/* Mock Tests */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><FileCheck /> Mock Tests Today</h2>
-                  <div className="mock-progress">
-                    <span>Free mocks remaining</span>
-                    <strong>{mockStats.freeMocksLeft}/3</strong>
-                  </div>
-                  <p className="card-copy">
-                    Mock tests focus on exam-style score and weak-area feedback.
-                  </p>
-                  <button className="btn btn-full" type="button" onClick={() => navigateIfAvailable("mock-tests")}>
-                    {mockStats.freeMocksLeft > 0 ? "Start Free Mock" : "Use 100 Coins"}
-                  </button>
-                </section>
-
-                {/* Tournament */}
-                <section className="dashboard-card tournament-card">
-                  <div className="card-heading">
-                    <h2 className="card-title"><Trophy /> Weekly Tournament</h2>
-                    <span className="gold-chip">Friday 7 PM</span>
-                  </div>
-                  <p className="tournament-description">
-                    Compete with other Loksewa learners every Friday in a participation-safe format.
-                  </p>
-                  <div className="reward-badges">
-                    <span>Practice-focused event</span>
-                  </div>
-                  <p className="ethical-note">No coin betting. Everyone earns participation rewards.</p>
-                  <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("tournament")}>
-                    View Tournament
-                  </button>
-                </section>
-
-                {/* Leaderboard */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><Award /> Weekly Leaderboard</h2>
-                  <div className="leaderboard-list">
-                    <article className="leaderboard-item top">
-                      <span className="leaderboard-rank medal">1</span>
-                      <span className="leaderboard-name">{userName}</span>
-                      <strong>{totalXp.toLocaleString()} XP</strong>
-                    </article>
-                  </div>
-                  <div className="your-rank">Leaderboard will expand when more users are connected.</div>
-                  <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("leaderboard")}>
-                    View Full Leaderboard
-                  </button>
-                </section>
-
-                {/* Next Badge */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><Star /> Next Badge</h2>
-                  {nextBadge ? (
-                    <div className="badge-container">
-                      <div style={{ display: "flex", justifyContent: "center" }}>
-                        <BadgeIcon
-                          shape={nextBadge.shape}
-                          iconKind={nextBadge.iconKind}
-                          rarity={nextBadge.rarity}
-                          size="lg"
-                          isSecret={nextBadge.isSecret}
-                          locked={nextBadgeMasked}
-                        />
-                      </div>
-                      <h3>{nextBadgeMasked ? "???" : nextBadge.name}</h3>
-                      <p>{nextBadgeMasked ? "??? / ???" : `${nextBadge.progress}/${nextBadge.target} completed`}</p>
                       <div className="progress-bar">
-                        <div className="progress-fill gold-fill" style={{ width: `${nextBadge.percent}%` }} />
+                        <div className="progress-fill" style={{ width: `${topWeakSubject.accuracy}%` }} />
                       </div>
-                      <span>{nextBadgeMasked ? "Hidden achievement" : `${nextBadge.rarity} · ${nextBadge.reward}`}</span>
                     </div>
-                  ) : (
-                    <div className="badge-container">
-                      <div className="badge-item"><Medal /></div>
-                      <h3>All badges earned</h3>
-                      <p>You've unlocked everything available.</p>
-                    </div>
-                  )}
-                  <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("badges")}>
-                    View Badges
-                  </button>
-                </section>
-
-                {/* Profile Summary */}
-                <section className="dashboard-card">
-                  <h2 className="card-title"><User /> Profile Summary</h2>
-                  <div className="profile-list">
-                    <div className="profile-item"><span>Name</span><strong>{userName}</strong></div>
-                    <div className="profile-item"><span>Exam</span><strong>{examLabel}</strong></div>
-                    <div className="profile-item"><span>Language</span><strong>{languageLabel}</strong></div>
-                    <div className="profile-item"><span>Rank</span><strong>{currentRank}</strong></div>
-                    <div className="profile-item"><span>Total XP</span><strong>{totalXp.toLocaleString()} XP</strong></div>
                   </div>
-                  <button className="btn btn-full btn-secondary" type="button" onClick={() => navigateIfAvailable("profile")}>
-                    View Profile
-                  </button>
-                </section>
-
-              </aside>
+                ) : (
+                  <div className="focus-area-body">
+                    <span className="focus-icon"><GraduationCap /></span>
+                    <div className="focus-copy">
+                      <strong className="focus-name">Not enough practice yet</strong>
+                      <p className="card-copy">Complete a practice session to reveal your focus area.</p>
+                    </div>
+                  </div>
+                )}
+                <button className="outline-pill focus-cta" type="button" onClick={() => navigateIfAvailable("practice")}>
+                  Practice Weak Areas <ChevronRight />
+                </button>
+              </section>
             </div>
 
           </section>

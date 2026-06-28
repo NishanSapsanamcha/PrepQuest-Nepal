@@ -27,6 +27,7 @@ function PracticeTypeCard({
   unlockPercent,
   validationMessage,
   questionCount,
+  iconSrc,
   onStart,
 }) {
   const Icon = practiceIcons[type.name] || FaQuestionCircle;
@@ -39,19 +40,26 @@ function PracticeTypeCard({
       className={`practice-type-card ${unlocked ? "unlocked" : "locked"}`}
       style={unlocked ? { "--mode-accent": accent } : undefined}
     >
-      <div className="ptc-top">
-        <span
-          className="ptc-icon hex-badge"
-          style={{ color: accent, background: `linear-gradient(150deg, ${accent}, ${accent}66)`, filter: `drop-shadow(0 5px 14px ${accent}50)` }}
-        >
-          <Icon />
-        </span>
-        {!unlocked && <span className="ptc-lock-pill"><FaLock /> Locked</span>}
-      </div>
-
-      <div className="ptc-body">
-        <h3>{type.name}</h3>
-        <p>{type.description}</p>
+      <div className="ptc-head">
+        {iconSrc ? (
+          <span className="ptc-icon ptc-icon-img" style={{ filter: `drop-shadow(0 5px 14px ${accent}55)` }}>
+            <img src={iconSrc} alt="" loading="lazy" />
+          </span>
+        ) : (
+          <span
+            className="ptc-icon hex-badge"
+            style={{ color: accent, background: `linear-gradient(150deg, ${accent}, ${accent}66)`, filter: `drop-shadow(0 5px 14px ${accent}50)` }}
+          >
+            <Icon />
+          </span>
+        )}
+        <div className="ptc-info">
+          <div className="ptc-title-row">
+            <h3>{type.name}</h3>
+            {!unlocked && <span className="ptc-lock-pill"><FaLock /> Locked</span>}
+          </div>
+          <p>{type.description}</p>
+        </div>
       </div>
 
       {unlocked ? (

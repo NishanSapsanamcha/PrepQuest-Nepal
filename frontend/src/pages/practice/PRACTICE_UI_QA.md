@@ -50,11 +50,25 @@ adjustment are marked with `/* TUNE: ... */` comments in the CSS.
 
 ---
 
+## Premium icon art (optional, drop-in)
+
+Summary-strip and subject icons use built-in CSS gem/hex badges by default. To
+swap in premium artwork (e.g. the XP gem, flame, coin, Nepal-flag badges): drop
+image files into **`frontend/public/assets/practice/`** and map them in
+**`frontend/src/data/practiceIconAssets.js`** (`STAT_ICON_ASSETS` /
+`SUBJECT_ICON_ASSETS`). Unmapped icons keep the CSS fallback — no 404s.
+
 ## 1. Practice Subject Overview (`/practice`)
 
-- [ ] Header: "Choose Your Practice Subject" + subtitle, not crowded.
-- [ ] Top-right Exam Track + Language chips and avatar present.
+Section order (top → bottom): **Header → Summary strip → Subjects grid →
+Recommended Practice → Review & Mistakes → How XP & Gamification Works**.
+
+- [ ] **No "Welcome back …" line** anywhere in the header.
+- [ ] Header: "Choose Your Practice Subject" + subtitle, compact (not tall).
+- [ ] Top-right Exam Track + Language chips + Change Preferences present.
 - [ ] Summary strip is **one wide glowing card**, not too tall (~1 row).
+- [ ] Subjects grid appears **before** Recommended Practice.
+- [ ] "How XP & Gamification Works" shows 6 compact cards at the bottom.
 - [ ] Strip shows 4 blocks: Total XP, Coins, Current Streak, Badges Earned, each
       with a gem/coin/flame/shield-style badge + label + value + helper.
 - [ ] Subject grid is **4 columns** on desktop (1366 / 1440 / 1536 / 1920).

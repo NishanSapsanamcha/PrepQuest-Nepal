@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { FaBookOpen, FaCalendarAlt, FaChevronDown, FaChevronUp, FaFire, FaMedal, FaShieldAlt, FaTrophy, FaUser, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 import { MdTrackChanges } from "react-icons/md";
 import BadgeIcon from "../components/badges/BadgeIcon";
+import AchievementBadge from "../components/common/AchievementBadge";
+import EditProfileModal from "../components/profile/EditProfileModal";
+import { rankJourney } from "../data/rankBadges";
+import { getInitials, getProfileOverrides, saveProfileOverrides } from "../utils/profileUtils";
 import { CoinIcon, CoinValue, RewardText } from "../components/common/Coin";
 import {
   getCoinSourceLabel,
@@ -12,7 +16,7 @@ import {
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
-import { mockProfileActivity, mockTournamentHistory, rankThresholds } from "../data/gamificationMockData";
+import { mockProfileActivity, mockTournamentHistory } from "../data/gamificationMockData";
 import { getEarnedBadges, syncBadges } from "../utils/badgeUtils";
 import { getCurrentStreak } from "../utils/dailyQuizUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../utils/practiceUtils";
@@ -50,17 +54,20 @@ function formatTransactionTime(transaction) {
   return parsed.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
 }
 
-function getInitials(name) {
-  return name.trim().split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "ME";
-}
-
 function Profile() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const soundMuted = localStorage.getItem("prepquest_sound_muted") === "true";
   const [isCoinWalletOpen, setIsCoinWalletOpen] = useState(false);
 
-  const realName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
+  // Editable identity (display name + avatar) takes precedence over the synced
+  // auth name. Kept in state so a save re-renders the header immediately.
+  const [profileOverrides, setProfileOverrides] = useState(() => getProfileOverrides());
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const authName = authUser?.fullName || authUser?.name || localStorage.getItem("userName") || "Aspirant";
+  const realName = profileOverrides.displayName || authName;
+  const avatarImage = profileOverrides.avatarImage;
   const storedUser = getUser();
   const selectedExamId = normalizeExamId(localStorage.getItem("selectedExam") || storedUser.selectedExam);
   const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
@@ -124,44 +131,103 @@ function Profile() {
   }));
   const tournamentHistory = realTournamentHistory.length ? realTournamentHistory : mockTournamentHistory;
 
-  const handleEditProfile = () => {
-    navigate("/setup", { state: { allowPreferenceChange: true } });
+  const handleSaveProfile = ({ displayName, avatarImage: nextImage }) => {
+    setProfileOverrides(saveProfileOverrides({ displayName, avatarImage: nextImage }));
+    setIsEditOpen(false);
   };
+
+  // Rank journey states derived from real XP (rankProgress.rankIndex).
+  const currentRankIndex = rankProgress.rankIndex;
+  const journeyBadges = rankJourney.map((rank, index) => ({
+    ...rank,
+    state:
+      index === currentRankIndex
+        ? "current"
+        : index === currentRankIndex + 1
+          ? "next"
+          : index < currentRankIndex
+            ? "achieved"
+            : "locked",
+  }));
+  const isMaxRank = currentRankIndex >= rankJourney.length - 1;
 
   return (
     <DashboardLayout activeKey="profile">
       <section className="dashboard-content profile-page">
-        <header className="dashboard-card profile-header-card">
-          <div className="profile-avatar">{getInitials(realName)}</div>
-          <div className="profile-header-copy">
-            <p className="eyebrow">Gamified Identity</p>
+        <header className="profile-identity-card">
+          <div className="profile-avatar" aria-hidden="true">
+            {avatarImage ? <img src={avatarImage} alt="" /> : <span>{getInitials(realName)}</span>}
+          </div>
+          <div className="profile-identity-copy">
             <h1>{realName}</h1>
             <div className="profile-chip-row">
-              <span className="chip">{examLabel}</span>
-              <span className="chip">{languageLabel}</span>
-              <span className="chip">{rankProgress.currentRank}</span>
-              <span className="chip"><FaShieldAlt /> Public leaderboard: On</span>
+              <span className="chip"><FaUser /> {examLabel}</span>
+              <span className="chip"><FaShieldAlt /> {languageLabel}</span>
             </div>
           </div>
-          <button className="outline-pill" type="button" onClick={handleEditProfile}>Edit Profile</button>
+          <button className="outline-pill profile-edit-btn" type="button" onClick={() => setIsEditOpen(true)}>
+            <FaPen /> Edit Profile
+          </button>
         </header>
 
         <section className="dashboard-card rank-journey-card">
           <div className="rank-journey-top">
             <div>
               <p className="eyebrow">Overall Rank Journey</p>
-              <h2>Current Rank: {rankProgress.currentRank}</h2>
-              <p>{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP toward {rankProgress.nextRank}.</p>
+              <h2>Current Rank: <span className="rank-journey-current">{rankProgress.currentRank}</span></h2>
+              {isMaxRank ? (
+                <p>{totalXp.toLocaleString()} XP · Top rank reached — you're a PrepQuest Legend.</p>
+              ) : (
+                <p>
+                  <strong className="rank-journey-xp">{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong>
+                  {" "}toward {rankProgress.nextRank}.
+                </p>
+              )}
             </div>
             <div className="rank-xp-box">
-              <span>XP Needed</span>
-              <strong>{rankProgress.xpToNextRank.toLocaleString()} XP</strong>
+              <span>{isMaxRank ? "Status" : "XP Needed"}</span>
+              <strong>{isMaxRank ? "Maxed" : `${rankProgress.xpToNextRank.toLocaleString()} XP`}</strong>
             </div>
           </div>
-          <div className="progress-bar"><div className="progress-fill" style={{ width: `${rankProgress.percent}%` }} /></div>
-          <div className="rank-path">
-            {rankThresholds.map((rank) => (
-              <span className={rank.rank === rankProgress.currentRank ? "current" : ""} key={rank.rank}>{rank.rank}</span>
+
+          <div className="rank-progress-track">
+            <div className="progress-bar rank-progress-bar">
+              <div className="progress-fill" style={{ width: `${rankProgress.percent}%` }} />
+            </div>
+            <div className="rank-progress-node" style={{ left: `${rankProgress.percent}%` }}>
+              <span className="rank-progress-bubble">{rankProgress.percent}%</span>
+            </div>
+          </div>
+
+          <div className="rank-badge-row">
+            {journeyBadges.map((rank) => (
+              <div
+                className={`rank-badge-item is-${rank.state}${rank.key === "prepQuestLegend" ? " is-legend" : ""}`}
+                key={rank.key}
+              >
+                <div className="rank-badge-art">
+                  <img src={rank.badge} alt={rank.label} loading="lazy" />
+                </div>
+                <span className="rank-node-track" aria-hidden="true">
+                  <span className="rank-node-dot" />
+                </span>
+                <span className="rank-badge-label">
+                  {rank.labelLines.map((line) => (
+                    <span className="rank-label-line" key={line}>{line}</span>
+                  ))}
+                </span>
+                <div className="rank-badge-meta">
+                  {rank.state === "current" ? (
+                    <span className="rank-state-chip is-current-chip">CURRENT</span>
+                  ) : rank.state === "next" ? (
+                    <span className="rank-state-chip is-next-chip">NEXT TARGET</span>
+                  ) : rank.state === "achieved" ? (
+                    <span className="rank-state-chip is-done-chip">✓</span>
+                  ) : (
+                    <span className="rank-state-lock" aria-label="Locked"><FaLock /></span>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         </section>
@@ -171,7 +237,7 @@ function Profile() {
           <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{currentStreak} Days</div><div className="stat-label">Current Streak</div><div className="stat-helper">Daily habit status</div></div></article>
           <article className="stat-card"><div className="stat-icon"><MdTrackChanges /></div><div><div className="stat-value">{overallAccuracy}%</div><div className="stat-label">Overall Accuracy</div><div className="stat-helper">{totalCorrect} correct answers</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaBookOpen /></div><div><div className="stat-value">{totalQuestionsAttempted}</div><div className="stat-label">Questions Attempted</div><div className="stat-helper">Across all practice sessions</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaMedal /></div><div><div className="stat-value">{earnedBadges.length}</div><div className="stat-label">Badges Earned</div><div className="stat-helper">Achievement showcase</div></div></article>
+          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earnedBadges.length}</div><div className="stat-label">Badges Earned</div><div className="stat-helper">Achievement showcase</div></div></article>
           <article className="stat-card"><div className="stat-icon"><FaUser /></div><div><div className="stat-value">{subjectsPracticed}</div><div className="stat-label">Subjects Practiced</div><div className="stat-helper">Study breadth</div></div></article>
         </section>
 
@@ -328,6 +394,14 @@ function Profile() {
           </aside>
         </div>
       </section>
+
+      <EditProfileModal
+        isOpen={isEditOpen}
+        currentName={realName}
+        currentImage={avatarImage}
+        onCancel={() => setIsEditOpen(false)}
+        onSave={handleSaveProfile}
+      />
     </DashboardLayout>
   );
 }

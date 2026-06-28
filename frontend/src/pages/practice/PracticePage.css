@@ -40,7 +40,7 @@
   /* Icon + badge sizes (TUNE: icon sizes) */
   --practice-icon-lg: 58px;     /* subject card hexagon icon */
   --practice-icon-mode: 3.5rem; /* mode card hexagon icon */
-  --practice-badge-icon: 3rem;  /* summary strip gem/coin badge */
+  --practice-badge-icon: 3.4rem;  /* summary strip gem/coin badge (CSS fallback) */
 
   /* Controls */
   --practice-progress-h: 8px;   /* TUNE: progress bar height */
@@ -50,6 +50,21 @@
   --practice-question-pad: clamp(1.1rem, 1.5vw, 1.45rem); /* TUNE: question card padding */
   --practice-panel-col: minmax(310px, 0.68fr);            /* TUNE: right panel width */
   --practice-header-h: 76px;                              /* TUNE: session header height */
+
+  /* Convenience aliases (friendly names → the tokens above) */
+  --practice-card-bg: var(--practice-card);
+  --practice-border: var(--practice-card-border);
+  --practice-glow: var(--practice-glow-soft);
+  --practice-card-radius: var(--practice-radius-lg);
+  --practice-icon-size: var(--practice-icon-lg);
+  --practice-grid-gap: var(--practice-subject-gap);
+
+  /* Summary strip (TUNE: glow / border / background to match the reference) */
+  --summary-glow: 0 0 32px rgba(45, 212, 191, 0.18);
+  --summary-border: rgba(45, 212, 191, 0.35);
+  --summary-bg: linear-gradient(135deg, rgba(15, 31, 54, 0.96), rgba(8, 18, 34, 0.98));
+  --summary-icon-size: 5.6rem;   /* TUNE: premium icon size in the strip (~90px) — XP/coin/streak/badges all use this */
+  --summary-subject-icon: 76px;  /* TUNE: premium image icon size on subject cards */
 }
 
 .dashboard-page.practice-dashboard-page {
@@ -76,27 +91,28 @@
   display: none;
 }
 
+/* TUNE: page header — compact (no welcome line) */
 .dashboard-page .practice-header {
   position: relative;
-  min-height: 170px;
-  padding: 1.75rem clamp(1.75rem, 2.4vw, 2.3rem) 1.1rem;
-  align-items: flex-start;
+  min-height: 0;
+  padding: 1.35rem clamp(1.5rem, 2.4vw, 2.3rem) 1rem;
+  align-items: center;
   border-bottom: 0;
   background: rgba(8, 13, 24, 0.62);
   backdrop-filter: none;
 }
 
 .dashboard-page .practice-header .header-left h1 {
-  margin-top: 0.7rem;
-  font-size: clamp(1.7rem, 2.5vw, 1.95rem);
-  line-height: 1.05;
+  margin-top: 0;
+  font-size: clamp(1.55rem, 2.4vw, 1.9rem);
+  line-height: 1.1;
 }
 
 .dashboard-page .practice-header .header-left p:not(.eyebrow) {
   max-width: 545px;
-  margin-top: 0.8rem;
-  font-size: 0.8rem;
-  line-height: 1.55;
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .dashboard-page .practice-header .eyebrow {
@@ -150,18 +166,23 @@
   z-index: 1;
 }
 
-/* TUNE: summary strip — Total XP / Coins / Streak / Badges (height = padding) */
+/* TUNE: summary strip — glowing game-style bar (Total XP / Coins / Streak / Badges) */
 .dashboard-page .practice-summary-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--practice-card-border-teal);
-  border-radius: var(--practice-radius-md);
+  min-height: 128px;
+  padding: 1.05rem 1.25rem;
+  border: 1px solid var(--summary-border);
+  border-radius: 20px;
   background:
-    radial-gradient(140% 160% at 0% 0%, rgba(45, 212, 191, 0.1), transparent 55%),
-    linear-gradient(180deg, var(--practice-card-grad-top), var(--practice-card-grad-bottom));
-  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.04), 0 10px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    radial-gradient(140% 180% at 0% 0%, rgba(45, 212, 191, 0.12), transparent 52%),
+    var(--summary-bg);
+  box-shadow:
+    var(--summary-glow),
+    inset 0 1px 0 rgba(125, 211, 252, 0.16),
+    inset 0 0 22px rgba(8, 18, 34, 0.55),
+    0 12px 36px rgba(0, 0, 0, 0.4);
 }
 
 .dashboard-page .summary-stat {
@@ -219,6 +240,25 @@
   filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.4));
 }
 
+/* Badges Earned has no photographic asset yet, so make its CSS gem large +
+   premium so it matches the other (image) badges in size and presence.
+   Drop a badge-earned.png into assets/gamification to replace it. */
+.dashboard-page .summary-stat-icon.badges:not(.has-img) {
+  width: var(--summary-icon-size);
+  height: var(--summary-icon-size);
+  background:
+    radial-gradient(120% 120% at 50% 18%, rgba(255, 255, 255, 0.35), transparent 45%),
+    linear-gradient(150deg, #d8b4fe, #7c3aed 70%, #5b21b6);
+  filter: drop-shadow(0 0 18px rgba(168, 85, 247, 0.5));
+}
+
+.dashboard-page .summary-stat-icon.badges:not(.has-img) svg {
+  width: 2.4rem;
+  height: 2.4rem;
+  color: #faf5ff;
+  filter: drop-shadow(0 1px 1px rgba(76, 29, 149, 0.7));
+}
+
 .dashboard-page .summary-stat-icon.coin {
   filter: drop-shadow(0 4px 12px rgba(251, 176, 52, 0.35));
 }
@@ -242,6 +282,12 @@
   line-height: 1.15;
 }
 
+/* Coins block shows only the value (no label/helper) — make it the highlight. */
+.dashboard-page .summary-stat-value-solo {
+  font-size: 1.95rem;
+  line-height: 1;
+}
+
 .dashboard-page .summary-stat-helper {
   color: var(--muted);
   font-size: 0.68rem;
@@ -260,6 +306,112 @@
 
 .dashboard-page .practice-footer-tagline svg { color: #fb923c; }
 .dashboard-page .practice-footer-tagline strong { color: var(--text); }
+
+/* Premium image badge — shown when art is added to src/assets/gamification/.
+   Otherwise the CSS gem/hex icon shows. (TUNE sizes via the tokens above.) */
+.dashboard-page .premium-badge-img,
+.dashboard-page .practice-summary-icon,
+.dashboard-page .practice-subject-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* When real (transparent) art is present: NO square box. Drop the hex
+   clip/gradient/border; the wrapper stays invisible except for a soft radial
+   glow behind the emblem, so the badge floats and blends into the card. */
+.dashboard-page .summary-stat-icon.has-img,
+.dashboard-page .subject-card-icon.has-img {
+  clip-path: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.18), transparent 62%) !important;
+  filter: drop-shadow(0 0 16px rgba(45, 212, 191, 0.32));
+}
+
+.dashboard-page .summary-stat-icon.has-img::before,
+.dashboard-page .subject-card-icon.has-img::before {
+  display: none;
+}
+
+/* Warm glow for the streak badge so the teal halo doesn't fight the flame. */
+.dashboard-page .summary-stat-icon.streak.has-img {
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.2), transparent 62%) !important;
+  filter: drop-shadow(0 0 16px rgba(249, 115, 22, 0.34));
+}
+
+/* Warm gold glow for the coin badge. */
+.dashboard-page .summary-stat-icon.coin.has-img {
+  background: radial-gradient(circle, rgba(251, 176, 52, 0.2), transparent 62%) !important;
+  filter: drop-shadow(0 0 16px rgba(251, 176, 52, 0.32));
+}
+
+/* TUNE: premium image icon sizes (larger than the CSS fallback badges) */
+.dashboard-page .summary-stat-icon.has-img {
+  width: var(--summary-icon-size);
+  height: var(--summary-icon-size);
+}
+
+.dashboard-page .subject-card-icon.has-img {
+  width: var(--summary-subject-icon);
+  height: var(--summary-subject-icon);
+  min-width: var(--summary-subject-icon);
+}
+
+/* TUNE: "How XP & Gamification Works" explainer cards (bottom of the page) */
+.dashboard-page .how-xp-section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dashboard-page .how-xp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--practice-grid-gap);
+}
+
+.dashboard-page .how-xp-card {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--practice-card-border);
+  border-radius: var(--practice-radius-md);
+  background: linear-gradient(170deg, var(--practice-card-grad-top), var(--practice-card-grad-bottom));
+}
+
+.dashboard-page .how-xp-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--practice-accent);
+  font-size: 1rem;
+}
+
+.dashboard-page .how-xp-icon.xp { background: rgba(56, 189, 248, 0.14); color: #38bdf8; }
+.dashboard-page .how-xp-icon.level { background: rgba(168, 85, 247, 0.14); color: #c084fc; }
+.dashboard-page .how-xp-icon.streak { background: rgba(249, 115, 22, 0.16); color: #fb923c; }
+.dashboard-page .how-xp-icon.coin { background: rgba(251, 176, 52, 0.14); }
+.dashboard-page .how-xp-icon.badge { background: rgba(34, 197, 94, 0.14); color: #4ade80; }
+.dashboard-page .how-xp-icon.weak { background: rgba(250, 204, 21, 0.14); color: #fde047; }
+
+.dashboard-page .how-xp-card h3 {
+  margin: 0;
+  color: var(--practice-title);
+  font-size: 0.95rem;
+}
+
+.dashboard-page .how-xp-card p {
+  margin: 0;
+  color: var(--practice-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
 
 .dashboard-page .recommended-practice-card {
   display: grid;
@@ -629,7 +781,8 @@
 }
 
 @media (max-width: 980px) {
-  .dashboard-page .practice-summary-strip {
+  .dashboard-page .practice-summary-strip,
+  .dashboard-page .how-xp-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -670,7 +823,8 @@
     padding: 1.15rem;
   }
 
-  .dashboard-page .practice-card-main {
+  .dashboard-page .practice-card-main,
+  .dashboard-page .how-xp-grid {
     grid-template-columns: 1fr;
   }
 }

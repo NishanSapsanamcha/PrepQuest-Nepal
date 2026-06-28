@@ -1,20 +1,21 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  FaArrowLeft,
   FaBookOpen,
   FaChartLine,
   FaCheckCircle,
-  FaGraduationCap,
-  FaLanguage,
   FaLayerGroup,
   FaLightbulb,
   FaLock,
   FaQuestionCircle,
+  FaSignOutAlt,
   FaStar,
+  FaVolumeMute,
+  FaVolumeUp,
 } from "react-icons/fa";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import PracticeTypeCard from "../../components/practice/PracticeTypeCard";
-import { examTracks } from "../../data/examTracks";
+import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { getLevelBadge, heroMountain, practiceModeIcons } from "../../assets/gamification";
 import { subjectLevels } from "../../data/subjectLevels";
 import { getSubjectById } from "../../data/subjects";
 import {
@@ -31,51 +32,48 @@ import "./SubjectPracticePage.css";
 const practiceTypes = [
   {
     name: "Quick Practice",
-    description: "10 validated questions. No pressure. Build daily streaks and earn XP!",
+    description: "Start with 10 mixed questions.",
     level: 1,
     buttonLabel: "Start Quick Practice",
   },
   {
     name: "Topic Practice",
-    description: "Focus on one topic and strengthen your fundamentals.",
+    description: "Focus on one topic.",
     level: 2,
+    buttonLabel: "Start Topic Practice",
   },
   {
     name: "Mixed Practice",
-    description: "Blend all topics to simulate real exam experience.",
+    description: "Practice across all topics.",
     level: 3,
+    buttonLabel: "Start Mixed Practice",
   },
   {
     name: "Weak Area Practice",
-    description: "Attack your weak topics and turn mistakes into strength.",
+    description: "Improve your weak topics.",
     level: 4,
+    buttonLabel: "Start Weak Area Practice",
   },
   {
     name: "Accuracy Challenge",
-    description: "Train toward a higher accuracy target and earn bonus XP.",
+    description: "Train for higher accuracy.",
     level: 5,
+    buttonLabel: "Start Accuracy Challenge",
   },
   {
     name: "Advanced Revision",
-    description: "Review deeper concepts and solidify long-term memory.",
+    description: "Review advanced concepts.",
     level: 6,
+    buttonLabel: "Start Advanced Revision",
   },
 ];
 
 const howItWorks = [
-  { icon: FaLayerGroup, title: "Choose a Mode", text: "Pick a practice mode that fits your goal and unlock it." },
-  { icon: FaCheckCircle, title: "Answer Questions", text: "Each correct answer earns +10 XP." },
-  { icon: FaLightbulb, title: "Learn & Improve", text: "Instant explanations help you understand better." },
-  { icon: FaChartLine, title: "Level Up", text: "Earn XP, unlock new modes, and track your growth." },
+  { icon: FaLayerGroup, title: "Choose a Mode", text: "Pick Quick Practice first, then unlock more modes as you level up." },
+  { icon: FaCheckCircle, title: "Answer Questions", text: "Each correct answer gives +10 XP." },
+  { icon: FaLightbulb, title: "Learn & Improve", text: "Review explanations and strengthen weak topics." },
+  { icon: FaChartLine, title: "Level Up", text: "Earn XP to unlock Topic, Mixed, Weak Area, Accuracy, and Advanced Revision modes." },
 ];
-
-export function formatLanguageLabel(language) {
-  const value = String(language || "English").trim().toLowerCase();
-  if (value === "both" || value.includes("both")) return "Both Nepali and English";
-  if (value === "nepali") return "Nepali";
-  if (value === "english") return "English";
-  return String(language || "English");
-}
 
 function getUnlockLevel(level) {
   return subjectLevels.find((item) => item.level === level) || subjectLevels[0];
@@ -86,9 +84,8 @@ function SubjectPracticePage() {
   const navigate = useNavigate();
   const user = getUser();
   const subject = getSubjectById(subjectId);
+  const { isMuted, toggleMute } = usePrepQuestSound();
   const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
-  const selectedExamLabel = examTracks[selectedExamId]?.name || user.selectedExam || "Sakha Adhikrit";
-  const languageLabel = formatLanguageLabel(localStorage.getItem("preferredLanguage") || user.preferredLanguage);
 
   if (!subject) {
     return (
@@ -111,6 +108,7 @@ function SubjectPracticePage() {
   const quickPracticeCount = Math.min(10, validatedQuestionCount);
   const nextUnlockType = nextLevel?.unlock || "All modes unlocked";
   const nextUnlockLabel = nextLevel ? `Level ${nextLevel.level}: ${nextLevel.name}` : "Mastered";
+  const levelBadge = getLevelBadge(levelProgress.currentLevel.level);
 
   // DEV-ONLY: ?debugPracticeLayout=true outlines/labels major layout sections.
   const debugLayout =
@@ -120,26 +118,48 @@ function SubjectPracticePage() {
 
   return (
     <DashboardLayout activeKey="practice">
-      <header className="dashboard-header subject-detail-header">
-        <div className="subject-header-content">
-          <p className="eyebrow">{subject.name}</p>
-          <h1>{subject.name} Practice Modes</h1>
-          <p>Level up your knowledge with smart, gamified practice.</p>
-        </div>
-        <div className="subject-header-actions">
-          <div className="header-chips">
-            <span className="subject-info-chip"><FaGraduationCap /> Exam: <strong>{selectedExamLabel}</strong></span>
-            <span className="subject-info-chip"><FaLanguage /> Language: <strong>{languageLabel}</strong></span>
-          </div>
-          <button className="outline-pill" type="button" onClick={() => navigate("/practice")}><FaArrowLeft /> All Subjects</button>
-        </div>
-      </header>
-
       <section className={`dashboard-content subject-detail-page${debugLayout ? " debug-practice-layout" : ""}`}>
-        {/* Horizontal hero: level, XP progress, validated questions, next unlock. */}
-        <section className="subject-hero" data-debug="Hero Summary">
+        {/* Separate top bar — sits ABOVE the hero, no mountain behind it. */}
+        <div className="practice-topbar">
+          <span className="hero-brand">PrepQuest <strong>Nepal</strong></span>
+          <div className="hero-actions">
+            <button
+              type="button"
+              className={`hero-volume-btn${isMuted ? " is-muted" : ""}`}
+              aria-label={isMuted ? "Unmute sound" : "Mute sound"}
+              aria-pressed={!isMuted}
+              title={isMuted ? "Sound off" : "Sound on"}
+              onClick={toggleMute}
+            >
+              {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
+            </button>
+            <button className="hero-exit-btn" type="button" onClick={() => navigate("/practice")}>
+              <FaSignOutAlt /> Exit Practice
+            </button>
+          </div>
+        </div>
+
+        {/* Hero banner — mountain decoration + subject heading only. */}
+        <header
+          className="subject-modes-hero"
+          style={heroMountain ? { "--hero-mountain": `url(${heroMountain})` } : undefined}
+        >
+          <div className="hero-mountain" aria-hidden="true" />
+          <div className="subject-modes-hero-body">
+            <span className="hero-subject-tag">{subject.name}</span>
+            <h1>{subject.name} Practice Modes</h1>
+            <p>Level up your knowledge with smart, gamified practice</p>
+          </div>
+        </header>
+
+        {/* Compact progress summary: level, XP, validated questions, next unlock. */}
+        <section className="subject-hero" data-debug="Progress Summary">
           <div className="hero-cell hero-level-cell">
-            <div className="hero-level-badge">{levelProgress.currentLevel.level}</div>
+            {levelBadge ? (
+              <img className="hero-level-art" src={levelBadge} alt={`Level ${levelProgress.currentLevel.level}`} />
+            ) : (
+              <div className="hero-level-badge">{levelProgress.currentLevel.level}</div>
+            )}
             <div className="hero-cell-body">
               <span className="hero-label">Current Level</span>
               <strong className="hero-value">Level {levelProgress.currentLevel.level}: {levelProgress.currentLevel.name}</strong>
@@ -152,7 +172,7 @@ function SubjectPracticePage() {
           <div className="hero-cell">
             <span className="hero-icon xp"><FaStar /></span>
             <div className="hero-cell-body">
-              <span className="hero-label">Subject XP Progress</span>
+              <span className="hero-label">Subject XP</span>
               <strong className="hero-value">{progress.xp} / {levelProgress.nextLevelXp} XP</strong>
               <div className="progress-bar"><div className="progress-fill" style={{ width: `${levelProgress.progressPercent}%` }} /></div>
               <span className="hero-sub">{levelProgress.progressPercent}% to {nextLevel ? `Level ${nextLevel.level}` : "Mastery"}</span>
@@ -224,6 +244,7 @@ function SubjectPracticePage() {
                 xpNeeded={xpNeeded}
                 questionCount={validatedQuestionCount}
                 quickPracticeCount={quickPracticeCount}
+                iconSrc={practiceModeIcons[type.name]}
                 validationMessage={validatedQuestionCount === 0 ? "Question bank not ready" : ""}
                 onStart={() => unlocked && navigate(`/practice/${subjectId}/session`)}
               />
