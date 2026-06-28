@@ -64,8 +64,21 @@
 
 .dashboard-page .rank-journey-card {
   display: grid;
-  gap: 1.25rem;
+  gap: 0.65rem;
   border-color: rgba(45, 212, 191, 0.22);
+  background:
+    radial-gradient(circle at 10% 18%, rgba(20, 184, 166, 0.08), transparent 34%),
+    linear-gradient(145deg, rgba(12, 22, 40, 0.98), rgba(17, 28, 50, 0.96));
+}
+
+/* Compact heading — keep the focus on the badges, not the copy. */
+.dashboard-page .rank-journey-card h2 {
+  font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+  font-weight: 800;
+}
+
+.dashboard-page .rank-journey-top p {
+  font-size: 0.86rem;
 }
 
 .dashboard-page .rank-journey-current {
@@ -85,45 +98,62 @@
 }
 
 .dashboard-page .rank-journey-top p {
-  margin: 0.45rem 0 0;
+  margin: 0.3rem 0 0;
   color: var(--muted);
 }
 
 .dashboard-page .rank-xp-box {
-  min-width: 170px;
-  padding: 0.9rem;
-  border-radius: var(--radius);
-  background: rgba(45, 212, 191, 0.1);
+  min-width: 102px;
+  padding: 0.45rem 0.7rem;
+  border-radius: 11px;
+  border: 1px solid rgba(45, 212, 191, 0.18);
+  background: rgba(45, 212, 191, 0.07);
   color: var(--muted);
+  font-size: 0.72rem;
+  text-align: right;
 }
 
 .dashboard-page .rank-xp-box strong {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.1rem;
   color: var(--teal);
-  font-size: 1.15rem;
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
 /* --- Progress track with a moving node + percentage bubble ----------------- */
 .dashboard-page .rank-progress-track {
   position: relative;
-  padding-top: 1.9rem;
+  padding-top: 1.7rem;
+  margin-top: 0.15rem;
 }
 
+/* Premium luminous fill — brighter cyan→teal→green with a layered glow. */
 .dashboard-page .rank-progress-bar {
-  height: 0.55rem;
+  height: 0.62rem;
+  background: rgba(8, 14, 28, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+}
+
+.dashboard-page .rank-progress-bar .progress-fill {
+  background: linear-gradient(90deg, #22d3ee 0%, #2dd4bf 55%, #34d399 100%);
+  box-shadow:
+    0 0 18px rgba(45, 212, 191, 0.6),
+    0 0 8px rgba(34, 211, 238, 0.55);
 }
 
 .dashboard-page .rank-progress-node {
   position: absolute;
-  top: 1.9rem;
+  top: 1.7rem;
   transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--teal);
-  border: 3px solid #0b1220;
-  box-shadow: 0 0 14px rgba(45, 212, 191, 0.8);
+  background: radial-gradient(circle at 35% 30%, #aef7ec, var(--teal) 65%);
+  box-shadow:
+    0 0 0 4px rgba(8, 14, 28, 0.92),
+    0 0 20px rgba(45, 212, 191, 0.95),
+    0 0 6px rgba(174, 247, 236, 0.9);
 }
 
 .dashboard-page .rank-progress-bubble {
@@ -143,27 +173,64 @@
 
 /* --- Rank badge row -------------------------------------------------------- */
 .dashboard-page .rank-badge-row {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 0.5rem;
+  margin-top: 0.85rem;
 }
 
 .dashboard-page .rank-badge-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.25rem;
+  gap: 0.55rem;
+  padding: 0.6rem 0.2rem;
   text-align: center;
 }
 
-/* Transparent wrapper + object-fit: contain so badges never look boxed or
-   cropped, even while some source PNGs still carry light backgrounds.
-   TODO: replace those with transparent (alpha) assets for perfect polish. */
+/* Full-width node track: the connecting line lives here as a centred pseudo,
+   and the dot is centred in the same track — so the line ALWAYS passes exactly
+   through every dot centre, with no fragile vertical math. The extra margin
+   drops the node row clearly below the badges. */
+.dashboard-page .rank-node-track {
+  position: relative;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  margin-top: 0.5rem;
+}
+
+.dashboard-page .rank-node-track::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -0.25rem;
+  right: -0.25rem;
+  height: 2px;
+  transform: translateY(-50%);
+  background: rgba(120, 145, 180, 0.32);
+  z-index: 0;
+}
+
+/* Line starts at the first node and ends at the last (no overhang past the row). */
+.dashboard-page .rank-badge-item:first-child .rank-node-track::before {
+  left: 50%;
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.85), rgba(96, 165, 250, 0.55));
+}
+
+.dashboard-page .rank-badge-item:last-child .rank-node-track::before {
+  right: 50%;
+}
+
+/* Transparent wrapper + object-fit: contain — the badge PNGs now ship with
+   true alpha backgrounds (stripped via tooling), so they blend straight into
+   the dark UI with no box, frame, or background-color behind them. */
 .dashboard-page .rank-badge-art {
   width: 100%;
-  max-width: 84px;
-  aspect-ratio: 1;
+  height: 132px;
   display: grid;
   place-items: center;
   background: transparent;
@@ -174,19 +241,58 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* Every badge keeps a clean, premium base glow so the whole row feels strong. */
+  filter: drop-shadow(0 0 16px rgba(96, 165, 250, 0.22)) saturate(1.06);
+}
+
+/* Node dot that sits centred on the journey line. */
+.dashboard-page .rank-node-dot {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #5a6b85;
+  border: 4px solid #0b1220;
+  box-shadow: 0 0 0 1.5px rgba(148, 163, 184, 0.3);
 }
 
 .dashboard-page .rank-badge-label {
-  color: var(--muted);
-  font-size: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 2.5rem;
+  color: var(--soft);
+  font-size: 0.8rem;
   font-weight: 750;
-  line-height: 1.25;
+  line-height: 1.2;
+}
+
+.dashboard-page .rank-label-line {
+  display: block;
+}
+
+/* Keeps the chip / lock row aligned across 1-line and 2-line labels. */
+.dashboard-page .rank-badge-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
 }
 
 /* State: current — strongest */
 .dashboard-page .rank-badge-item.is-current .rank-badge-art {
-  filter: drop-shadow(0 0 16px rgba(45, 212, 191, 0.6));
-  transform: scale(1.06);
+  transform: scale(1.1);
+}
+
+.dashboard-page .rank-badge-item.is-current .rank-badge-art img {
+  filter: drop-shadow(0 0 28px rgba(45, 212, 191, 0.7)) saturate(1.12);
+}
+
+.dashboard-page .rank-badge-item.is-current .rank-node-dot {
+  background: var(--teal);
+  box-shadow: 0 0 18px rgba(45, 212, 191, 0.95);
 }
 
 .dashboard-page .rank-badge-item.is-current .rank-badge-label {
@@ -194,8 +300,13 @@
 }
 
 /* State: next target — highlighted */
-.dashboard-page .rank-badge-item.is-next .rank-badge-art {
-  filter: drop-shadow(0 0 14px rgba(96, 165, 250, 0.55));
+.dashboard-page .rank-badge-item.is-next .rank-badge-art img {
+  filter: drop-shadow(0 0 24px rgba(96, 165, 250, 0.62)) saturate(1.1);
+}
+
+.dashboard-page .rank-badge-item.is-next .rank-node-dot {
+  background: #60a5fa;
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.85);
 }
 
 .dashboard-page .rank-badge-item.is-next .rank-badge-label {
@@ -203,24 +314,81 @@
 }
 
 /* State: achieved — earned but behind */
-.dashboard-page .rank-badge-item.is-achieved .rank-badge-art {
-  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.25));
+.dashboard-page .rank-badge-item.is-achieved .rank-node-dot {
+  background: var(--teal);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.55);
 }
 
-/* State: locked/future — muted */
-.dashboard-page .rank-badge-item.is-locked .rank-badge-art {
-  filter: grayscale(0.65) brightness(0.7);
-  opacity: 0.55;
+/* State: locked/future — kept clear, sharp & premium. Only a whisper of muting
+   plus a soft cool glow so the middle ranks read as desirable collectibles,
+   clearly weaker than current/next but never dull, flat, or hard to notice. */
+.dashboard-page .rank-badge-item.is-locked .rank-badge-art img {
+  filter:
+    grayscale(0.1)
+    brightness(0.94)
+    contrast(1.05)
+    drop-shadow(0 0 16px rgba(120, 160, 215, 0.3));
+  opacity: 0.96;
+}
+
+.dashboard-page .rank-badge-item.is-locked .rank-badge-label {
+  color: var(--soft);
+}
+
+/* PrepQuest Legend — the ultimate rank, strongest treatment of all. Gold aura
+   that overrides the locked muting so it always reads as legendary & special. */
+.dashboard-page .rank-badge-item.is-legend .rank-badge-art {
+  transform: scale(1.06);
+}
+
+.dashboard-page .rank-badge-item.is-legend .rank-badge-art img,
+.dashboard-page .rank-badge-item.is-legend.is-locked .rank-badge-art img {
+  filter:
+    drop-shadow(0 0 34px rgba(251, 191, 36, 0.8))
+    drop-shadow(0 0 16px rgba(245, 158, 11, 0.65))
+    saturate(1.3)
+    brightness(1.08);
+  opacity: 1;
+  animation: legendPulse 2.6s ease-in-out infinite;
+}
+
+.dashboard-page .rank-badge-item.is-legend .rank-badge-label {
+  color: #fcd34d;
+}
+
+.dashboard-page .rank-badge-item.is-legend .rank-node-dot {
+  background: var(--gold);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.8);
+}
+
+.dashboard-page .rank-badge-item.is-legend .rank-state-lock {
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fcd34d;
+}
+
+@keyframes legendPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 28px rgba(251, 191, 36, 0.68)) drop-shadow(0 0 12px rgba(245, 158, 11, 0.55)) saturate(1.25) brightness(1.05);
+  }
+  50% {
+    filter: drop-shadow(0 0 44px rgba(251, 191, 36, 0.95)) drop-shadow(0 0 20px rgba(245, 158, 11, 0.7)) saturate(1.35) brightness(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page .rank-badge-item.is-legend .rank-badge-art img {
+    animation: none;
+  }
 }
 
 .dashboard-page .rank-state-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
-  padding: 0 0.6rem;
+  min-height: 26px;
+  padding: 0 0.7rem;
   border-radius: 999px;
-  font-size: 0.62rem;
+  font-size: 0.64rem;
   font-weight: 850;
   letter-spacing: 0.04em;
 }
@@ -551,7 +719,16 @@
 
   .dashboard-page .rank-badge-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem 0.5rem;
+    gap: 1rem 0.5rem;
+  }
+
+  /* Connector reads as one line only on a single straight row — hide once wrapped. */
+  .dashboard-page .rank-node-track::before {
+    display: none;
+  }
+
+  .dashboard-page .rank-badge-art {
+    height: 118px;
   }
 }
 

@@ -7,10 +7,11 @@
  * matching badge image to each tier, in the same order, so the Profile rank
  * journey never drifts from the real rank math.
  *
- * TODO: a few of these PNGs still ship with light/near-white backgrounds.
- * Transparent (alpha) versions are preferred for perfect dark-theme polish —
- * until then the badges render with `object-fit: contain` on a transparent
- * wrapper (see Profile.css .rank-badge-art) so nothing looks cropped or boxed.
+ * The badge PNGs have had their baked-in white/gray backgrounds stripped to
+ * true alpha transparency (originals kept in assets/level/_original_backup/),
+ * so they blend straight into the dark UI. They render with `object-fit:
+ * contain` on a transparent wrapper (Profile.css .rank-badge-art) — no box,
+ * frame, or background-color behind them.
  */
 import NewAspirantBadge from "../assets/level/New_aspirant.png";
 import FocusedLearnerBadge from "../assets/level/focused_learner.png";
@@ -45,11 +46,28 @@ const RANK_KEYS = [
   "prepQuestLegend",
 ];
 
+// Intentional two-line label wrapping so the badge row stays clean and balanced
+// (short labels stay on one line). Keyed by rank key.
+const LABEL_LINES = {
+  newAspirant: ["New Aspirant"],
+  focusedLearner: ["Focused", "Learner"],
+  kharidarCandidate: ["Kharidar", "Candidate"],
+  nayabSubbaCandidate: ["Nayab Subba", "Candidate"],
+  officerCandidate: ["Officer", "Candidate"],
+  loksewaWarrior: ["Loksewa", "Warrior"],
+  publicServiceMaster: ["Public Service", "Master"],
+  prepQuestLegend: ["PrepQuest", "Legend"],
+};
+
 // Ladder used by the rank journey row. Derived from `rankThresholds` so XP
 // values are never duplicated/hardcoded here.
-export const rankJourney = rankThresholds.map((tier, index) => ({
-  key: RANK_KEYS[index] || `rank_${index}`,
-  label: tier.rank,
-  minXp: tier.xp,
-  badge: rankBadgeMap[RANK_KEYS[index]] || NewAspirantBadge,
-}));
+export const rankJourney = rankThresholds.map((tier, index) => {
+  const key = RANK_KEYS[index] || `rank_${index}`;
+  return {
+    key,
+    label: tier.rank,
+    labelLines: LABEL_LINES[key] || [tier.rank],
+    minXp: tier.xp,
+    badge: rankBadgeMap[key] || NewAspirantBadge,
+  };
+});

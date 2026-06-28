@@ -200,20 +200,32 @@ function Profile() {
 
           <div className="rank-badge-row">
             {journeyBadges.map((rank) => (
-              <div className={`rank-badge-item is-${rank.state}`} key={rank.key}>
+              <div
+                className={`rank-badge-item is-${rank.state}${rank.key === "prepQuestLegend" ? " is-legend" : ""}`}
+                key={rank.key}
+              >
                 <div className="rank-badge-art">
                   <img src={rank.badge} alt={rank.label} loading="lazy" />
                 </div>
-                <span className="rank-badge-label">{rank.label}</span>
-                {rank.state === "current" ? (
-                  <span className="rank-state-chip is-current-chip">CURRENT</span>
-                ) : rank.state === "next" ? (
-                  <span className="rank-state-chip is-next-chip">NEXT TARGET</span>
-                ) : rank.state === "achieved" ? (
-                  <span className="rank-state-chip is-done-chip">✓</span>
-                ) : (
-                  <span className="rank-state-lock" aria-label="Locked"><FaLock /></span>
-                )}
+                <span className="rank-node-track" aria-hidden="true">
+                  <span className="rank-node-dot" />
+                </span>
+                <span className="rank-badge-label">
+                  {rank.labelLines.map((line) => (
+                    <span className="rank-label-line" key={line}>{line}</span>
+                  ))}
+                </span>
+                <div className="rank-badge-meta">
+                  {rank.state === "current" ? (
+                    <span className="rank-state-chip is-current-chip">CURRENT</span>
+                  ) : rank.state === "next" ? (
+                    <span className="rank-state-chip is-next-chip">NEXT TARGET</span>
+                  ) : rank.state === "achieved" ? (
+                    <span className="rank-state-chip is-done-chip">✓</span>
+                  ) : (
+                    <span className="rank-state-lock" aria-label="Locked"><FaLock /></span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
