@@ -5,44 +5,76 @@
   max-width: none;
 }
 
-.dashboard-page .profile-header-card {
+/* --- Compact gamified identity header -------------------------------------- */
+.dashboard-page .profile-identity-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1rem;
+  gap: 1.1rem;
+  padding: 1rem 1.25rem;
+  border-color: rgba(45, 212, 191, 0.24);
+  background:
+    radial-gradient(120% 160% at 0% 0%, rgba(45, 212, 191, 0.1), transparent 55%),
+    #141d31;
 }
 
 .dashboard-page .profile-avatar {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 4.25rem;
+  height: 4.25rem;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 16px;
+  border: 1px solid rgba(45, 212, 191, 0.4);
   background: linear-gradient(135deg, var(--teal), var(--green));
-  color: #031014;
-  font-size: 1.35rem;
-  font-weight: 950;
+  box-shadow: 0 0 22px rgba(45, 212, 191, 0.22);
 }
 
-.dashboard-page .profile-header-copy h1,
+.dashboard-page .profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-page .profile-avatar span {
+  color: #031014;
+  font-size: 1.4rem;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+}
+
+.dashboard-page .profile-identity-copy h1,
 .dashboard-page .rank-journey-card h2 {
-  margin: 0.25rem 0 0;
+  margin: 0.2rem 0 0;
   color: var(--text);
-  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+  font-size: clamp(1.3rem, 2.1vw, 1.7rem);
 }
 
 .dashboard-page .profile-chip-row {
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
-  margin-top: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.dashboard-page .profile-edit-btn {
+  align-self: center;
 }
 
 .dashboard-page .rank-journey-card {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
   border-color: rgba(45, 212, 191, 0.22);
+}
+
+.dashboard-page .rank-journey-current {
+  color: var(--teal);
+}
+
+.dashboard-page .rank-journey-xp {
+  color: var(--teal);
+  font-weight: 800;
 }
 
 .dashboard-page .rank-journey-top {
@@ -72,32 +104,160 @@
   font-size: 1.15rem;
 }
 
-.dashboard-page .rank-path {
+/* --- Progress track with a moving node + percentage bubble ----------------- */
+.dashboard-page .rank-progress-track {
+  position: relative;
+  padding-top: 1.9rem;
+}
+
+.dashboard-page .rank-progress-bar {
+  height: 0.55rem;
+}
+
+.dashboard-page .rank-progress-node {
+  position: absolute;
+  top: 1.9rem;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--teal);
+  border: 3px solid #0b1220;
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.8);
+}
+
+.dashboard-page .rank-progress-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(45, 212, 191, 0.5);
+  background: rgba(8, 13, 24, 0.95);
+  color: var(--teal);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* --- Rank badge row -------------------------------------------------------- */
+.dashboard-page .rank-badge-row {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
-.dashboard-page .rank-path span {
-  min-height: 42px;
-  display: inline-flex;
+.dashboard-page .rank-badge-item {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 0.35rem;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: var(--radius);
-  background: rgba(15, 23, 39, 0.72);
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 850;
+  gap: 0.5rem;
+  padding: 0.5rem 0.25rem;
   text-align: center;
+}
+
+/* Transparent wrapper + object-fit: contain so badges never look boxed or
+   cropped, even while some source PNGs still carry light backgrounds.
+   TODO: replace those with transparent (alpha) assets for perfect polish. */
+.dashboard-page .rank-badge-art {
+  width: 100%;
+  max-width: 84px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  transition: transform 0.25s ease, filter 0.25s ease, opacity 0.25s ease;
+}
+
+.dashboard-page .rank-badge-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dashboard-page .rank-badge-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
   line-height: 1.25;
 }
 
-.dashboard-page .rank-path span.current {
-  border-color: rgba(45, 212, 191, 0.48);
+/* State: current — strongest */
+.dashboard-page .rank-badge-item.is-current .rank-badge-art {
+  filter: drop-shadow(0 0 16px rgba(45, 212, 191, 0.6));
+  transform: scale(1.06);
+}
+
+.dashboard-page .rank-badge-item.is-current .rank-badge-label {
   color: var(--teal);
-  background: rgba(45, 212, 191, 0.1);
+}
+
+/* State: next target — highlighted */
+.dashboard-page .rank-badge-item.is-next .rank-badge-art {
+  filter: drop-shadow(0 0 14px rgba(96, 165, 250, 0.55));
+}
+
+.dashboard-page .rank-badge-item.is-next .rank-badge-label {
+  color: #93c5fd;
+}
+
+/* State: achieved — earned but behind */
+.dashboard-page .rank-badge-item.is-achieved .rank-badge-art {
+  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.25));
+}
+
+/* State: locked/future — muted */
+.dashboard-page .rank-badge-item.is-locked .rank-badge-art {
+  filter: grayscale(0.65) brightness(0.7);
+  opacity: 0.55;
+}
+
+.dashboard-page .rank-state-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-page .rank-state-chip.is-current-chip {
+  border: 1px solid rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--teal);
+}
+
+.dashboard-page .rank-state-chip.is-next-chip {
+  border: 1px solid rgba(96, 165, 250, 0.55);
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
+
+.dashboard-page .rank-state-chip.is-done-chip {
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.dashboard-page .rank-state-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 39, 0.7);
+  color: var(--muted);
+}
+
+.dashboard-page .rank-state-lock svg {
+  width: 0.72rem;
+  height: 0.72rem;
 }
 
 .dashboard-page .profile-main-grid {
@@ -385,13 +545,35 @@
 }
 
 @media (max-width: 1200px) {
-  .dashboard-page .profile-main-grid,
-  .dashboard-page .profile-header-card {
+  .dashboard-page .profile-main-grid {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-page .rank-path {
+  .dashboard-page .rank-badge-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem 0.5rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-page .profile-identity-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "avatar copy"
+      "edit edit";
+  }
+
+  .dashboard-page .profile-identity-card .profile-avatar {
+    grid-area: avatar;
+  }
+
+  .dashboard-page .profile-identity-card .profile-identity-copy {
+    grid-area: copy;
+  }
+
+  .dashboard-page .profile-edit-btn {
+    grid-area: edit;
+    justify-content: center;
   }
 }
 
@@ -406,7 +588,7 @@
     flex-direction: column;
   }
 
-  .dashboard-page .rank-path {
-    grid-template-columns: 1fr;
+  .dashboard-page .rank-badge-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
