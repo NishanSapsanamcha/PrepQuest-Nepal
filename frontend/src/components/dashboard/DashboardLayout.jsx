@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { FaMedal, FaTrophy } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import LogoutConfirmModal from "../common/LogoutConfirmModal";
 import "../../pages/dashboard/DashboardPage.css";
 
 const routeTargets = {
@@ -53,6 +54,7 @@ function DashboardLayout({ activeKey, children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => isPracticeRoute || isDailyQuizRoute || isMockRoute || localStorage.getItem("sidebarCollapsed") === "true"
   );
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const currentActiveKey = activeKey || (isPracticeRoute ? "practice" : isDailyQuizRoute ? "daily-quiz" : isMockRoute ? "mock-tests" : "dashboard");
 
@@ -66,7 +68,7 @@ function DashboardLayout({ activeKey, children }) {
 
   const handleNavClick = (key) => {
     if (key === "logout") {
-      handleLogout();
+      setShowLogoutConfirm(true);
       return;
     }
     const target = routeTargets[key];
@@ -76,6 +78,7 @@ function DashboardLayout({ activeKey, children }) {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
     navigate("/login", { replace: true });
   };
@@ -141,6 +144,12 @@ function DashboardLayout({ activeKey, children }) {
 
         <div className="main-content">{children}</div>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+      />
     </main>
   );
 }

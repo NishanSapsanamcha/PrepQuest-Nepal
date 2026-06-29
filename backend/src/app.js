@@ -6,6 +6,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import tournamentRoutes from "./routes/tournamentRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 // Initialize Express application
@@ -37,6 +38,7 @@ app.use(cookieParser());
 // Authentication endpoints - login, register, password reset
 app.use("/api/auth", authRoutes);
 app.use("/api/tournaments", tournamentRoutes);
+app.use("/api/users", userRoutes);
 
 // Health check endpoint - verifies API is running
 app.get("/api/health", (req, res) => {

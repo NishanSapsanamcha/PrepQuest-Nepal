@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CoinIcon } from "../../components/common/Coin";
 import { loginUser } from "../../services/authService";
+import { syncDailyRewardStateFromServer } from "../../utils/dailyRewardUtils";
 import { Link } from "react-router-dom";
 import "./LoginPage.css";
 
@@ -45,16 +46,18 @@ function LoginPage() {
       });
 
       login(response, formData.remember);
+      // Reconcile the daily-reward streak with the account's saved snapshot
+      // before navigating, so the dashboard's reward modal never shows a
+      // stale/reset streak for a returning user.
+      await syncDailyRewardStateFromServer();
 
-      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
-      const selectedExam = localStorage.getItem("selectedExam");
-      const preferredLanguage = localStorage.getItem("preferredLanguage");
-
-      if (onboardingCompleted === "true" && selectedExam && preferredLanguage) {
-        navigate("/dashboard", { replace: true });
-      } else {
-        navigate("/setup", { replace: true });
-      }
+      // Source of truth is the account record returned by the server, not a
+      // per-browser localStorage flag - so setup is asked exactly once per
+      // account, on any device.
+      const setupDone = Boolean(
+        response?.user?.setupCompleted && response?.user?.selectedExam && response?.user?.preferredLanguage
+      );
+      navigate(setupDone ? "/dashboard" : "/setup", { replace: true });
     } catch (submitError) {
       const status = submitError?.response?.status;
       setError(

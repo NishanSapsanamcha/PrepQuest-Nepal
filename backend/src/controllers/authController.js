@@ -43,6 +43,12 @@ const registerSchema = z.object({
 	path: ["confirmPassword"]
 });
 
+// Zod schema for the one-time setup flow (exam track + language preference)
+const completeSetupSchema = z.object({
+	selectedExam: z.string().trim().min(1, "Select an exam track"),
+	preferredLanguage: z.string().trim().min(1, "Select a language")
+});
+
 // Zod schema for forgot password request
 // Only requires email to identify the user account
 const forgotPasswordSchema = z.object({
@@ -158,6 +164,26 @@ const login = asyncHandler(async (req, res) => {
 	});
 });
 
+// Complete setup controller - Persists the one-time exam-track + language
+// choice on the authenticated user's own account (req.user comes from the
+// `protect` middleware). Once saved, the setup screen never shows again for
+// this account on any device, since the check happens against the server
+// record instead of a per-browser localStorage flag.
+const completeSetup = asyncHandler(async (req, res) => {
+	const { selectedExam, preferredLanguage } = completeSetupSchema.parse(req.body);
+
+	req.user.selectedExam = selectedExam;
+	req.user.preferredLanguage = preferredLanguage;
+	req.user.setupCompleted = true;
+	await req.user.save({ hooks: false });
+
+	return res.status(200).json({
+		success: true,
+		message: "Setup completed",
+		user: sanitizeUser(req.user)
+	});
+});
+
 const requestPasswordReset = asyncHandler(async (req, res) => {
 	// Validate email format using forgotPasswordSchema
 	const { email } = forgotPasswordSchema.parse(req.body);
@@ -249,4 +275,4 @@ const resetPassword = asyncHandler(async (req, res) => {
 	});
 });
 
-export { login, register, requestPasswordReset, resetPassword, verifySecurityAnswer };
+export { completeSetup, login, register, requestPasswordReset, resetPassword, verifySecurityAnswer };

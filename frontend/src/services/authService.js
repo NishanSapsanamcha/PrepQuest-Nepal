@@ -32,4 +32,9 @@ const resetPassword = async ({ resetToken, password, confirmPassword }) => {
 	return data;
 };
 
-export { loginUser, registerUser, requestPasswordReset, resetPassword, verifySecurityAnswer };
+const completeSetup = async ({ selectedExam, preferredLanguage }) => {
+	const { data } = await api.patch("/auth/setup", { selectedExam, preferredLanguage });
+	return data;
+};
+
+export { completeSetup, loginUser, registerUser, requestPasswordReset, resetPassword, verifySecurityAnswer };

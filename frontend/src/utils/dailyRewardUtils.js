@@ -8,7 +8,15 @@
 // these and renders the result. Coins/XP are credited through the existing
 // coin engine (coinService.js) and XP ledger (xpUtils.js) so balances stay a
 // single source of truth - this file never touches localStorage for those.
+//
+// The streak snapshot itself (lastClaimedRewardDate/currentStreak/etc.) is
+// cached in localStorage for synchronous reads, but is also mirrored to the
+// user's account on the server (getDailyRewardState/syncDailyRewardState in
+// userService) so it survives a cleared browser or a different device -
+// localStorage alone was getting wiped between sessions, silently resetting
+// the streak back to Day 1 even though the user had already claimed.
 import { awardCoins } from "../services/coinService";
+import { getDailyRewardState as fetchServerDailyRewardState, syncDailyRewardState as pushServerDailyRewardState } from "../services/userService";
 import { addXPTransaction } from "./xpUtils";
 import { getActiveAccountId } from "./storageUtils";
 
@@ -110,6 +118,46 @@ export function getDailyRewardState() {
 
 function saveDailyRewardState(state) {
   writeJson(STATE_KEY, state);
+}
+
+// Whichever snapshot has made more progress wins. totalClaims only ever
+// increases on a successful claim, so it's a reliable "more advanced" signal
+// even if the two snapshots were written on different devices/days.
+function pickMoreAdvancedState(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  if ((a.totalClaims || 0) !== (b.totalClaims || 0)) {
+    return (a.totalClaims || 0) > (b.totalClaims || 0) ? a : b;
+  }
+  return (a.lastClaimedRewardDate || "") >= (b.lastClaimedRewardDate || "") ? a : b;
+}
+
+/**
+ * Reconciles the local (this browser) and server (this account) daily-reward
+ * snapshots, keeping whichever made more progress, then makes both sides
+ * match it. Call this once right after login so a streak claimed on another
+ * device/browser - or lost when this browser's storage was cleared - is
+ * restored instead of silently resetting back to Day 1.
+ */
+export async function syncDailyRewardStateFromServer() {
+  try {
+    const serverState = await fetchServerDailyRewardState();
+    const localState = readJson(STATE_KEY, null);
+    const winner = pickMoreAdvancedState(localState, serverState);
+    if (!winner) return;
+
+    const merged = { ...DEFAULT_STATE, ...winner };
+
+    if (JSON.stringify({ ...DEFAULT_STATE, ...(localState || {}) }) !== JSON.stringify(merged)) {
+      saveDailyRewardState(merged);
+    }
+    if (JSON.stringify({ ...DEFAULT_STATE, ...(serverState || {}) }) !== JSON.stringify(merged)) {
+      pushServerDailyRewardState(merged).catch(() => {});
+    }
+  } catch {
+    // Offline or request failed - fall back to whatever is cached locally;
+    // the next successful login retries the sync.
+  }
 }
 
 export function getRewardForDay(cycleDay) {
@@ -252,6 +300,10 @@ export function claimDailyReward() {
     claimedRewardDates,
   };
   saveDailyRewardState(nextState);
+  // Mirror to the server so the streak survives a cleared browser or a
+  // different device. Fire-and-forget: the claim has already been credited
+  // locally, and the next login's sync will retry if this fails.
+  pushServerDailyRewardState(nextState).catch(() => {});
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent(DAILY_REWARD_CLAIMED_EVENT, { detail: nextState }));
   }
