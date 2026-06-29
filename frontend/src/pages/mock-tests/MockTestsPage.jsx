@@ -18,6 +18,7 @@ import {
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { CoinValue, RewardDisplay } from "../../components/common/Coin";
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { languageLabel as getLanguageLabel, t, translateExamName, translateSubjectName, translateDifficulty } from "../../data/translations";
 import { mockTestRules } from "../../data/mockTestMockData";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import {
@@ -32,8 +33,6 @@ import {
   startMockSession,
 } from "../../utils/mockTestUtils";
 import "./MockTestsPage.css";
-
-const languageLabels = { english: "English", nepali: "Nepali", both: "Both" };
 
 function MockTestsPage() {
   const navigate = useNavigate();
@@ -72,11 +71,11 @@ function MockTestsPage() {
       return;
     }
     if (result.reason === "not_enough_questions") {
-      setEmptyState("Not enough validated questions are available for this mock test yet. Add more reviewed questions to the question bank before starting this mock.");
+      setEmptyState(t("notEnoughQuestionsMock", context.preferredLanguage));
       return;
     }
     if (result.reason === "not_enough_coins") {
-      setEmptyState("You used all 3 free mock tests today. Extra mock tests cost 100 coins. Earn more coins through daily quiz, practice, or tomorrow's free mocks.");
+      setEmptyState(t("usedAllFreeMocksMsg", context.preferredLanguage));
     }
   };
 
@@ -86,28 +85,29 @@ function MockTestsPage() {
     handleStart(mockTypeId, { confirmPaid: true });
   };
 
+  const lang = context.preferredLanguage;
   const statusCards = [
-    { label: "Best Mock Score", value: stats.bestScore === null ? "No attempts" : `${stats.bestScore}%`, helper: stats.hasRealAttempts ? "Highest completed mock" : "Complete a mock to set this", Icon: FaStar },
-    { label: "Average Accuracy", value: stats.averageAccuracy === null ? "No attempts" : `${stats.averageAccuracy}%`, helper: stats.hasRealAttempts ? "Based on completed mocks" : "Real attempts only", Icon: FaBullseye },
-    { label: "Exam Readiness", value: stats.examReadiness === null ? "Not ready" : `${stats.examReadiness}%`, helper: stats.hasRealAttempts ? "Recent mock average" : "Take a mock to calculate", Icon: FaShieldAlt },
-    { label: "Completed Mocks", value: stats.totalMocksCompleted.toString(), helper: "Real completed attempts", Icon: FaCheckCircle },
+    { label: t("bestMockScore", lang), value: stats.bestScore === null ? t("noAttempts", lang) : `${stats.bestScore}%`, helper: stats.hasRealAttempts ? t("highestCompletedMock", lang) : t("completeMockToSet", lang), Icon: FaStar },
+    { label: t("averageAccuracy", lang), value: stats.averageAccuracy === null ? t("noAttempts", lang) : `${stats.averageAccuracy}%`, helper: stats.hasRealAttempts ? t("basedOnCompletedMocks", lang) : t("realAttemptsOnly", lang), Icon: FaBullseye },
+    { label: t("examReadinessTitle", lang), value: stats.examReadiness === null ? t("notReadyStat", lang) : `${stats.examReadiness}%`, helper: stats.hasRealAttempts ? t("recentMockAverage", lang) : t("takeMockToCalculate", lang), Icon: FaShieldAlt },
+    { label: t("completedMocks", lang), value: stats.totalMocksCompleted.toString(), helper: t("realCompletedAttempts", lang), Icon: FaCheckCircle },
   ];
   const usedFreeMocks = Math.min(stats.freeMocksTotal, stats.freeMocksTotal - stats.freeMocksLeft);
-  const accessButtonText = canUseFree ? "Start Free Mock" : canUseCoins ? "Use 100 Coins & Start Mock" : "Not Enough Coins";
-  const mockTypeButtonText = canUseFree ? "Start Free Mock" : canUseCoins ? "Use 100 Coins" : "Not Enough Coins";
+  const accessButtonText = canUseFree ? t("startFreeMock", lang) : canUseCoins ? t("use100Start", lang) : t("notEnoughCoins", lang);
+  const mockTypeButtonText = canUseFree ? t("startFreeMock", lang) : canUseCoins ? t("use100Coins", lang) : t("notEnoughCoins", lang);
 
   return (
     <DashboardLayout activeKey="mock-tests">
       <header className="dashboard-header mock-header">
         <div className="header-left">
-          <p className="eyebrow">Exam Readiness</p>
-          <h1>Mock Tests</h1>
-          <p>Take exam-style Loksewa mock tests, track accuracy, find weak areas, and improve your exam readiness.</p>
+          <p className="eyebrow">{t("examReadinessTitle", lang)}</p>
+          <h1>{t("mockTestsTitle", lang)}</h1>
+          <p>{t("mockTestsSubtitle", lang)}</p>
         </div>
         <div className="header-right">
           <div className="header-chips">
-            <span className="chip"><FaGraduationCap /> Exam: <strong>{context.selectedExamLabel}</strong></span>
-            <span className="chip"><FaLanguage /> Language: <strong>{languageLabels[context.preferredLanguage]}</strong></span>
+            <span className="chip"><FaGraduationCap /> {t("exam", lang)}: <strong>{translateExamName(context.selectedExamLabel, lang)}</strong></span>
+            <span className="chip"><FaLanguage /> {t("language", lang)}: <strong>{getLanguageLabel(lang)}</strong></span>
           </div>
         </div>
       </header>
@@ -130,39 +130,39 @@ function MockTestsPage() {
           <section className="dashboard-card mock-hero-card">
             <div>
               <div className="card-heading">
-                <h2 className="card-title"><FaListAlt /> Today's Full Mock Test</h2>
+                <h2 className="card-title"><FaListAlt /> {t("todaysFullMock", lang)}</h2>
                 <span className={`status-chip${fullMockReadiness?.ready ? " complete" : ""}`}>
-                  {fullMockReadiness?.ready ? "Ready" : "Not Ready Yet"}: {fullMockReadiness?.available || 0}/{fullMock?.questions || 25}
+                  {fullMockReadiness?.ready ? t("ready", lang) : t("notReadyYet", lang)}: {fullMockReadiness?.available || 0}/{fullMock?.questions || 25}
                 </span>
               </div>
-              <p className="mock-hero-subtitle">A balanced 25-question mock to check your current exam readiness.</p>
+              <p className="mock-hero-subtitle">{t("mockHeroSubtitle", lang)}</p>
               <div className="mock-launch-section">
-                <span>Mock Format</span>
+                <span>{t("mockFormat", lang)}</span>
                 <div className="mock-launch-grid">
-                  <strong>25 Questions</strong>
-                  <strong>20 Minutes</strong>
-                  <strong>Mixed Subjects</strong>
+                  <strong>{t("questions25", lang)}</strong>
+                  <strong>{t("minutes20", lang)}</strong>
+                  <strong>{t("mixedSubjects", lang)}</strong>
                 </div>
               </div>
               <div className="mock-launch-section">
-                <span>After Completion</span>
+                <span>{t("afterCompletion", lang)}</span>
                 <div className="mock-launch-grid">
-                  <strong>Score Report</strong>
-                  <strong>Weak Areas</strong>
-                  <strong>Review Answers</strong>
+                  <strong>{t("scoreReport", lang)}</strong>
+                  <strong>{t("weakAreas", lang)}</strong>
+                  <strong>{t("reviewAnswers", lang)}</strong>
                 </div>
               </div>
               <div className="mock-launch-section">
-                <span>Rewards</span>
+                <span>{t("rewardsWord", lang)}</span>
                 <div className="mock-reward-row">
-                  <strong>Complete <RewardDisplay coins={40} xp={100} /></strong>
+                  <strong>{t("complete", lang)} <RewardDisplay coins={40} xp={100} /></strong>
                   <strong>80%+ <RewardDisplay coins={30} xp={50} /></strong>
-                  <strong>90%+: Badge progress</strong>
+                  <strong>90%+: {t("badgeProgressWord", lang)}</strong>
                 </div>
               </div>
-              {fullMockReadiness?.ready && <p className="mock-ready-note">Balanced mixed mock ready across {fullMockReadiness.subjectsAvailable} subjects.</p>}
+              {fullMockReadiness?.ready && <p className="mock-ready-note">{t("balancedMockReady", lang)}</p>}
               {!fullMockReadiness?.ready && (
-                <p className="mock-warning"><FaExclamationTriangle /> Need {fullMockReadiness?.missing || 0} more reviewed questions before this full mock can start.</p>
+                <p className="mock-warning"><FaExclamationTriangle /> {t("notReadyYet", lang)}</p>
               )}
               <div className="mock-primary-action">
                 <button className="btn btn-full" type="button" disabled={!fullMockReadiness?.ready || (!canUseFree && !canUseCoins)} onClick={() => handleStart(fullMock?.id)}>
@@ -170,10 +170,10 @@ function MockTestsPage() {
                 </button>
                 <p className="muted-copy">
                   {canUseFree
-                    ? "This will use 1 of your 3 free mock attempts for today after submission."
+                    ? t("willUseFreeAttempt", lang)
                     : canUseCoins
-                      ? "You used all free mocks today. This extra attempt costs 100 coins."
-                      : "Complete daily quiz or practice to earn more coins."}
+                      ? t("extraCosts100", lang)
+                      : t("completeToEarnCoins", lang)}
                 </p>
               </div>
               {emptyState && <p className="mock-warning"><FaExclamationTriangle /> {emptyState}</p>}
@@ -182,27 +182,27 @@ function MockTestsPage() {
 
           <section className="dashboard-card mock-access-card">
             <div className="card-heading">
-              <h2 className="card-title"><FaClipboardCheck /> Daily Mock Access</h2>
+              <h2 className="card-title"><FaClipboardCheck /> {t("dailyMockAccess", lang)}</h2>
             </div>
             <div className="mock-access-hero">
               <strong>{stats.freeMocksLeft} / {stats.freeMocksTotal}</strong>
-              <span>free mocks remaining today</span>
+              <span>{t("freeMocksRemainingToday", lang)}</span>
             </div>
-            <p className="card-copy">{canUseFree ? "Use your free mock to check today's exam readiness." : "You used all free mock tests for today."}</p>
+            <p className="card-copy">{canUseFree ? t("useFreeMockCheck", lang) : t("usedAllFreeMocks", lang)}</p>
             <div className="mock-access-progress-row">
-              <span>Daily free mock progress</span>
-              <strong>{usedFreeMocks}/{stats.freeMocksTotal} used</strong>
+              <span>{t("dailyFreeMockProgress", lang)}</span>
+              <strong>{usedFreeMocks}/{stats.freeMocksTotal} {t("usedLabel", lang)}</strong>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${(usedFreeMocks / stats.freeMocksTotal) * 100}%` }} />
               </div>
             </div>
             <div className="mock-access-details">
-              <div><span>Extra attempt</span><strong>{canUseFree ? `${EXTRA_MOCK_COST} coins after free limit` : `${EXTRA_MOCK_COST} coins`}</strong></div>
-              <div><span>Your coins</span><strong><CoinValue amount={userCoins} /></strong></div>
+              <div><span>{t("extraAttempt", lang)}</span><strong>{EXTRA_MOCK_COST} {t("coinsWord", lang)}</strong></div>
+              <div><span>{t("yourCoins", lang)}</span><strong><CoinValue amount={userCoins} /></strong></div>
             </div>
-            <p className="muted-copy">Free attempts reset daily. Extra attempts use coins but basic practice remains free.</p>
+            <p className="muted-copy">{t("freeAttemptsReset", lang)}</p>
             <button className="btn btn-full btn-secondary" type="button" onClick={() => document.querySelector(".mock-section-heading")?.scrollIntoView({ behavior: "smooth" })}>
-              View Mock Options
+              {t("viewMockOptions", lang)}
             </button>
           </section>
         </div>
@@ -210,7 +210,7 @@ function MockTestsPage() {
         <div className="mock-layout-grid">
           <div className="mock-main-column">
             <section className="mock-section-heading">
-              <h2>Mock Type Selection</h2>
+              <h2>{t("mockTypeSelection", lang)}</h2>
             </section>
             <section className="mock-type-grid">
               {mockTypes.map((mockType) => {
@@ -221,18 +221,18 @@ function MockTestsPage() {
                     <h3>{mockType.title}</h3>
                     <p>{mockType.description}</p>
                     <div className="mock-meta-grid">
-                      <span>{mockType.questions} questions</span>
+                      <span>{mockType.questions} {t("questionsWord", lang)}</span>
                       <span>{mockType.estimatedTime}</span>
-                      <span>Difficulty: {mockType.difficulty}</span>
-                      <span>{readiness.ready ? "Ready" : "Needs more questions"}: {readiness.available}/{readiness.required}</span>
+                      <span>{t("difficultyLabel", lang)}: {translateDifficulty(mockType.difficulty, lang)}</span>
+                      <span>{readiness.ready ? t("ready", lang) : t("needsMoreQuestions", lang)}: {readiness.available}/{readiness.required}</span>
                     </div>
                     {!readiness.ready && (
-                      <p className="mock-card-empty">Not Ready Yet. Only {readiness.available} of {readiness.required} reviewed questions are available. Add {readiness.missing} more reviewed questions to unlock this mock.</p>
+                      <p className="mock-card-empty">{t("notReadyYet", lang)}</p>
                     )}
-                    {mockType.type === "full" && readiness.ready && <p className="mock-card-empty ready-copy">Balanced mixed mock ready.</p>}
-                    <div className="mock-card-reward">Reward <RewardDisplay coins={40} xp={100} /></div>
+                    {mockType.type === "full" && readiness.ready && <p className="mock-card-empty ready-copy">{t("balancedMockReady", lang)}</p>}
+                    <div className="mock-card-reward">{t("rewardWord", lang)} <RewardDisplay coins={40} xp={100} /></div>
                     <button className="action-btn" type="button" disabled={!readiness.ready || (!canUseFree && !canUseCoins)} onClick={() => handleStart(mockType.id)}>
-                      {!readiness.ready ? "Not Ready Yet" : mockTypeButtonText}
+                      {!readiness.ready ? t("notReadyYet", lang) : mockTypeButtonText}
                     </button>
                   </article>
                 );
@@ -241,8 +241,8 @@ function MockTestsPage() {
 
             <section className="dashboard-card mock-history-card">
               <div className="card-heading">
-                <h2 className="card-title"><FaHistory /> Recent Mock History</h2>
-                <span className="status-chip">{recentAttempts.length} recent</span>
+                <h2 className="card-title"><FaHistory /> {t("recentMockHistory", lang)}</h2>
+                <span className="status-chip">{recentAttempts.length} {t("recentLabel", lang)}</span>
               </div>
               {recentAttempts.length ? (
                 <div className="mock-history-list">
@@ -250,33 +250,33 @@ function MockTestsPage() {
                     <article className="mock-history-item" key={attempt.id}>
                       <div>
                         <h3>{attempt.mockTitle}</h3>
-                        <p>Score: {attempt.accuracy}% - Time: {formatMockDuration(attempt.timeTakenSeconds)}</p>
-                        <span>Weak Subject: {attempt.weakestSubject || "None"}</span>
+                        <p>{t("scoreLabel", lang)}: {attempt.accuracy}% - {t("timeLabel", lang)}: {formatMockDuration(attempt.timeTakenSeconds)}</p>
+                        <span>{t("weakSubjectLabel", lang)}: {attempt.weakestSubject ? translateSubjectName(attempt.weakestSubject, lang) : t("none", lang)}</span>
                       </div>
                       <div className="history-result">
                         <strong>{attempt.readinessLabel}</strong>
                         <RewardDisplay coins={attempt.coinsEarned} xp={attempt.xpEarned} />
                         <button className="btn btn-secondary" type="button" onClick={() => { playClick(); navigate("/mock-tests/result", { state: { resultId: attempt.id } }); }}>
-                          Review Result
+                          {t("reviewResult", lang)}
                         </button>
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
-                <p className="card-copy">No mock tests completed yet. Take your first mock to see score, weak areas, and rewards.</p>
+                <p className="card-copy">{t("noMockCompleted", lang)}</p>
               )}
             </section>
           </div>
 
           <aside className="mock-side-column">
             <section className="dashboard-card">
-              <h2 className="card-title"><FaShieldAlt /> Exam Readiness Preview</h2>
-              <p className="insight-value">{stats.examReadiness === null ? "Take a mock" : `${stats.examReadiness}%`}</p>
-              <p className="card-copy">Recent mock accuracy becomes your readiness checkpoint.</p>
+              <h2 className="card-title"><FaShieldAlt /> {t("examReadinessPreview", lang)}</h2>
+              <p className="insight-value">{stats.examReadiness === null ? t("takeMock", lang) : `${stats.examReadiness}%`}</p>
+              <p className="card-copy">{t("recentMockReadiness", lang)}</p>
             </section>
             <section className="dashboard-card">
-              <h2 className="card-title"><FaAward /> Badge Progress Preview</h2>
+              <h2 className="card-title"><FaAward /> {t("badgeProgressPreview", lang)}</h2>
               <div className="badge-progress-list">
                 {badges.map((badge) => (
                   <div className="badge-progress-item" key={badge.id}>
@@ -288,7 +288,7 @@ function MockTestsPage() {
               </div>
             </section>
             <section className="dashboard-card">
-              <h2 className="card-title"><FaLock /> Mock Test Rules</h2>
+              <h2 className="card-title"><FaLock /> {t("mockTestRulesTitle", lang)}</h2>
               <ul className="mock-rules-list">
                 {mockTestRules.map((rule) => <li key={rule}>{rule}</li>)}
               </ul>
@@ -298,11 +298,11 @@ function MockTestsPage() {
       </section>
       <ConfirmModal
         isOpen={Boolean(paidConfirmMockTypeId)}
-        title="Use 100 Coins?"
-        description={`You have used all 3 free mocks today. This extra mock attempt costs 100 coins.\nYour coins: ${userCoins}\nAfter this attempt: ${Math.max(0, userCoins - EXTRA_MOCK_COST)}`}
-        cancelLabel="Cancel"
-        confirmLabel="Use Coins & Start"
-        confirmAriaLabel="Use coins and start mock"
+        title={t("use100CoinsQ", lang)}
+        description={`${t("extraCosts100", lang)}\n${t("yourCoins", lang)}: ${userCoins}`}
+        cancelLabel={t("cancel", lang)}
+        confirmLabel={t("useCoinsStart", lang)}
+        confirmAriaLabel={t("useCoinsStart", lang)}
         onCancel={() => setPaidConfirmMockTypeId("")}
         onConfirm={handleConfirmPaidStart}
       />

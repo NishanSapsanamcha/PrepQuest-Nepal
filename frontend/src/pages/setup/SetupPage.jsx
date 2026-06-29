@@ -24,8 +24,7 @@ const examNames = {
 
 const languageNames = {
   nepali: "Nepali",
-  english: "English",
-  both: "Both"
+  english: "English"
 };
 
 const features = [
@@ -73,22 +72,23 @@ const languages = [
   {
     title: "Nepali",
     value: "nepali",
-    emoji: "🇳🇵",
-    description: "नेपाली प्रश्न र व्याख्या"
+    label: "NP",
+    description: "नेपाली भाषामा प्रश्न र व्याख्या"
   },
   {
     title: "English",
     value: "english",
-    emoji: "🇬🇧",
+    label: "GB",
     description: "English questions and explanations"
-  },
-  {
-    title: "Both",
-    value: "both",
-    emoji: "🌐",
-    description: "नेपाली + English together"
   }
 ];
+
+const normalizeSetupLanguage = (language) => {
+  const value = String(language || "").toLowerCase();
+  if (value.includes("nepali")) return "nepali";
+  if (value.includes("english")) return "english";
+  return "";
+};
 
 function SetupPage() {
   const navigate = useNavigate();
@@ -107,7 +107,7 @@ function SetupPage() {
     () => ({
       exam: selectedExam ? examNames[selectedExam] : "Not selected",
       language: selectedLanguage ? languageNames[selectedLanguage] : "Not selected",
-      status: isReady ? "Ready ✓" : "Incomplete"
+      status: isReady ? "Ready" : "Incomplete"
     }),
     [isReady, selectedExam, selectedLanguage]
   );
@@ -127,7 +127,7 @@ function SetupPage() {
 
     if (allowPreferenceChange) {
       setSelectedExam(user?.selectedExam || storedExam || "");
-      setSelectedLanguage(user?.preferredLanguage || storedLanguage || "");
+      setSelectedLanguage(normalizeSetupLanguage(user?.preferredLanguage || storedLanguage));
     }
   }, [allowPreferenceChange, navigate, user]);
 
@@ -278,7 +278,7 @@ function SetupPage() {
               <p className="section-subtitle">Select how you want questions and explanations presented.</p>
             </div>
             <div className="language-grid">
-              {languages.map(({ title, value, emoji, description }) => {
+              {languages.map(({ title, value, label, description }) => {
                 const isSelected = selectedLanguage === value;
 
                 return (
@@ -292,7 +292,7 @@ function SetupPage() {
                   >
                     <CheckCircle className={`check-icon${isSelected ? " visible" : ""}`} aria-hidden="true" />
                     <span className="language-emoji" aria-hidden="true">
-                      {emoji}
+                      {label}
                     </span>
                     <span className="card-title">{title}</span>
                     <span className="card-description">{description}</span>
@@ -325,3 +325,4 @@ function SetupPage() {
 }
 
 export default SetupPage;
+

@@ -294,7 +294,9 @@
 }
 
 .setup-page .language-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  max-width: 900px;
+  margin-inline: auto;
 }
 
 .setup-page .language-card-center {
@@ -308,7 +310,10 @@
 
 .setup-page .language-emoji {
   display: block;
-  font-size: 1.8rem;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   margin-bottom: 0.6rem;
 }
 

@@ -19,6 +19,7 @@ import {
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { CoinIcon, RewardDisplay } from "../components/common/Coin";
 import { getCurrentTournaments, registerForTournament } from "../services/tournamentService";
+import { getPreferredLanguage, t, translateExamName, formatMixedQuestions, formatRegisteredCount } from "../data/translations";
 import TournamentCup from "../assets/level/tournamentcup-transparent.png";
 import "./Tournament.css";
 
@@ -27,22 +28,26 @@ const examLabels = {
   "sakha-adhikrit": "Sakha Adhikrit",
 };
 
-const languageLabels = {
-  english: "English",
-  nepali: "Nepali",
-  both: "Both",
-};
-
+// Reward rows use translation keys for both the rank label and badge name.
 const rewards = [
-  { rank: "1st Place", coins: 500, xp: 500, badge: "Gold Champion Badge" },
-  { rank: "2nd Place", coins: 300, xp: 300, badge: "Silver Champion Badge" },
-  { rank: "3rd Place", coins: 150, xp: 200, badge: "Bronze Champion Badge" },
-  { rank: "Top 10", badge: "Top Performer Badge" },
-  { rank: "All Participants", coins: 50, xp: 100 },
+  { rankKey: "firstPlace", coins: 500, xp: 500, badgeKey: "goldChampionBadge" },
+  { rankKey: "secondPlace", coins: 300, xp: 300, badgeKey: "silverChampionBadge" },
+  { rankKey: "thirdPlace", coins: 150, xp: 200, badgeKey: "bronzeChampionBadge" },
+  { rankKey: "top10", badgeKey: "topPerformerBadge" },
+  { rankKey: "allParticipants", coins: 50, xp: 100 },
 ];
 
-function formatPreference(value, labels) {
-  return labels[String(value || "").trim().toLowerCase()] || value || "Not selected";
+function formatExamPreference(value, lang) {
+  const english = examLabels[String(value || "").trim().toLowerCase()];
+  return english ? translateExamName(english, lang) : (value || t("notSelected", lang));
+}
+
+function formatLanguagePreference(value, lang) {
+  const mode = String(value || "").trim().toLowerCase();
+  if (mode === "english") return "English";
+  if (mode === "nepali") return "नेपाली";
+  if (mode === "both") return t("both", lang);
+  return t("notSelected", lang);
 }
 
 function formatCountdown(seconds = 0) {
@@ -52,21 +57,17 @@ function formatCountdown(seconds = 0) {
   return `${minutes}m ${String(secs).padStart(2, "0")}s`;
 }
 
-function formatRegistrationCount(count = 0) {
-  return `${count} ${count === 1 ? "user" : "users"} registered`;
-}
-
-function getAction(tournament) {
+function getAction(tournament, lang) {
   const registered = Boolean(tournament?.registration);
-  if (!tournament) return { label: "Unavailable", disabled: true, kind: "disabled" };
-  if (tournament.status === "registration_open" && !registered) return { label: "Join Tournament", disabled: false, kind: "join" };
-  if (tournament.status === "registration_open" && registered) return { label: "Registered", disabled: true, kind: "registered" };
-  if (tournament.status === "ready_room" && registered) return { label: "Enter Tournament", disabled: false, kind: "enter" };
-  if (tournament.status === "ready_room" && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
-  if (["live", "reveal", "checkpoint"].includes(tournament.status) && registered) return { label: "Enter Battle", disabled: false, kind: "enter" };
-  if (["live", "reveal", "checkpoint"].includes(tournament.status) && !registered) return { label: "Registration Closed", disabled: true, kind: "closed" };
-  if (tournament.status === "finished" || tournament.status === "results_published") return { label: "View Results", disabled: false, kind: "results" };
-  return { label: "Registration Closed", disabled: true, kind: "closed" };
+  if (!tournament) return { label: t("unavailable", lang), disabled: true, kind: "disabled" };
+  if (tournament.status === "registration_open" && !registered) return { label: t("joinTournament", lang), disabled: false, kind: "join" };
+  if (tournament.status === "registration_open" && registered) return { label: t("registered", lang), disabled: true, kind: "registered" };
+  if (tournament.status === "ready_room" && registered) return { label: t("enterTournament", lang), disabled: false, kind: "enter" };
+  if (tournament.status === "ready_room" && !registered) return { label: t("registrationClosed", lang), disabled: true, kind: "closed" };
+  if (["live", "reveal", "checkpoint"].includes(tournament.status) && registered) return { label: t("enterBattle", lang), disabled: false, kind: "enter" };
+  if (["live", "reveal", "checkpoint"].includes(tournament.status) && !registered) return { label: t("registrationClosed", lang), disabled: true, kind: "closed" };
+  if (tournament.status === "finished" || tournament.status === "results_published") return { label: t("viewResults", lang), disabled: false, kind: "results" };
+  return { label: t("registrationClosed", lang), disabled: true, kind: "closed" };
 }
 
 function Tournament() {
@@ -74,6 +75,7 @@ function Tournament() {
   const rulesRef = useRef(null);
   const selectedExam = localStorage.getItem("selectedExam") || "";
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "";
+  const lang = getPreferredLanguage();
   const [tournament, setTournament] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -86,10 +88,10 @@ function Tournament() {
       setTournament(nextTournament);
       setError("");
       if (nextTournament?.registration) {
-        setMessage("You're already registered for this tournament.");
+        setMessage(t("alreadyRegistered", lang));
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Tournament server is unavailable.");
+      setError(err.response?.data?.message || t("tournamentServerUnavailable", lang));
     }
   };
 
@@ -99,7 +101,7 @@ function Tournament() {
     return () => window.clearInterval(id);
   }, []);
 
-  const action = getAction(tournament);
+  const action = getAction(tournament, lang);
   const registered = Boolean(tournament?.registration);
 
   const handleAction = async () => {
@@ -119,10 +121,10 @@ function Tournament() {
     setError("");
     try {
       const data = await registerForTournament(tournament.id, { selectedExam, preferredLanguage });
-      setMessage(data.message || "You're already registered for this tournament.");
+      setMessage(data.message || t("alreadyRegistered", lang));
       await load();
     } catch (err) {
-      setError(err.response?.data?.message || "Could not register for this tournament.");
+      setError(err.response?.data?.message || t("couldNotRegister", lang));
     } finally {
       setBusy(false);
     }
@@ -138,18 +140,15 @@ function Tournament() {
       <section className="dashboard-content tournament-page">
         <header className="dashboard-card tournament-header-card">
           <div className="tournament-header-main">
-            <span className="tournament-label-chip"><FaTrophy /> Friday Live Tournament</span>
-            <h1>Friday Live Tournament</h1>
-            <p>
-              Register once, wait for the server countdown, then enter a timed live Loksewa battle
-              with checkpoint rankings and final podium results.
-            </p>
+            <span className="tournament-label-chip"><FaTrophy /> {t("fridayLiveTournament", lang)}</span>
+            <h1>{t("fridayLiveTournament", lang)}</h1>
+            <p>{t("tournamentIntro", lang)}</p>
 
             <div className="tournament-chip-row" aria-label="Tournament context">
-              <span className="tournament-chip"><FaClock /> Starts in: <strong>{formatCountdown(tournament?.secondsToStart || 0)}</strong></span>
-              <span className="tournament-chip"><FaGraduationCap /> Exam: <strong>{formatPreference(selectedExam, examLabels)}</strong></span>
-              <span className="tournament-chip"><FaLanguage /> Language: <strong>{formatPreference(preferredLanguage, languageLabels)}</strong></span>
-              <span className="tournament-chip safe"><FaShieldAlt /> No betting. No coin loss.</span>
+              <span className="tournament-chip"><FaClock /> {t("startsIn", lang)}: <strong>{formatCountdown(tournament?.secondsToStart || 0)}</strong></span>
+              <span className="tournament-chip"><FaGraduationCap /> {t("exam", lang)}: <strong>{formatExamPreference(selectedExam, lang)}</strong></span>
+              <span className="tournament-chip"><FaLanguage /> {t("language", lang)}: <strong>{formatLanguagePreference(preferredLanguage, lang)}</strong></span>
+              <span className="tournament-chip safe"><FaShieldAlt /> {t("noBettingNoCoinLoss", lang)}</span>
             </div>
 
             {message && <p className="tournament-success"><FaCheckCircle /> {message}</p>}
@@ -158,10 +157,10 @@ function Tournament() {
 
           <div className="tournament-header-actions">
             <button className="tournament-primary-btn" type="button" disabled={action.disabled || busy} onClick={handleAction}>
-              <FaTrophy /> {busy ? "Please wait..." : action.label}
+              <FaTrophy /> {busy ? t("pleaseWait", lang) : action.label}
             </button>
             <button className="tournament-secondary-btn" type="button" onClick={handleViewRules}>
-              <FaListAlt /> View Rules
+              <FaListAlt /> {t("viewRules", lang)}
             </button>
           </div>
 
@@ -174,19 +173,19 @@ function Tournament() {
         <section className="tournament-stats-grid" aria-label="Tournament status">
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaClock /></div>
-            <div><div className="stat-value">{formatCountdown(tournament?.secondsToStart || 0)}</div><div className="stat-label">Registration Countdown</div><div className="stat-helper">Battle starts automatically</div></div>
+            <div><div className="stat-value">{formatCountdown(tournament?.secondsToStart || 0)}</div><div className="stat-label">{t("registrationCountdown", lang)}</div><div className="stat-helper">{t("battleStartsAuto", lang)}</div></div>
           </article>
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaUsers /></div>
-            <div><div className="stat-value">{tournament?.registrationCount ?? 0}</div><div className="stat-label">Registered Users</div><div className="stat-helper">{formatRegistrationCount(tournament?.registrationCount || 0)}</div></div>
+            <div><div className="stat-value">{tournament?.registrationCount ?? 0}</div><div className="stat-label">{t("registeredUsers", lang)}</div><div className="stat-helper">{formatRegisteredCount(tournament?.registrationCount || 0, lang)}</div></div>
           </article>
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaUserCheck /></div>
-            <div><div className="stat-value">{registered ? "Registered" : "Not Registered"}</div><div className="stat-label">Your Status</div><div className="stat-helper">{registered ? "You're already registered for this tournament." : "Join before countdown reaches zero"}</div></div>
+            <div><div className="stat-value">{registered ? t("registered", lang) : t("notRegistered", lang)}</div><div className="stat-label">{t("yourStatus", lang)}</div><div className="stat-helper">{registered ? t("alreadyRegistered", lang) : t("joinBeforeCountdown", lang)}</div></div>
           </article>
           <article className="stat-card tournament-stat-card">
             <div className="stat-icon"><FaShieldAlt /></div>
-            <div><div className="stat-value">{String(tournament?.status || "loading").replaceAll("_", " ")}</div><div className="stat-label">Tournament Status</div><div className="stat-helper">Server controlled</div></div>
+            <div><div className="stat-value">{String(tournament?.status || "loading").replaceAll("_", " ")}</div><div className="stat-label">{t("tournamentStatus", lang)}</div><div className="stat-helper">{t("serverControlled", lang)}</div></div>
           </article>
         </section>
 
@@ -194,81 +193,81 @@ function Tournament() {
           <div className="tournament-left-column">
             <section className="dashboard-card tournament-card registration-card">
               <div className="tournament-card-header">
-                <h2 className="card-title"><FaTrophy /> Friday Live Tournament</h2>
-                <span className="status-chip">{formatRegistrationCount(tournament?.registrationCount || 0)}</span>
+                <h2 className="card-title"><FaTrophy /> {t("fridayLiveTournament", lang)}</h2>
+                <span className="status-chip">{formatRegisteredCount(tournament?.registrationCount || 0, lang)}</span>
               </div>
               <div className="tournament-detail-list">
-                <div><span>Status</span><strong>{String(tournament?.status || "loading").replaceAll("_", " ")}</strong></div>
-              <div><span>{tournament?.status === "ready_room" ? "Ready Room" : "Countdown"}</span><strong>{tournament?.status === "ready_room" ? `${tournament?.readyCountdownSeconds || 0}s` : formatCountdown(tournament?.secondsToStart || 0)}</strong></div>
-                <div><span>Questions</span><strong>{tournament?.questionCount || 20} mixed questions, {tournament?.timePerQuestion || 15}s each</strong></div>
-                <div><span>Ranking</span><strong>After questions 5, 10, and 15</strong></div>
+                <div><span>{t("statusWord", lang)}</span><strong>{String(tournament?.status || "loading").replaceAll("_", " ")}</strong></div>
+              <div><span>{tournament?.status === "ready_room" ? t("readyRoom", lang) : t("countdown", lang)}</span><strong>{tournament?.status === "ready_room" ? `${tournament?.readyCountdownSeconds || 0}s` : formatCountdown(tournament?.secondsToStart || 0)}</strong></div>
+                <div><span>{t("questionsWord", lang)}</span><strong>{formatMixedQuestions(tournament?.questionCount || 20, tournament?.timePerQuestion || 15, lang)}</strong></div>
+                <div><span>{t("ranking", lang)}</span><strong>{t("afterQuestions51015", lang)}</strong></div>
               </div>
 
               {registered ? (
-                <p className="tournament-success compact"><FaCheckCircle /> You're already registered for this tournament.</p>
+                <p className="tournament-success compact"><FaCheckCircle /> {t("alreadyRegistered", lang)}</p>
               ) : tournament?.status !== "registration_open" ? (
-                <p className="tournament-note"><FaExclamationTriangle /> Registration Closed.</p>
+                <p className="tournament-note"><FaExclamationTriangle /> {t("registrationClosedDot", lang)}</p>
               ) : null}
 
               <button className="tournament-primary-btn full" type="button" disabled={action.disabled || busy} onClick={handleAction}>
-                <FaTrophy /> {busy ? "Please wait..." : action.label}
+                <FaTrophy /> {busy ? t("pleaseWait", lang) : action.label}
               </button>
             </section>
 
             <section className="dashboard-card tournament-card" ref={rulesRef} tabIndex={-1}>
               <div className="tournament-card-header">
-                <h2 className="card-title"><FaBalanceScale /> Live Battle Rules</h2>
-                <span className="status-chip">Fair scoring</span>
+                <h2 className="card-title"><FaBalanceScale /> {t("liveBattleRules", lang)}</h2>
+                <span className="status-chip">{t("fairScoring", lang)}</span>
               </div>
               <div className="tournament-format-grid">
-                <div className="tournament-format-item"><FaCheckCircle /> 20 mixed Loksewa questions</div>
-                <div className="tournament-format-item"><FaCheckCircle /> 15 seconds per question</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Correct answer gives +100 points</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Faster correct answers earn +0 to +50 speed bonus</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Maximum per question: 150 points</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Wrong or unanswered gives 0 points</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Answer locks after submit and cannot be changed</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Correct/wrong reveals only after timer closes</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Checkpoints after questions 5, 10, and 15</div>
-                <div className="tournament-format-item"><FaCheckCircle /> Missed questions count as unanswered</div>
-                <div className="tournament-format-item"><FaShieldAlt /> No betting. Users never lose coins.</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("rule20Questions", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("rule15Seconds", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleCorrect100", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleSpeedBonus", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleMax150", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleWrong0", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleAnswerLocks", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleRevealAfterTimer", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleCheckpoints", lang)}</div>
+                <div className="tournament-format-item"><FaCheckCircle /> {t("ruleMissedUnanswered", lang)}</div>
+                <div className="tournament-format-item"><FaShieldAlt /> {t("ruleNoBetting", lang)}</div>
               </div>
               <div className="scoring-highlight-grid" aria-label="Tournament scoring examples">
-                <div><span>Correct Answer</span><strong>+100 points</strong></div>
-                <div><span>Speed Bonus</span><strong>+0 to +50</strong></div>
-                <div><span>Max Per Question</span><strong>150 points</strong></div>
-                <div><span>Wrong / Unanswered</span><strong>0 points</strong></div>
+                <div><span>{t("correctAnswerLabel", lang)}</span><strong>+100</strong></div>
+                <div><span>{t("speedBonus", lang)}</span><strong>+0 to +50</strong></div>
+                <div><span>{t("maxPerQuestion", lang)}</span><strong>150</strong></div>
+                <div><span>{t("wrongUnanswered", lang)}</span><strong>0</strong></div>
               </div>
-              <p className="tournament-note">Choose carefully - once submitted, your answer cannot be changed. Correct with 15s left = 150 points; with 8s left = about 127; with 1s left = about 103.</p>
+              <p className="tournament-note">{t("scoringNote", lang)}</p>
             </section>
           </div>
 
           <aside className="tournament-right-column">
             <section className="dashboard-card tournament-card">
               <div className="tournament-card-header">
-                <h2 className="card-title"><FaMedal /> Leaderboard</h2>
+                <h2 className="card-title"><FaMedal /> {t("leaderboard", lang)}</h2>
               </div>
-              <p className="empty-state">Leaderboard will appear after participants answer live questions.</p>
+              <p className="empty-state">{t("leaderboardWillAppear", lang)}</p>
             </section>
 
             <section className="dashboard-card tournament-card">
               <div className="tournament-card-header">
-                <h2 className="card-title"><FaGift /> Tournament Rewards</h2>
-                <span className="gold-chip"><FaCrown /> Podium</span>
+                <h2 className="card-title"><FaGift /> {t("tournamentRewards", lang)}</h2>
+                <span className="gold-chip"><FaCrown /> {t("podium", lang)}</span>
               </div>
               <div className="tournament-reward-list">
-                {rewards.map(({ rank, coins, xp, badge }) => (
-                  <div className="tournament-reward-row" key={rank}>
-                    <span>{rank}</span>
+                {rewards.map(({ rankKey, coins, xp, badgeKey }) => (
+                  <div className="tournament-reward-row" key={rankKey}>
+                    <span>{t(rankKey, lang)}</span>
                     {coins != null || xp != null ? (
-                      <RewardDisplay coins={coins} xp={xp} extra={badge} />
+                      <RewardDisplay coins={coins} xp={xp} extra={badgeKey ? t(badgeKey, lang) : undefined} />
                     ) : (
-                      <strong>{badge}</strong>
+                      <strong>{t(badgeKey, lang)}</strong>
                     )}
                   </div>
                 ))}
               </div>
-              <p className="tournament-note"><CoinIcon size="sm" /> Rewards are applied once when results are published.</p>
+              <p className="tournament-note"><CoinIcon size="sm" /> {t("rewardsAppliedOnce", lang)}</p>
             </section>
           </aside>
         </div>

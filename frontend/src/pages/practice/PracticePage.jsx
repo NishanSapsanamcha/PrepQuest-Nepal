@@ -6,6 +6,15 @@ import SubjectCard from "../../components/practice/SubjectCard";
 import PremiumBadge from "../../components/practice/PremiumBadge";
 import { CoinIcon } from "../../components/common/Coin";
 import { STAT_ICON_ASSETS } from "../../data/practiceIconAssets";
+import {
+  languageLabel as getLanguageLabel,
+  t,
+  translateExamName,
+  formatDays,
+  formatStartWith,
+  formatLowestAccuracy,
+  formatBuildFoundation,
+} from "../../data/translations";
 import badgeStatIcon from "../../assets/level/bages.png";
 import { examTracks } from "../../data/examTracks";
 import { getCurrentStreak } from "../../utils/dailyQuizUtils";
@@ -33,8 +42,9 @@ function PracticePage() {
   const user = getUser();
   const currentStreak = getCurrentStreak();
   const selectedExamId = normalizeExamId(user.selectedExam || localStorage.getItem("selectedExam"));
-  const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
-  const languageLabel = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "English";
+  const preferredLanguage = localStorage.getItem("preferredLanguage") || user.preferredLanguage || "english";
+  const examLabel = translateExamName(examTracks[selectedExamId]?.name || "Sakha Adhikrit", preferredLanguage);
+  const languageLabel = getLanguageLabel(preferredLanguage);
   const subjectProgress = getNormalizedSubjectProgress();
   const totalXp = calculateTotalXPFromTransactions();
   const coinBalance = getUserCoinBalance();
@@ -59,18 +69,18 @@ function PracticePage() {
         [...subjectCards].sort((a, b) => b.questionsAvailable - a.questionsAvailable)[0];
   const recommendation = recommendationSubject
     ? {
-        title: `Start with ${recommendationSubject.name}`,
+        title: formatStartWith(recommendationSubject.name, preferredLanguage),
         text:
           recommendationSubject.progress.questionsSolved > 0
-            ? `${recommendationSubject.name} has your lowest current accuracy. Complete a focused practice to improve it.`
-            : `Start with ${recommendationSubject.name} to build your foundation.`,
+            ? formatLowestAccuracy(recommendationSubject.name, preferredLanguage)
+            : formatBuildFoundation(recommendationSubject.name, preferredLanguage),
         questionsAvailable: recommendationSubject.questionsAvailable,
         canPractice: recommendationSubject.canPractice,
         subjectId: recommendationSubject.id,
       }
     : {
-        title: "Question bank not ready",
-        text: "Validated practice questions are not available yet.",
+        title: t("questionBankNotReadyTitle", preferredLanguage),
+        text: t("questionsNotAvailable", preferredLanguage),
         questionsAvailable: 0,
         canPractice: false,
         subjectId: null,
@@ -87,16 +97,16 @@ function PracticePage() {
       {/* A. Header — clean, no welcome line */}
       <header className="dashboard-header practice-header">
         <div className="header-left">
-          <h1>Choose Your Practice Subject</h1>
-          <p>Master each subject step by step and level up your knowledge.</p>
+          <h1>{t("chooseSubject", preferredLanguage)}</h1>
+          <p>{t("practicePageSubtitle", preferredLanguage)}</p>
         </div>
         <div className="header-right">
           <div className="header-chips">
-            <span className="chip"><FaGraduationCap /> Exam: <strong>{examLabel}</strong></span>
-            <span className="chip"><FaLanguage /> Language: <strong>{languageLabel}</strong></span>
+            <span className="chip"><FaGraduationCap /> {t("exam", preferredLanguage)}: <strong>{examLabel}</strong></span>
+            <span className="chip"><FaLanguage /> {t("language", preferredLanguage)}: <strong>{languageLabel}</strong></span>
           </div>
           <button className="outline-pill" type="button" onClick={() => navigate("/setup", { state: { allowPreferenceChange: true } })}>
-            <FaTools /> Change Preferences
+            <FaTools /> {t("changePreferences", preferredLanguage)}
           </button>
         </div>
       </header>
@@ -107,9 +117,9 @@ function PracticePage() {
           <div className="summary-stat">
             <PremiumBadge src={STAT_ICON_ASSETS.xp} alt="XP" className="summary-stat-icon xp" imgClassName="practice-summary-icon"><FaStar /></PremiumBadge>
             <div className="summary-stat-body">
-              <span className="summary-stat-label">Total XP</span>
+              <span className="summary-stat-label">{t("totalXP", preferredLanguage)}</span>
               <strong className="summary-stat-value">{totalXp.toLocaleString()}</strong>
-              <span className="summary-stat-helper">Keep leveling up!</span>
+              <span className="summary-stat-helper">{t("keepLevelingUp", preferredLanguage)}</span>
             </div>
           </div>
           <div className="summary-stat">
@@ -121,15 +131,15 @@ function PracticePage() {
           <div className="summary-stat">
             <PremiumBadge src={STAT_ICON_ASSETS.streak} alt="Streak" className="summary-stat-icon streak" imgClassName="practice-summary-icon"><FaFire /></PremiumBadge>
             <div className="summary-stat-body">
-              <span className="summary-stat-label">Current Streak</span>
-              <strong className="summary-stat-value">{currentStreak} {currentStreak === 1 ? "Day" : "Days"}</strong>
-              <span className="summary-stat-helper">{currentStreak > 0 ? "Keep it alive today" : "Start a daily quiz"}</span>
+              <span className="summary-stat-label">{t("currentStreak", preferredLanguage)}</span>
+              <strong className="summary-stat-value">{formatDays(currentStreak, preferredLanguage)}</strong>
+              <span className="summary-stat-helper">{currentStreak > 0 ? t("keepItAliveToday", preferredLanguage) : t("startDailyQuizPrompt", preferredLanguage)}</span>
             </div>
           </div>
           <div className="summary-stat">
             <PremiumBadge src={badgeStatIcon} alt="Badges" className="summary-stat-icon badges" imgClassName="practice-summary-icon"><FaMedal /></PremiumBadge>
             <div className="summary-stat-body">
-              <span className="summary-stat-label">Badges Earned</span>
+              <span className="summary-stat-label">{t("earnedBadges", preferredLanguage)}</span>
               <strong className="summary-stat-value">{badgesEarned}</strong>
             </div>
           </div>
@@ -137,7 +147,7 @@ function PracticePage() {
 
         {/* C. Subjects grid (main focus) */}
         <section className="practice-section-heading">
-          <h2>Subjects</h2>
+          <h2>{t("chooseSubject", preferredLanguage)}</h2>
         </section>
 
         <section className="subject-grid" data-debug="Subject Grid">
@@ -159,41 +169,41 @@ function PracticePage() {
         {/* E. Review & Mistakes */}
         <section className="review-mistakes-section" aria-labelledby="review-mistakes-title">
           <div className="practice-section-heading compact">
-            <h2 id="review-mistakes-title">Review &amp; Mistakes</h2>
-            <p>Revisit saved questions and correct your weak areas before your next practice.</p>
+            <h2 id="review-mistakes-title">{t("reviewMistakes", preferredLanguage)}</h2>
+            <p>{t("revisitSaved", preferredLanguage)}</p>
           </div>
           <div className="review-card-grid">
             <article className="review-mini-card">
               <div className="review-mini-icon"><FaBookmark /></div>
               <div>
-                <h3>Saved Questions</h3>
-                <strong>{savedQuestions.length} saved</strong>
-                <p>Questions you bookmarked during practice.</p>
+                <h3>{t("savedQuestions", preferredLanguage)}</h3>
+                <strong>{savedQuestions.length} {t("savedWord", preferredLanguage)}</strong>
+                <p>{t("bookmarkedQuestions", preferredLanguage)}</p>
               </div>
               <button className="btn btn-secondary" type="button" disabled={!savedQuestions.length} onClick={() => navigate("/practice/review?tab=saved")}>
-                Review Saved
+                {t("reviewSaved", preferredLanguage)}
               </button>
             </article>
             <article className="review-mini-card mistakes">
               <div className="review-mini-icon"><FaExclamationTriangle /></div>
               <div>
-                <h3>Wrong Answers</h3>
-                <strong>{wrongAnswers.length ? `${wrongAnswers.length} to review` : "No mistakes yet"}</strong>
-                <p>Learn from mistakes with explanations.</p>
+                <h3>{t("wrongAnswers", preferredLanguage)}</h3>
+                <strong>{wrongAnswers.length ? `${wrongAnswers.length} ${t("toReviewSuffix", preferredLanguage)}` : t("noMistakesYet", preferredLanguage)}</strong>
+                <p>{t("learnFromMistakes", preferredLanguage)}</p>
               </div>
               <button className="btn btn-secondary" type="button" disabled={!wrongAnswers.length} onClick={() => navigate("/practice/review?tab=wrong")}>
-                Review Mistakes
+                {t("reviewMistakesAction", preferredLanguage)}
               </button>
             </article>
             <article className="review-mini-card">
               <div className="review-mini-icon"><FaLightbulb /></div>
               <div>
-                <h3>Weak Topic</h3>
-                <strong>{topWeakTopic ? topWeakTopic.topic : "Not enough data yet"}</strong>
-                <p>Most missed topic from recent practice.</p>
+                <h3>{t("weakTopics", preferredLanguage)}</h3>
+                <strong>{topWeakTopic ? topWeakTopic.topic : t("notEnoughDataYet", preferredLanguage)}</strong>
+                <p>{t("mostMissedRecent", preferredLanguage)}</p>
               </div>
               <button className="btn btn-secondary" type="button" disabled={!topWeakTopic} onClick={() => navigate("/practice/review?tab=weak")}>
-                Practice Topic
+                {t("practiceTopic", preferredLanguage)}
               </button>
             </article>
           </div>
@@ -202,45 +212,45 @@ function PracticePage() {
         {/* F. How XP & Gamification Works (extra explanation lives here) */}
         <section className="how-xp-section" aria-labelledby="how-xp-title">
           <div className="practice-section-heading compact">
-            <h2 id="how-xp-title">How XP &amp; Gamification Works</h2>
-            <p>A quick guide to how progress, rewards, and unlocks are earned.</p>
+            <h2 id="how-xp-title">{t("howXpWorks", preferredLanguage)}</h2>
+            <p>{t("howXpWorksDesc", preferredLanguage)}</p>
           </div>
           <div className="how-xp-grid">
             <article className="how-xp-card">
               <span className="how-xp-icon xp"><FaStar /></span>
-              <h3>Earn XP</h3>
-              <p>Each correct practice answer gives +10 XP.</p>
+              <h3>{t("earnXp", preferredLanguage)}</h3>
+              <p>{t("earnXpDesc", preferredLanguage)}</p>
             </article>
             <article className="how-xp-card">
               <span className="how-xp-icon level"><FaLayerGroup /></span>
-              <h3>Level Up Subjects</h3>
-              <p>Subject XP unlocks new practice modes and harder challenges.</p>
+              <h3>{t("levelUpSubjects", preferredLanguage)}</h3>
+              <p>{t("levelUpSubjectsDesc", preferredLanguage)}</p>
             </article>
             <article className="how-xp-card">
               <span className="how-xp-icon streak"><FaFire /></span>
-              <h3>Build Streaks</h3>
-              <p>Daily learning increases your streak and can unlock streak badges.</p>
+              <h3>{t("buildStreaks", preferredLanguage)}</h3>
+              <p>{t("buildStreaksDesc", preferredLanguage)}</p>
             </article>
             <article className="how-xp-card">
               <span className="how-xp-icon coin"><CoinIcon size="sm" /></span>
-              <h3>Earn Coins</h3>
-              <p>Coins come from daily challenges, mocks, tournaments, badges, and strong practice.</p>
+              <h3>{t("earnCoins", preferredLanguage)}</h3>
+              <p>{t("earnCoinsDesc", preferredLanguage)}</p>
             </article>
             <article className="how-xp-card">
               <span className="how-xp-icon badge"><FaMedal /></span>
-              <h3>Unlock Badges</h3>
-              <p>Badges unlock automatically when real requirements are completed.</p>
+              <h3>{t("unlockBadges", preferredLanguage)}</h3>
+              <p>{t("unlockBadgesDesc", preferredLanguage)}</p>
             </article>
             <article className="how-xp-card">
               <span className="how-xp-icon weak"><FaLightbulb /></span>
-              <h3>Improve Weak Areas</h3>
-              <p>Wrong answers and weak topics are tracked so you can review and improve.</p>
+              <h3>{t("improveWeakAreas", preferredLanguage)}</h3>
+              <p>{t("improveWeakAreasDesc", preferredLanguage)}</p>
             </article>
           </div>
         </section>
 
         <p className="practice-footer-tagline">
-          <FaFire /> <strong>Consistent practice makes perfect!</strong> Keep your streak alive and climb the leaderboard.
+          <FaFire /> <strong>{t("consistentPracticeBold", preferredLanguage)}</strong> {t("consistentPracticeRest", preferredLanguage)}
         </p>
       </section>
     </DashboardLayout>

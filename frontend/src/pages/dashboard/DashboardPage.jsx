@@ -45,6 +45,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { rankThresholds } from "../../data/gamificationMockData";
 import { rankJourney } from "../../data/rankBadges";
+import { languageLabel as getLanguageLabel, t, translateExamName, translateRankName, translateSubjectName, formatDays, formatBestStreak } from "../../data/translations";
 import { getCurrentStreak, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { canClaimDailyReward, DAILY_REWARD_CLAIMED_EVENT, getDailyRewardState, getNepalRewardDate } from "../../utils/dailyRewardUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
@@ -60,12 +61,6 @@ import "./DashboardPage.css";
 const examNames = {
   "nayab-subba": "Nayab Subba",
   "sakha-adhikrit": "Sakha Adhikrit",
-};
-
-const languageNames = {
-  nepali: "Nepali",
-  english: "English",
-  both: "Both",
 };
 
 const routeTargets = {
@@ -103,15 +98,15 @@ const subjectData = {
 };
 
 const sidebarItems = [
-  { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
-  { key: "progression", label: "Progression", Icon: Route },
-  { key: "practice", label: "Practice", Icon: BookOpenCheck },
-  { key: "daily-quiz", label: "Daily Quiz", Icon: CircleHelp },
-  { key: "mock-tests", label: "Mock Tests", Icon: ClipboardList },
-  { key: "tournament", label: "Tournament", Icon: Trophy },
-  { key: "leaderboard", label: "Leaderboard", Icon: Award },
-  { key: "badges", label: "Badges", Icon: Medal },
-  { key: "profile", label: "Profile", Icon: UserRound },
+  { key: "dashboard", labelKey: "dashboard", Icon: LayoutDashboard },
+  { key: "progression", labelKey: "progression", Icon: Route },
+  { key: "practice", labelKey: "practice", Icon: BookOpenCheck },
+  { key: "daily-quiz", labelKey: "dailyQuiz", Icon: CircleHelp },
+  { key: "mock-tests", labelKey: "mockTest", Icon: ClipboardList },
+  { key: "tournament", labelKey: "tournament", Icon: Trophy },
+  { key: "leaderboard", labelKey: "leaderboard", Icon: Award },
+  { key: "badges", labelKey: "badges", Icon: Medal },
+  { key: "profile", labelKey: "profile", Icon: UserRound },
 ];
 
 function DashboardPage() {
@@ -151,13 +146,14 @@ function DashboardPage() {
   const coinIcon = gamificationIcons.coins;
   const streakIcon = gamificationIcons.streak;
   const missionImg = missionArt || gamificationIcons.mission;
-  const coins = getUserCoinBalance();
   const subjectCards = getExamSubjects(selectedExam).map((subject) =>
     buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExam)
   );
 
-  const examLabel = examNames[selectedExam] || "Nayab Subba";
-  const languageLabel = languageNames[preferredLanguage] || "English";
+  const examLabel = translateExamName(examNames[selectedExam] || "Nayab Subba", preferredLanguage);
+  const languageLabel = getLanguageLabel(preferredLanguage);
+  const currentRankLabel = translateRankName(currentRank, preferredLanguage);
+  const nextRankLabel = translateRankName(nextRank, preferredLanguage);
 
   const weakSubjects = useMemo(() => {
     return subjectCards
@@ -227,30 +223,33 @@ function DashboardPage() {
           </button>
 
           <nav className="sidebar-nav">
-            {sidebarItems.map(({ key, label, Icon }) => (
+            {sidebarItems.map(({ key, label, labelKey, Icon }) => {
+              const navLabel = label || t(labelKey, preferredLanguage);
+              return (
               <button
                 type="button"
                 className={`nav-item${key === "dashboard" ? " active" : ""}`}
                 key={key}
                 data-nav={key}
-                title={label}
-                aria-label={label}
+                title={navLabel}
+                aria-label={navLabel}
                 onClick={() => handleNavClick(key)}
               >
                 <Icon />
-                <span>{label}</span>
+                <span>{navLabel}</span>
               </button>
-            ))}
+              );
+            })}
             <button
               type="button"
               className="nav-item logout"
               data-nav="logout"
-              title="Logout"
-              aria-label="Logout"
+              title={t("logout", preferredLanguage)}
+              aria-label={t("logout", preferredLanguage)}
               onClick={() => handleNavClick("logout")}
             >
               <LogOut />
-              <span>Logout</span>
+              <span>{t("logout", preferredLanguage)}</span>
             </button>
           </nav>
         </aside>
@@ -258,17 +257,23 @@ function DashboardPage() {
         <div className="main-content">
           <header className="dashboard-header">
             <div className="header-left">
-              <p className="eyebrow">Welcome back, <span>{userName}</span></p>
-              <h1>PrepQuest Dashboard</h1>
-              <p>Track progress, earn rewards, and prepare smarter for <strong>{examLabel}</strong>.</p>
+              <p className="eyebrow">{t("welcomeBack", preferredLanguage)} <span>{userName}</span></p>
+              <h1>PrepQuest {t("dashboard", preferredLanguage)}</h1>
+              <p>
+                {preferredLanguage === "nepali" ? (
+                  <><strong>{examLabel}</strong> {t("dashboardSubtitlePrefix", preferredLanguage)}{t("dashboardSubtitleSuffix", preferredLanguage)}</>
+                ) : (
+                  <>{t("dashboardSubtitlePrefix", preferredLanguage)} <strong>{examLabel}</strong>{t("dashboardSubtitleSuffix", preferredLanguage)}</>
+                )}
+              </p>
             </div>
             <div className="header-right">
               <div className="header-chips">
-                <span className="chip"><GraduationCap /> Exam: <strong>{examLabel}</strong></span>
-                <span className="chip"><Languages /> Language: <strong>{languageLabel}</strong></span>
+                <span className="chip"><GraduationCap /> {t("exam", preferredLanguage)}: <strong>{examLabel}</strong></span>
+                <span className="chip"><Languages /> {t("language", preferredLanguage)}: <strong>{languageLabel}</strong></span>
               </div>
               <button className="outline-pill" type="button" onClick={handleChangePreferences}>
-                <Settings /> Change Preferences
+                <Settings /> {t("changePreferences", preferredLanguage)}
               </button>
             </div>
           </header>
@@ -279,12 +284,12 @@ function DashboardPage() {
             <section className="stats-banner" aria-label="Learning stats">
               <div className="stat-block">
                 <span className="stat-art level">
-                  <img src={rankBadge} alt={currentRank} />
+                  <img src={rankBadge} alt={currentRankLabel} />
                 </span>
                 <div className="stat-info">
-                  <div className="stat-value">Level {rankProgress.level}</div>
-                  <div className="stat-label accent-level">{currentRank}</div>
-                  <div className="stat-helper">{totalXp.toLocaleString()} XP earned</div>
+                  <div className="stat-value">{t("level", preferredLanguage)} {rankProgress.level}</div>
+                  <div className="stat-label accent-level">{currentRankLabel}</div>
+                  <div className="stat-helper">{totalXp.toLocaleString()} {t("xpEarned", preferredLanguage)}</div>
                 </div>
               </div>
 
@@ -293,14 +298,14 @@ function DashboardPage() {
               <div className="stat-block">
                 <span className="stat-art coin">
                   {coinIcon ? (
-                    <img className="dashboard-stat-icon-img" src={coinIcon} alt="Coins" />
+                    <img className="dashboard-stat-icon-img" src={coinIcon} alt={t("coins", preferredLanguage)} />
                   ) : (
                     <CoinIcon size="xl" />
                   )}
                 </span>
                 <div className="stat-info">
                   <div className="stat-value coin-stat-value">{coins.toLocaleString()}</div>
-                  <div className="stat-label">Coins</div>
+                  <div className="stat-label">{t("coins", preferredLanguage)}</div>
                 </div>
               </div>
 
@@ -315,14 +320,14 @@ function DashboardPage() {
                   )}
                 </span>
                 <div className="stat-info">
-                  <div className="stat-value">{dailyRewardState.currentStreak} {dailyRewardState.currentStreak === 1 ? "Day" : "Days"}</div>
-                  <div className="stat-label accent-streak">Current Streak</div>
+                  <div className="stat-value">{formatDays(dailyRewardState.currentStreak, preferredLanguage)}</div>
+                  <div className="stat-label accent-streak">{t("currentStreak", preferredLanguage)}</div>
                   <div className="stat-helper">
                     {(() => {
                       const best = dailyRewardState.bestStreak > 0
                         ? dailyRewardState.bestStreak
                         : (dailyRewardState.currentStreak > 0 ? dailyRewardState.currentStreak : 0);
-                      return `Best streak: ${best} ${best === 1 ? "Day" : "Days"}`;
+                      return formatBestStreak(best, preferredLanguage);
                     })()}
                   </div>
                 </div>
@@ -332,7 +337,7 @@ function DashboardPage() {
             {/* Today's Mission — the hero / main action section */}
             <section className="dashboard-card mission-card hero-mission">
               <div className="mission-left">
-                <p className="mission-title">Today&apos;s Mission</p>
+                <p className="mission-title">{t("todayMission", preferredLanguage)}</p>
                 <div className="mission-visual" aria-hidden="true">
                   {missionImg ? (
                     <img className="mission-image" src={missionImg} alt="" />
@@ -343,23 +348,23 @@ function DashboardPage() {
               </div>
               <div className="mission-tasks">
                 <div className={`mission-item${dailyQuizCompleted ? " completed" : ""}`}>
-                  {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>Complete 1 daily quiz</span>
+                  {dailyQuizCompleted ? <CheckCircle2 /> : <Circle />}<span>{t("completeDailyQuiz", preferredLanguage)}</span>
                 </div>
                 <div className={`mission-item${mockCompletedToday ? " completed" : ""}`}>
-                  {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>Take 1 mock test</span>
+                  {mockCompletedToday ? <CheckCircle2 /> : <Circle />}<span>{t("takeMockTest", preferredLanguage)}</span>
                 </div>
                 <div className="mission-item">
-                  <Circle /><span>Practice your weak subject</span>
+                  <Circle /><span>{t("practiceWeakSubject", preferredLanguage)}</span>
                 </div>
               </div>
               <div className="mission-cta">
-                <span className="mission-reward"><Gift /> Complete all to earn bonus coins!</span>
+                <span className="mission-reward"><Gift /> {t("completeBonusCoins", preferredLanguage)}</span>
                 <button
                   className="btn mission-start-btn"
                   type="button"
                   onClick={() => navigate(dailyQuizCompleted ? "/daily-quiz/result" : "/daily-quiz")}
                 >
-                  {dailyQuizCompleted ? "Review Daily Quiz" : "Start Daily Quiz"} <ChevronRight />
+                  {dailyQuizCompleted ? t("reviewDailyQuiz", preferredLanguage) : t("startDailyQuiz", preferredLanguage)} <ChevronRight />
                 </button>
               </div>
             </section>
@@ -367,10 +372,10 @@ function DashboardPage() {
             {/* Your Progress — below the mission */}
             <section className="dashboard-card your-progress-card">
               <div className="your-progress-info">
-                <p className="eyebrow">Your Progress</p>
-                <h2>{currentRank}</h2>
+                <p className="eyebrow">{t("yourProgress", preferredLanguage)}</p>
+                <h2>{currentRankLabel}</h2>
                 <p className="your-progress-xp">
-                  <strong>{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong> earned
+                  <strong>{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong> {t("earnedSuffix", preferredLanguage)}
                 </p>
               </div>
               <div className="your-progress-track">
@@ -380,47 +385,47 @@ function DashboardPage() {
                 <span className="your-progress-percent">{rankProgress.percent}%</span>
               </div>
               <div className="your-progress-next">
-                <span>Next Rank:</span>
-                <strong>{isMaxRank ? "Top rank reached" : nextRank}</strong>
+                <span>{t("nextRank", preferredLanguage)}:</span>
+                <strong>{isMaxRank ? t("topRankReached", preferredLanguage) : nextRankLabel}</strong>
               </div>
               <button className="outline-pill view-progression-btn" type="button" onClick={() => navigate("/progression")}>
-                View Progression <ChevronRight />
+                {t("viewProgression", preferredLanguage)} <ChevronRight />
               </button>
             </section>
 
             {/* Quick Actions + Weak Subjects / Focus Area */}
             <div className="dashboard-bottom-grid">
               <section className="dashboard-card">
-                <h2 className="card-title">Quick Actions</h2>
+                <h2 className="card-title">{t("quickActions", preferredLanguage)}</h2>
                 <div className="quick-actions-grid">
                   <button className="qa-card" type="button" onClick={() => navigateIfAvailable("daily-quiz")}>
                     <span className="qa-icon qa-teal"><CircleHelp /></span>
-                    <span className="qa-label">Daily Quiz</span>
+                    <span className="qa-label">{t("dailyQuiz", preferredLanguage)}</span>
                   </button>
                   <button className="qa-card" type="button" onClick={() => navigateIfAvailable("mock-tests")}>
                     <span className="qa-icon qa-blue"><ClipboardList /></span>
-                    <span className="qa-label">Mock Test</span>
+                    <span className="qa-label">{t("mockTest", preferredLanguage)}</span>
                   </button>
                   <button className="qa-card" type="button" onClick={() => navigateIfAvailable("practice")}>
                     <span className="qa-icon qa-purple"><BookOpen /></span>
-                    <span className="qa-label">Subject Practice</span>
+                    <span className="qa-label">{t("subjectPractice", preferredLanguage)}</span>
                   </button>
                 </div>
               </section>
 
               <section className="dashboard-card focus-area-card">
-                <h2 className="card-title">Weak Subjects / Focus Area</h2>
+                <h2 className="card-title">{t("practiceWeakSubject", preferredLanguage)}</h2>
                 {topWeakSubject ? (
                   <div className="focus-area-body">
                     <span className="focus-icon"><GraduationCap /></span>
                     <div className="focus-copy">
                       <div className="focus-top">
-                        <strong className="focus-name">{topWeakSubject.name}</strong>
+                        <strong className="focus-name">{translateSubjectName(topWeakSubject.name, preferredLanguage)}</strong>
                         <span className="focus-accuracy">{topWeakSubject.accuracy}%</span>
                       </div>
                       <div className="focus-meta">
-                        <span>Accuracy</span>
-                        <span>{topWeakSubject.progress.questionsSolved} solved</span>
+                        <span>{t("accuracy", preferredLanguage)}</span>
+                        <span>{topWeakSubject.progress.questionsSolved} {t("solved", preferredLanguage)}</span>
                       </div>
                       <div className="progress-bar">
                         <div className="progress-fill" style={{ width: `${topWeakSubject.accuracy}%` }} />
@@ -431,13 +436,13 @@ function DashboardPage() {
                   <div className="focus-area-body">
                     <span className="focus-icon"><GraduationCap /></span>
                     <div className="focus-copy">
-                      <strong className="focus-name">Not enough practice yet</strong>
-                      <p className="card-copy">Complete a practice session to reveal your focus area.</p>
+                      <strong className="focus-name">{t("notEnoughPracticeYet", preferredLanguage)}</strong>
+                      <p className="card-copy">{t("completePracticeReveal", preferredLanguage)}</p>
                     </div>
                   </div>
                 )}
                 <button className="outline-pill focus-cta" type="button" onClick={() => navigateIfAvailable("practice")}>
-                  Practice Weak Areas <ChevronRight />
+                  {t("practiceWeakAreas", preferredLanguage)} <ChevronRight />
                 </button>
               </section>
             </div>

@@ -18,6 +18,20 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { getOptionLabel, getText } from "../../utils/practiceUtils";
 import { getCurrentTournaments, getTournamentLiveState, markTournamentReady, submitTournamentAnswer } from "../../services/tournamentService";
+import {
+  t,
+  translateSubjectName,
+  translateDifficulty,
+  formatBeginsInSeconds,
+  formatNextAfterReg,
+  formatAfterQuestion,
+  formatQuestionOf,
+  formatCWU,
+  formatScorePts,
+  formatYourRank,
+  formatPointsEarned,
+  formatRegisteredCount,
+} from "../../data/translations";
 import "../Tournament.css";
 
 function useTournamentId() {
@@ -61,7 +75,7 @@ function TournamentSessionPage() {
         navigate(`/tournament/result?id=${encodeURIComponent(tournamentId)}`, { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Live battle is unavailable.");
+      setError(err.response?.data?.message || t("liveBattleUnavailable", languageMode));
     }
   };
 
@@ -75,7 +89,7 @@ function TournamentSessionPage() {
   useEffect(() => {
     setSelectedOptionKey(state?.answer?.selectedOptionKey || "");
     if (state?.answer?.locked && state?.phase?.phase === "question") {
-      setNotice("Answer locked. Waiting for reveal.");
+      setNotice(t("answerLockedWaiting", state?.registration?.preferredLanguage || "english"));
     }
   }, [state?.answer?.locked, state?.answer?.selectedOptionKey, state?.phase?.phase, state?.question?.id]);
 
@@ -108,7 +122,7 @@ function TournamentSessionPage() {
   const progressPercent = Math.round((Math.min(questionNumber || 0, tournament?.questionCount || 20) / (tournament?.questionCount || 20)) * 100);
   const reveal = phase?.phase === "reveal";
   const locked = Boolean(answer?.locked);
-  const selectedAnswerLabel = question && answer?.selectedOptionKey ? getOptionLabel(question, answer.selectedOptionKey, languageMode) : "No answer submitted";
+  const selectedAnswerLabel = question && answer?.selectedOptionKey ? getOptionLabel(question, answer.selectedOptionKey, languageMode) : t("noAnswerSubmitted", languageMode);
   const correctAnswerLabel = question?.correctOption ? getOptionLabel(question, question.correctOption, languageMode) : "";
 
   const handleReady = async () => {
@@ -118,10 +132,10 @@ function TournamentSessionPage() {
     playClick();
     try {
       await markTournamentReady(tournament.id);
-      setNotice("You're ready. Question 1 starts on server time.");
+      setNotice(t("youreReady", languageMode));
       await loadState();
     } catch (err) {
-      setError(err.response?.data?.message || "Could not mark you ready.");
+      setError(err.response?.data?.message || t("couldNotMarkReady", languageMode));
     } finally {
       setReadyBusy(false);
     }
@@ -130,7 +144,7 @@ function TournamentSessionPage() {
   const handleSubmit = async () => {
     if (!tournament || locked || submitting || phase?.phase !== "question") return;
     if (!selectedOptionKey) {
-      setError("Choose an answer before locking it.");
+      setError(t("chooseAnswerBeforeLock", languageMode));
       return;
     }
     setSubmitting(true);
@@ -139,10 +153,10 @@ function TournamentSessionPage() {
     playClick();
     try {
       const data = await submitTournamentAnswer(tournament.id, selectedOptionKey);
-      setNotice(data.answer?.message || "Answer locked. Waiting for reveal.");
+      setNotice(data.answer?.message || t("answerLockedWaiting", languageMode));
       await loadState();
     } catch (err) {
-      setError(err.response?.data?.message || "Could not lock answer.");
+      setError(err.response?.data?.message || t("couldNotLockAnswer", languageMode));
     } finally {
       setSubmitting(false);
     }
@@ -170,9 +184,9 @@ function TournamentSessionPage() {
       <DashboardLayout activeKey="tournament">
         <section className="dashboard-content tournament-page">
           <section className="dashboard-card tournament-card">
-            <h1>Registration Closed</h1>
-            <p className="empty-state">You must be registered before entering a live tournament battle.</p>
-            <button className="tournament-primary-btn" type="button" onClick={() => navigate("/tournament")}>Back to Tournament</button>
+            <h1>{t("registrationClosed", languageMode)}</h1>
+            <p className="empty-state">{t("mustRegisterBattle", languageMode)}</p>
+            <button className="tournament-primary-btn" type="button" onClick={() => navigate("/tournament")}>{t("backToTournament", languageMode)}</button>
           </section>
         </section>
       </DashboardLayout>
@@ -183,8 +197,8 @@ function TournamentSessionPage() {
     <DashboardLayout activeKey="tournament">
       <header className="dashboard-header session-header">
         <div className="header-left">
-          <p className="eyebrow subject-pill">Friday Live Tournament</p>
-          <h1>Live Battle</h1>
+          <p className="eyebrow subject-pill">{t("fridayLiveTournament", languageMode)}</p>
+          <h1>{t("liveBattle", languageMode)}</h1>
         </div>
         <div className="header-right">
           <button
@@ -196,9 +210,9 @@ function TournamentSessionPage() {
           >
             {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
           </button>
-          <span className="soft-timer"><FaTrophy /> {registration.score} pts</span>
+          <span className="soft-timer"><FaTrophy /> {registration.score} {t("pts", languageMode)}</span>
           <button className="outline-pill exit-practice-btn" type="button" onClick={handleExit}>
-            <FaDoorOpen /> Exit Battle
+            <FaDoorOpen /> {t("exitBattle", languageMode)}
           </button>
         </div>
       </header>
@@ -209,62 +223,62 @@ function TournamentSessionPage() {
         {phase?.phase === "ready_room" ? (
           <section className="dashboard-card ready-room-card">
             <div className="ready-countdown">
-              <span>Get Ready for Friday Live Tournament</span>
+              <span>{t("getReadyFriday", languageMode)}</span>
               <strong>{formatCountdown(tournament.readyCountdownSeconds)}</strong>
-              <p>Tournament begins in {tournament.readyCountdownSeconds} seconds</p>
+              <p>{formatBeginsInSeconds(tournament.readyCountdownSeconds, languageMode)}</p>
             </div>
             <div className="ready-room-meta-grid">
-              <div><FaUsers /><span>Total registered</span><strong>{tournament.registrationCount} {tournament.registrationCount === 1 ? "user" : "users"}</strong></div>
-              <div><FaTrophy /><span>Exam track</span><strong>{tournament.examTrack === "mixed" ? "Mixed" : registration.selectedExam}</strong></div>
-              <div><FaUserCheck /><span>Language mode</span><strong>{registration.preferredLanguage}</strong></div>
-              <div><FaRegClock /><span>Format</span><strong>20 mixed questions</strong></div>
+              <div><FaUsers /><span>{t("totalRegistered", languageMode)}</span><strong>{formatRegisteredCount(tournament.registrationCount, languageMode)}</strong></div>
+              <div><FaTrophy /><span>{t("examTrack", languageMode)}</span><strong>{tournament.examTrack === "mixed" ? t("mixedWord", languageMode) : translateSubjectName(registration.selectedExam, languageMode)}</strong></div>
+              <div><FaUserCheck /><span>{t("languageModeLabel", languageMode)}</span><strong>{registration.preferredLanguage === "nepali" ? "नेपाली" : registration.preferredLanguage === "english" ? "English" : registration.preferredLanguage}</strong></div>
+              <div><FaRegClock /><span>{t("formatLabel", languageMode)}</span><strong>{t("twentyMixedQuestions", languageMode)}</strong></div>
             </div>
             <div className="tournament-format-grid">
-              <div className="tournament-format-item"><FaCheckCircle /> 20 mixed Loksewa questions</div>
-              <div className="tournament-format-item"><FaCheckCircle /> 15 seconds per question</div>
-              <div className="tournament-format-item"><FaCheckCircle /> Speed bonus up to +50 points</div>
-              <div className="tournament-format-item"><FaCheckCircle /> Answers lock after submission</div>
-              <div className="tournament-format-item"><FaCheckCircle /> Correct/wrong reveals after timer closes</div>
-              <div className="tournament-format-item"><FaCheckCircle /> Speed bonus rewards faster correct answers</div>
-              <div className="tournament-format-item"><FaShieldAlt /> No betting. No coin loss.</div>
+              <div className="tournament-format-item"><FaCheckCircle /> {t("rule20Questions", languageMode)}</div>
+              <div className="tournament-format-item"><FaCheckCircle /> {t("rule15Seconds", languageMode)}</div>
+              <div className="tournament-format-item"><FaCheckCircle /> {t("ruleSpeedBonus50", languageMode)}</div>
+              <div className="tournament-format-item"><FaCheckCircle /> {t("ruleAnswersLock", languageMode)}</div>
+              <div className="tournament-format-item"><FaCheckCircle /> {t("ruleRevealAfterTimer", languageMode)}</div>
+              <div className="tournament-format-item"><FaCheckCircle /> {t("ruleSpeedRewards", languageMode)}</div>
+              <div className="tournament-format-item"><FaShieldAlt /> {t("noBettingNoCoinLoss", languageMode)}</div>
             </div>
             <div className="ready-participant-panel">
               <div className="card-heading">
-                <h2 className="card-title"><FaUsers /> Registered Participants</h2>
-                <span className="status-chip">{state.participants?.length || 0} total</span>
+                <h2 className="card-title"><FaUsers /> {t("registeredParticipants", languageMode)}</h2>
+                <span className="status-chip">{state.participants?.length || 0}</span>
               </div>
               <div className="ready-participant-list">
                 {state.participants?.length ? state.participants.map((participant) => (
                   <div className={`ready-participant-row${participant.isCurrentUser ? " current-user" : ""}`} key={participant.userId}>
                     <strong>{participant.displayName}</strong>
-                    <span>{participant.selectedExam} · {participant.preferredLanguage}</span>
-                    {participant.isCurrentUser ? <em>You</em> : null}
+                    <span>{translateSubjectName(participant.selectedExam, languageMode)} · {participant.preferredLanguage === "nepali" ? "नेपाली" : participant.preferredLanguage === "english" ? "English" : participant.preferredLanguage}</span>
+                    {participant.isCurrentUser ? <em>{t("you", languageMode)}</em> : null}
                   </div>
-                )) : <p className="empty-state">No users registered yet.</p>}
+                )) : <p className="empty-state">{t("noUsersRegistered", languageMode)}</p>}
               </div>
             </div>
             <button className="tournament-primary-btn" type="button" disabled={readyBusy || registration.readyStatus} onClick={handleReady}>
-              <FaTrophy /> {registration.readyStatus ? "Entered Tournament" : "Enter Tournament"}
+              <FaTrophy /> {registration.readyStatus ? t("enteredTournament", languageMode) : t("enterTournament", languageMode)}
             </button>
-            <p className="tournament-note">Question 1 starts from the shared server clock for everyone together.</p>
+            <p className="tournament-note">{t("q1StartsShared", languageMode)}</p>
           </section>
         ) : tournament?.status === "registration_open" ? (
           <section className="dashboard-card checkpoint-leaderboard-card">
             <div className="card-heading">
-              <h2 className="card-title"><FaRegClock /> Battle Starting Soon</h2>
-              <span className="status-chip">Registered</span>
+              <h2 className="card-title"><FaRegClock /> {t("battleStartingSoon", languageMode)}</h2>
+              <span className="status-chip">{t("registered", languageMode)}</span>
             </div>
-            <p className="empty-state">Next question starts after registration closes in {tournament?.secondsToStart || phase?.secondsToStart || 0} seconds.</p>
+            <p className="empty-state">{formatNextAfterReg(tournament?.secondsToStart || phase?.secondsToStart || 0, languageMode)}</p>
           </section>
         ) : phase?.phase === "checkpoint" ? (
           <section className="dashboard-card checkpoint-leaderboard-card major-checkpoint-card">
             <div className="checkpoint-countdown-card">
-              <span>Next question starts in 15 seconds.</span>
+              <span>{t("nextStarts15", languageMode)}</span>
               <strong>{phase.countdownSeconds}</strong>
             </div>
             <div className="card-heading">
-              <h2 className="card-title"><FaTrophy /> Live Ranking Checkpoint</h2>
-              <span className="status-chip">After Question {phase.afterQuestion}</span>
+              <h2 className="card-title"><FaTrophy /> {t("liveRankingCheckpoint", languageMode)}</h2>
+              <span className="status-chip">{formatAfterQuestion(phase.afterQuestion, languageMode)}</span>
             </div>
             <div className="checkpoint-leaderboard-list scrollable-ranking">
               {state.leaderboard.length ? state.leaderboard.map((row) => (
@@ -273,30 +287,30 @@ function TournamentSessionPage() {
                   <span className="learner-cell">
                     {row.rank === 1 ? <FaCrown /> : row.rank <= 3 ? <FaMedal /> : null}
                     <strong>{row.displayName}</strong>
-                    {row.isCurrentUser ? <em className="you-badge">You</em> : null}
+                    {row.isCurrentUser ? <em className="you-badge">{t("you", languageMode)}</em> : null}
                   </span>
-                  <span>{row.correctAnswers} correct · {row.wrongAnswers} wrong · {row.unanswered} unanswered</span>
-                  <strong>{row.score} pts</strong>
+                  <span>{formatCWU(row.correctAnswers, row.wrongAnswers, row.unanswered, languageMode)}</span>
+                  <strong>{row.score} {t("pts", languageMode)}</strong>
                 </div>
-              )) : <p className="empty-state">Leaderboard will appear after participants answer live questions.</p>}
+              )) : <p className="empty-state">{t("leaderboardWillAppear", languageMode)}</p>}
             </div>
-            <p className="tournament-note">Your rank: {currentRank ? `#${currentRank.rank} · ${currentRank.score} pts · ${currentRank.correctAnswers} correct` : "Not ranked yet"}</p>
+            <p className="tournament-note">{formatYourRank(currentRank?.rank, currentRank?.score, currentRank?.correctAnswers, languageMode)}</p>
           </section>
         ) : question ? (
           <div className="practice-board tournament-practice-board">
             <div className="board-question-side">
               <div className="board-top-strip">
                 <div className="preview-progress-row">
-                  <span>Question {questionNumber} of {tournament.questionCount}</span>
-                  <span>{progressPercent}% complete</span>
+                  <span>{formatQuestionOf(questionNumber, tournament.questionCount, languageMode)}</span>
+                  <span>{progressPercent}% {t("complete", languageMode)}</span>
                 </div>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
                 </div>
                 <div className="progress-strip-footer">
-                  <span className="xp-chip">Score: {registration.score} pts · {registration.correctAnswers} correct</span>
+                  <span className="xp-chip">{formatScorePts(registration.score, registration.correctAnswers, languageMode)}</span>
                   <span className={`question-timer${(phase.timeLeft || 0) <= 5 && phase.phase === "question" ? " low" : ""}`}>
-                    <FaRegClock /> {phase.phase === "question" ? `${phase.timeLeft}s` : `Reveal ${phase.revealCountdownSeconds}s`}
+                    <FaRegClock /> {phase.phase === "question" ? `${phase.timeLeft}s` : `${t("reveal", languageMode)} ${phase.revealCountdownSeconds}s`}
                   </span>
                 </div>
                 <div className="progress-bar question-timer-bar">
@@ -309,13 +323,13 @@ function TournamentSessionPage() {
 
               <section className="dashboard-card question-card">
                 <div className="question-meta-row">
-                  <span className="question-pill difficulty">{question.difficulty}</span>
-                  <span className="question-pill">{question.topic}</span>
-                  <span className="question-pill level">{question.subject}</span>
-                  <span className="question-pill">Tournament</span>
+                  <span className="question-pill difficulty">{translateDifficulty(question.difficulty, languageMode)}</span>
+                  <span className="question-pill">{translateSubjectName(question.topic, languageMode)}</span>
+                  <span className="question-pill level">{translateSubjectName(question.subject, languageMode)}</span>
+                  <span className="question-pill">{t("tournament", languageMode)}</span>
                 </div>
                 <p className="question-text">{questionText?.question}</p>
-                <p className="lock-warning">Choose carefully. You can change your answer before locking it.</p>
+                <p className="lock-warning">{t("chooseCarefullyChange", languageMode)}</p>
                 <div className="answer-options">
                   {questionText?.options.map((option) => {
                     const isSelected = (locked ? answer?.selectedOptionKey : selectedOptionKey) === option.key;
@@ -350,20 +364,20 @@ function TournamentSessionPage() {
               <div className={`question-actions${locked ? " answered" : ""}`}>
                 {reveal && answer ? (
                   <span className={`tournament-score-badge${answer.isCorrect ? " correct" : " wrong"}`}>
-                    {answer.isCorrect ? `+${answer.pointsEarned} points` : "+0 points"}
+                    {answer.isCorrect ? formatPointsEarned(answer.pointsEarned, languageMode) : t("points0", languageMode)}
                   </span>
                 ) : reveal ? (
-                  <span className="tournament-score-badge wrong">Time's up · +0 points</span>
+                  <span className="tournament-score-badge wrong">{t("timesUpZero", languageMode)}</span>
                 ) : locked ? (
-                  <span className="tournament-score-badge">Answer locked. Waiting for reveal.</span>
+                  <span className="tournament-score-badge">{t("answerLockedWaiting", languageMode)}</span>
                 ) : (
-                  <span className="xp-preview">Correct Answer: +100 · Speed Bonus: +0 to +50 · Max: 150</span>
+                  <span className="xp-preview">{t("scoringPreview", languageMode)}</span>
                 )}
               </div>
               {!reveal && !locked ? (
                 <div className="question-actions lock-answer-row">
                   <button className="tournament-primary-btn lock-answer-btn" type="button" disabled={!selectedOptionKey || submitting || phase?.phase !== "question"} onClick={handleSubmit}>
-                    <FaCheckCircle /> {submitting ? "Locking..." : "Lock Answer"}
+                    <FaCheckCircle /> {submitting ? t("locking", languageMode) : t("lockAnswer", languageMode)}
                   </button>
                 </div>
               ) : null}
@@ -371,13 +385,13 @@ function TournamentSessionPage() {
 
             <aside className="board-coach-panel" aria-label="Tournament feedback panel">
               <section className="coach-section mini-session-stats">
-                <div className="coach-section-heading"><span>Battle</span><strong>{questionNumber}/{tournament.questionCount}</strong></div>
+                <div className="coach-section-heading"><span>{t("battleWord", languageMode)}</span><strong>{questionNumber}/{tournament.questionCount}</strong></div>
                 <div className="summary-grid">
-                  <div><span>Score</span><strong>{registration.score}</strong></div>
-                  <div><span>Correct</span><strong>{registration.correctAnswers}</strong></div>
-                  <div><span>Wrong</span><strong>{registration.wrongAnswers}</strong></div>
-                  <div><span>Unanswered</span><strong>{registration.unanswered}</strong></div>
-                  <div><span>Speed Bonus</span><strong>+{registration.speedBonusTotal || 0}</strong></div>
+                  <div><span>{t("scoreWord", languageMode)}</span><strong>{registration.score}</strong></div>
+                  <div><span>{t("correct", languageMode)}</span><strong>{registration.correctAnswers}</strong></div>
+                  <div><span>{t("wrong", languageMode)}</span><strong>{registration.wrongAnswers}</strong></div>
+                  <div><span>{t("unanswered", languageMode)}</span><strong>{registration.unanswered}</strong></div>
+                  <div><span>{t("speedBonus", languageMode)}</span><strong>+{registration.speedBonusTotal || 0}</strong></div>
                 </div>
               </section>
 
@@ -387,46 +401,46 @@ function TournamentSessionPage() {
                     <div className="feedback-heading">
                       <span className="feedback-icon">{answer?.isCorrect ? <FaCheckCircle /> : <FaExclamationTriangle />}</span>
                       <div>
-                        <h3>{answer ? (answer.isCorrect ? "Correct" : "Not correct") : "Time's up"}</h3>
-                        <p>{answer ? (answer.isCorrect ? "Nice work - your answer was correct." : "Your selected answer was not correct.") : "No answer was submitted."}</p>
+                        <h3>{answer ? (answer.isCorrect ? t("correct", languageMode) : t("notCorrect", languageMode)) : t("timesUp", languageMode)}</h3>
+                        <p>{answer ? (answer.isCorrect ? t("niceWorkCorrect", languageMode) : t("yourAnswerNotCorrect", languageMode)) : t("noAnswerWasSubmitted", languageMode)}</p>
                       </div>
                     </div>
                     <div className="feedback-answer-grid">
                       {!answer?.isCorrect && (
                         <div>
-                          <span>Your answer</span>
+                          <span>{t("yourAnswer", languageMode)}</span>
                           <strong>{selectedAnswerLabel}</strong>
                         </div>
                       )}
                       <div>
-                        <span>Correct answer</span>
+                        <span>{t("correctAnswer", languageMode)}</span>
                         <strong>{correctAnswerLabel}</strong>
                       </div>
                       <div>
-                        <span>Points earned</span>
+                        <span>{t("pointsEarned", languageMode)}</span>
                         <strong>{answer?.pointsEarned || 0}</strong>
                       </div>
                       <div>
-                        <span>Base points</span>
+                        <span>{t("basePoints", languageMode)}</span>
                         <strong>{answer?.basePoints || 0}</strong>
                       </div>
                       {answer?.isCorrect && (
                         <div>
-                          <span>Speed bonus</span>
+                          <span>{t("speedBonus", languageMode)}</span>
                           <strong>+{answer.speedBonus || 0}</strong>
                         </div>
                       )}
                     </div>
                     <div className="feedback-explanation">
-                      <strong>Explanation</strong>
+                      <strong>{t("explanation", languageMode)}</strong>
                       <span>{questionText?.explanation}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="coach-placeholder">
-                    <span>Live State</span>
-                    <strong>{notice || "Answer before the server timer ends"}</strong>
-                    <p>Correct or wrong is revealed only after the 15-second timer closes.</p>
+                    <span>{t("liveState", languageMode)}</span>
+                    <strong>{notice || t("answerBeforeTimer", languageMode)}</strong>
+                    <p>{t("revealAfter15", languageMode)}</p>
                   </div>
                 )}
               </section>
@@ -434,7 +448,7 @@ function TournamentSessionPage() {
           </div>
         ) : (
           <section className="dashboard-card tournament-card">
-            <p className="empty-state">Not enough validated tournament questions are available yet.</p>
+            <p className="empty-state">{t("notEnoughTournamentQuestions", languageMode)}</p>
           </section>
         )}
       </section>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowRight, FaBookOpen, FaFire, FaMedal, FaShieldAlt, FaStar } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
@@ -6,6 +6,7 @@ import LeaderboardProfilePanel from "../components/leaderboard/LeaderboardProfil
 import { CoinIcon } from "../components/common/Coin";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
+import { getPreferredLanguage, t, translateExamName, translateSubjectName, formatYouAreRank, formatRankHash, formatPracticeToUnlock } from "../data/translations";
 import { getLatestTournamentResults } from "../services/tournamentService";
 import { getCurrentStreak } from "../utils/dailyQuizUtils";
 import { getEarnedBadges, syncBadges } from "../utils/badgeUtils";
@@ -37,21 +38,28 @@ function deriveLevel(xp) {
 }
 
 const rankingTypes = [
-  { id: "tournament", label: "Tournament", description: "Ranking based on Friday Loksewa Battle performance." },
-  { id: "weekly", label: "Weekly", description: "Ranking by XP earned over the last 7 days." },
-  { id: "monthly", label: "Monthly", description: "Ranking by XP earned over the last 30 days." },
-  { id: "subject", label: "Subject-wise", description: "Ranking by subject XP, accuracy, and solved questions." },
-  { id: "examTrack", label: "Exam Track", description: "Ranking by total XP within the exam track." },
-  { id: "hallOfFame", label: "Hall of Fame", description: "Lifetime XP, badges, and long-term consistency." },
+  { id: "tournament", labelKey: "tournament", descKey: "tournamentRankDesc" },
+  { id: "weekly", labelKey: "weekly", descKey: "weeklyRankDesc" },
+  { id: "monthly", labelKey: "monthly", descKey: "monthlyRankDesc" },
+  { id: "subject", labelKey: "subjectWise", descKey: "subjectRankDesc" },
+  { id: "examTrack", labelKey: "examTrack", descKey: "examTrackRankDesc" },
+  { id: "hallOfFame", labelKey: "hallOfFame", descKey: "hallOfFameRankDesc" },
 ];
+
+// Maps the internal English filter values (kept as state keys) to translation keys.
+const FILTER_KEY = {
+  "This Week": "thisWeek", "Last Week": "lastWeek",
+  "This Month": "thisMonth", "Last Month": "lastMonth",
+  "Lifetime XP": "lifetimeXPFilter", "Lifetime Tournament Wins": "lifetimeTournamentWins", "Lifetime Badges": "lifetimeBadges",
+};
 
 // Podium rewards are awarded by finishing position (matches the Friday Battle
 // reward table) so they stay correct even when the source row carries no
 // `reward` field (e.g. live tournament rows from the backend).
 const podiumRewards = {
-  1: { coins: 500, xp: 500, title: "Gold Champion" },
-  2: { coins: 300, xp: 300, title: "Silver Champion" },
-  3: { coins: 150, xp: 200, title: "Bronze Champion" },
+  1: { coins: 500, xp: 500, titleKey: "goldChampion" },
+  2: { coins: 300, xp: 300, titleKey: "silverChampion" },
+  3: { coins: 150, xp: 200, titleKey: "bronzeChampion" },
 };
 
 const weeklyFilters = ["This Week", "Last Week"];
@@ -72,6 +80,7 @@ function xpInWindow(transactions, fromDaysAgo, toDaysAgo) {
 function Leaderboard() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
+  const preferredLanguage = getPreferredLanguage();
 
   const [selectedRankingType, setSelectedRankingType] = useState("tournament");
   const [weeklyFilter, setWeeklyFilter] = useState("This Week");
@@ -153,7 +162,7 @@ function Leaderboard() {
   const isTournament = selectedRankingType === "tournament";
 
   // Real users only. This prototype stores a single real account locally (the
-  // logged-in user). No seeded/demo competitors are ever shown — every ranking
+  // logged-in user). No seeded/demo competitors are ever shown â€” every ranking
   // is derived from real saved progress. If/when a real multi-user store exists
   // it can be merged into this list; until then it is just the current user.
   const realUsers = useMemo(() => [me], [me]);
@@ -264,7 +273,7 @@ function Leaderboard() {
           about: row.isCurrentUser ? me.about : "This learner is building progress on PrepQuest Nepal.",
         }));
       }
-      // No backend list, but a legacy/offline local attempt exists — show it.
+      // No backend list, but a legacy/offline local attempt exists â€” show it.
       if (me.hasPlayedTournament) {
         return [{ ...me, rank: me.bestAttempt?.rank || 1, displayPoints: me.tournamentPoints, accuracy: me.tournamentAccuracy, topPercent: 100 }];
       }
@@ -303,26 +312,27 @@ function Leaderboard() {
 
   // Honest, tab-specific empty states (no fake rows are ever shown instead).
   const getEmptyState = () => {
+    const startPractice = { label: t("startPractice", preferredLanguage), action: () => navigate("/practice") };
     switch (selectedRankingType) {
       case "tournament":
         // Reached only when there are no public results to show. Distinguish a
         // backend/connection failure from a genuinely empty board.
         if (tournamentLoadError) {
-          return { title: "Unable to load tournament results right now.", body: "Please check your connection or try again later.", cta: { label: "Retry", action: () => window.location.reload() } };
+          return { title: t("emptyTournamentErrorTitle", preferredLanguage), body: t("emptyTournamentErrorBody", preferredLanguage), cta: { label: t("retry", preferredLanguage), action: () => window.location.reload() } };
         }
-        return { title: "No tournament results yet.", body: "Rankings will appear after learners complete the Friday Loksewa Battle.", cta: { label: "Go to Tournament", action: goToTournament } };
+        return { title: t("emptyTournamentTitle", preferredLanguage), body: t("emptyTournamentBody", preferredLanguage), cta: { label: t("goToTournament", preferredLanguage), action: goToTournament } };
       case "weekly":
-        return { title: "No weekly ranking yet.", body: "Complete quizzes, practice sessions, or mock tests this week to appear here.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+        return { title: t("emptyWeeklyTitle", preferredLanguage), body: t("emptyWeeklyBody", preferredLanguage), cta: startPractice };
       case "monthly":
-        return { title: "No monthly ranking yet.", body: "Earn XP this month to appear on the monthly leaderboard.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+        return { title: t("emptyMonthlyTitle", preferredLanguage), body: t("emptyMonthlyBody", preferredLanguage), cta: startPractice };
       case "subject":
-        return { title: "No subject-wise ranking yet.", body: `Practice ${subjectFilter || "this subject"} to unlock your subject leaderboard position.`, cta: { label: "Practice Subject", action: () => navigate("/practice") } };
+        return { title: t("emptySubjectTitle", preferredLanguage), body: formatPracticeToUnlock(subjectFilter, preferredLanguage), cta: { label: t("practiceSubjectBtn", preferredLanguage), action: () => navigate("/practice") } };
       case "examTrack":
-        return { title: "No ranking yet for this exam track.", body: "Your real progress will appear here as you earn XP.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+        return { title: t("emptyExamTrackTitle", preferredLanguage), body: t("emptyExamTrackBody", preferredLanguage), cta: startPractice };
       case "hallOfFame":
-        return { title: "No Hall of Fame ranking yet.", body: "Long-term rankings will appear as you build total XP.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+        return { title: t("emptyHallOfFameTitle", preferredLanguage), body: t("emptyHallOfFameBody", preferredLanguage), cta: startPractice };
       default:
-        return { title: "No ranking data yet.", body: "Start practicing to build your real stats.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+        return { title: t("emptyDefaultTitle", preferredLanguage), body: t("emptyDefaultBody", preferredLanguage), cta: startPractice };
     }
   };
 
@@ -331,7 +341,7 @@ function Leaderboard() {
       return (
         <div className="secondary-filter-row" aria-label="Weekly filters">
           {weeklyFilters.map((filter) => (
-            <button className={`filter-option${weeklyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setWeeklyFilter(filter)}>{filter}</button>
+            <button className={`filter-option${weeklyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setWeeklyFilter(filter)}>{t(FILTER_KEY[filter], preferredLanguage)}</button>
           ))}
         </div>
       );
@@ -340,7 +350,7 @@ function Leaderboard() {
       return (
         <div className="secondary-filter-row" aria-label="Monthly filters">
           {monthlyFilters.map((filter) => (
-            <button className={`filter-option${monthlyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setMonthlyFilter(filter)}>{filter}</button>
+            <button className={`filter-option${monthlyFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setMonthlyFilter(filter)}>{t(FILTER_KEY[filter], preferredLanguage)}</button>
           ))}
         </div>
       );
@@ -349,9 +359,9 @@ function Leaderboard() {
       return (
         <div className="secondary-filter-grid subject-filter-grid">
           <label>
-            <span>Subject</span>
+            <span>{t("subject", preferredLanguage)}</span>
             <select value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
-              {me.subjects.map((subject) => <option key={subject}>{subject}</option>)}
+              {me.subjects.map((subject) => <option key={subject} value={subject}>{translateSubjectName(subject, preferredLanguage)}</option>)}
             </select>
           </label>
         </div>
@@ -361,27 +371,27 @@ function Leaderboard() {
       return (
         <div className="secondary-filter-row" aria-label="Hall of Fame filters">
           {hallOfFameFilters.map((filter) => (
-            <button className={`filter-option${hallOfFameFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setHallOfFameFilter(filter)}>{filter}</button>
+            <button className={`filter-option${hallOfFameFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setHallOfFameFilter(filter)}>{t(FILTER_KEY[filter], preferredLanguage)}</button>
           ))}
         </div>
       );
     }
     return (
       <div className="scope-note">
-        <strong>{activeRanking.label} Ranking</strong>
-        <span>{activeRanking.description}</span>
+        <strong>{t(activeRanking.labelKey, preferredLanguage)} {t("rankingSuffix", preferredLanguage)}</strong>
+        <span>{t(activeRanking.descKey, preferredLanguage)}</span>
       </div>
     );
   };
 
   const ViewButton = ({ user }) => (
-    <button className="view-profile-btn" type="button" onClick={() => handleViewProfile(user)}>View Profile</button>
+    <button className="view-profile-btn" type="button" onClick={() => handleViewProfile(user)}>{t("viewProfile", preferredLanguage)}</button>
   );
 
   const LearnerCell = ({ user }) => (
     <span className="learner-cell">
       <span className="mini-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.initials}</span>
-      <span><strong>{user.name}</strong>{user.isCurrentUser ? <em>You</em> : null}</span>
+      <span><strong>{user.name}</strong>{user.isCurrentUser ? <em>{t("you", preferredLanguage)}</em> : null}</span>
     </span>
   );
 
@@ -404,7 +414,7 @@ function Leaderboard() {
       return (
         <div className="leaderboard-table subject-table">
           <div className="leaderboard-table-head">
-            <span>Rank</span><span>Learner</span><span>Subject</span><span>Subject XP</span><span>Accuracy</span><span>Solved</span><span>View</span>
+            <span>{t("rank", preferredLanguage)}</span><span>{t("learner", preferredLanguage)}</span><span>{t("subject", preferredLanguage)}</span><span>{t("subjectXP", preferredLanguage)}</span><span>{t("accuracy", preferredLanguage)}</span><span>{t("solved", preferredLanguage)}</span><span>{t("view", preferredLanguage)}</span>
           </div>
           {rows.map((user) => {
             const stats = user.subjectStats?.[subjectFilter] || { xp: 0, accuracy: null, questionsSolved: 0 };
@@ -412,9 +422,9 @@ function Leaderboard() {
               <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
                 <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
                 <LearnerCell user={user} />
-                <span>{subjectFilter}</span>
+                <span>{translateSubjectName(subjectFilter, preferredLanguage)}</span>
                 <strong>{formatNumber(stats.xp)} XP</strong>
-                <span>{Number.isFinite(stats.accuracy) ? `${stats.accuracy}%` : "Not Started"}</span>
+                <span>{Number.isFinite(stats.accuracy) ? `${stats.accuracy}%` : t("notStartedYet", preferredLanguage)}</span>
                 <span>{stats.questionsSolved}</span>
                 <span><ViewButton user={user} /></span>
               </div>
@@ -428,17 +438,17 @@ function Leaderboard() {
       return (
         <div className="leaderboard-table hall-table">
           <div className="leaderboard-table-head">
-            <span>Rank</span><span>Learner</span><span>Exam Track</span><span>Lifetime XP</span><span>Badges</span><span>Wins</span><span>Streak</span><span>View</span>
+            <span>{t("rank", preferredLanguage)}</span><span>{t("learner", preferredLanguage)}</span><span>{t("examTrack", preferredLanguage)}</span><span>{t("lifetimeXPHeader", preferredLanguage)}</span><span>{t("badges", preferredLanguage)}</span><span>{t("wins", preferredLanguage)}</span><span>{t("streak", preferredLanguage)}</span><span>{t("view", preferredLanguage)}</span>
           </div>
           {rows.map((user) => (
             <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
               <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
               <LearnerCell user={user} />
-              <span>{user.examTrack}</span>
+              <span>{translateExamName(user.examTrack, preferredLanguage)}</span>
               <strong>{formatNumber(user.lifetimeXP)} XP</strong>
               <span>{user.badges}</span>
               <span>{user.tournamentWins || 0}</span>
-              <span>{user.streak || 0}d</span>
+              <span>{user.streak || 0}{preferredLanguage === "nepali" ? " दिन" : "d"}</span>
               <span><ViewButton user={user} /></span>
             </div>
           ))}
@@ -446,20 +456,20 @@ function Leaderboard() {
       );
     }
 
-    const pointsHeading = isTournament ? "Points" : selectedRankingType === "monthly" ? "Monthly XP" : selectedRankingType === "examTrack" ? "Exam XP" : selectedRankingType === "weekly" ? "Weekly XP" : "Points";
+    const pointsHeading = isTournament ? t("points", preferredLanguage) : selectedRankingType === "monthly" ? t("monthlyXP", preferredLanguage) : selectedRankingType === "examTrack" ? t("examXP", preferredLanguage) : selectedRankingType === "weekly" ? t("weeklyXP", preferredLanguage) : t("points", preferredLanguage);
     return (
       <div className="leaderboard-table standard-table">
         <div className="leaderboard-table-head">
-          <span>Rank</span><span>Learner</span><span>Exam Track</span><span>{pointsHeading}</span><span>Accuracy</span><span>Level</span><span>Badges</span><span>View</span>
+          <span>{t("rank", preferredLanguage)}</span><span>{t("learner", preferredLanguage)}</span><span>{t("examTrack", preferredLanguage)}</span><span>{pointsHeading}</span><span>{t("accuracy", preferredLanguage)}</span><span>{t("level", preferredLanguage)}</span><span>{t("badges", preferredLanguage)}</span><span>{t("view", preferredLanguage)}</span>
         </div>
         {rows.map((user) => (
           <div className={`leaderboard-table-row${user.isCurrentUser ? " current-user" : ""}`} key={user.id}>
             <span className={`rank-badge rank-${user.rank <= 3 ? user.rank : "default"}`}>#{user.rank}</span>
             <LearnerCell user={user} />
-            <span>{user.examTrack}</span>
+            <span>{translateExamName(user.examTrack, preferredLanguage)}</span>
             <strong>{formatNumber(metricFor(user))}</strong>
             <span>{user.accuracy || 0}%</span>
-            <span className="level-pill">Lv {user.level || 1}</span>
+            <span className="level-pill">{t("lvAbbr", preferredLanguage)} {user.level || 1}</span>
             <span className="badge-cell"><FaMedal /> {user.badges || 0}</span>
             <span><ViewButton user={user} /></span>
           </div>
@@ -473,14 +483,14 @@ function Leaderboard() {
       <section className="dashboard-content leaderboard-page">
         <header className="dashboard-header leaderboard-header">
           <div className="header-left">
-            <h1>Leaderboard</h1>
-            <p>Track your ranking, earn XP, and rise to the top.</p>
+            <h1>{t("leaderboard", preferredLanguage)}</h1>
+            <p>{t("trackRanking", preferredLanguage)}</p>
           </div>
           <div className="header-right">
             <div className="header-chips">
-              <span className="chip"><FaFire /> Friday Battle</span>
-              <span className="chip"><FaMedal /> {selectedExam}</span>
-              <span className="chip"><FaShieldAlt /> Privacy-safe ranking</span>
+              <span className="chip"><FaFire /> {t("fridayBattle", preferredLanguage)}</span>
+              <span className="chip"><FaMedal /> {translateExamName(selectedExam, preferredLanguage)}</span>
+              <span className="chip"><FaShieldAlt /> {t("privacySafeRanking", preferredLanguage)}</span>
             </div>
           </div>
         </header>
@@ -488,23 +498,23 @@ function Leaderboard() {
         {/* Tournament rank + exam track + CTA + trophy banner */}
         <section className="dashboard-card leaderboard-rank-banner">
           <div className="rank-zone rank-main">
-            <p className="eyebrow">My Tournament Rank</p>
+            <p className="eyebrow">{t("myTournamentRank", preferredLanguage)}</p>
             <div className="rank-main-row">
               <span className="rank-circle">{playedTournament && myTournamentRank ? `#${myTournamentRank}` : "—"}</span>
               <span className="rank-main-text">
                 <strong>
                   {playedTournament
-                    ? `${formatNumber(myTournamentPoints)} points`
+                    ? `${formatNumber(myTournamentPoints)} ${t("points", preferredLanguage)}`
                     : publicResultsExist
-                    ? "You haven't joined yet"
-                    : "You haven't played yet"}
+                    ? t("youHaventJoined", preferredLanguage)
+                    : t("youHaventPlayed", preferredLanguage)}
                 </strong>
                 <span>
                   {playedTournament
-                    ? `${myTournamentAccuracy}% accuracy`
+                    ? `${myTournamentAccuracy}% ${t("accuracy", preferredLanguage)}`
                     : publicResultsExist
-                    ? "Final public rankings are shown below. Join the next Friday Loksewa Battle to appear on the board."
-                    : "Take the Friday Loksewa Battle and start your climb!"}
+                    ? t("finalPublicRankings", preferredLanguage)
+                    : t("takeFridayBattle", preferredLanguage)}
                 </span>
               </span>
             </div>
@@ -513,14 +523,14 @@ function Leaderboard() {
           <div className="rank-zone rank-exam">
             <span className="rank-exam-icon"><FaBookOpen /></span>
             <span className="rank-exam-text">
-              <p className="eyebrow">Exam Track</p>
-              <strong className="rank-banner-exam">{selectedExam}</strong>
+              <p className="eyebrow">{t("examTrack", preferredLanguage)}</p>
+              <strong className="rank-banner-exam">{translateExamName(selectedExam, preferredLanguage)}</strong>
             </span>
           </div>
 
           <div className="rank-zone rank-cta-zone">
-            <p className="rank-banner-tagline">Every question you answer brings you closer to the top!</p>
-            <button className="btn rank-cta" type="button" onClick={goToTournament}>View Tournament Details <FaArrowRight /></button>
+            <p className="rank-banner-tagline">{t("everyQuestionTop", preferredLanguage)}</p>
+            <button className="btn rank-cta" type="button" onClick={goToTournament}>{t("viewTournamentDetails", preferredLanguage)} <FaArrowRight /></button>
           </div>
 
           <div className="rank-banner-cup" aria-hidden="true">
@@ -542,20 +552,20 @@ function Leaderboard() {
                   <div className="leader-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.initials}</div>
                   <div className="podium-name">
                     <h2>{user.name}</h2>
-                    <p>{user.examTrack}</p>
+                    <p>{translateExamName(user.examTrack, preferredLanguage)}</p>
                   </div>
                   <strong className="podium-score">
-                    {formatNumber(score)} {isTournament ? "points" : "XP"}{accuracy ? ` · ${accuracy}%` : ""}
+                    {formatNumber(score)} {isTournament ? t("points", preferredLanguage) : "XP"}{accuracy ? ` · ${accuracy}%` : ""}
                   </strong>
                   <div className="podium-rewards">
                     {isTournament ? (
                       <>
                         <span className="reward-pill"><CoinIcon size="xs" /> {reward.coins}</span>
                         <span className="reward-pill"><FaStar className="reward-star" /> {reward.xp} XP</span>
-                        <span className="reward-pill champion">{reward.title}</span>
+                        <span className="reward-pill champion">{t(reward.titleKey, preferredLanguage)}</span>
                       </>
                     ) : (
-                      <span className="reward-pill champion">Rank #{user.rank}</span>
+                      <span className="reward-pill champion">{formatRankHash(user.rank, preferredLanguage)}</span>
                     )}
                   </div>
                 </article>
@@ -567,8 +577,8 @@ function Leaderboard() {
         {/* Ranking tabs */}
         <section className="dashboard-card leaderboard-controls">
           <div className="control-heading">
-            <h2>Choose Ranking Type</h2>
-            <p>{activeRanking.description}</p>
+              <h2>{t("chooseRankingType", preferredLanguage)}</h2>
+            <p>{t(activeRanking.descKey, preferredLanguage)}</p>
           </div>
           <div className="ranking-tabs" role="tablist" aria-label="Ranking type">
             {rankingTypes.map((type) => (
@@ -580,26 +590,25 @@ function Leaderboard() {
                 key={type.id}
                 onClick={() => setSelectedRankingType(type.id)}
               >
-                {type.label}
+                {t(type.labelKey, preferredLanguage)}
               </button>
             ))}
           </div>
           {renderSecondaryFilters()}
         </section>
 
-        {/* Full leaderboard table — splits into table + inline profile panel
+        {/* Full leaderboard table â€” splits into table + inline profile panel
             (beside the table, in this same section) when a profile is open. */}
         <section className="dashboard-card leaderboard-table-card">
           <div className="card-heading">
-            <h2 className="card-title"><FaMedal /> Full Leaderboard</h2>
-            <span className="status-chip">{selectedRankingType === "subject" ? subjectFilter : activeRanking.label}{myRow ? ` · You are #${myRow.rank}` : ""}</span>
+            <h2 className="card-title"><FaMedal /> {t("fullLeaderboard", preferredLanguage)}</h2>
+            <span className="status-chip">{selectedRankingType === "subject" ? translateSubjectName(subjectFilter, preferredLanguage) : t(activeRanking.labelKey, preferredLanguage)}{myRow ? formatYouAreRank(myRow.rank, preferredLanguage) : ""}</span>
           </div>
           <div className={`leaderboard-table-body${selectedProfile ? " profile-open" : ""}`}>
             <div className="leaderboard-table-main">
               {renderTable()}
               <p className="privacy-note">
-                Your row reflects your real saved progress. Other learners are shown for ranking context and only public,
-                privacy-safe details are displayed.
+                {t("leaderboardPrivacyNote", preferredLanguage)}
               </p>
             </div>
             {selectedProfile ? (
@@ -613,3 +622,4 @@ function Leaderboard() {
 }
 
 export default Leaderboard;
+
