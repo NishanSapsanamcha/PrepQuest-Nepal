@@ -32,6 +32,18 @@ const syncLocalProfileWithAuthUser = (authUser) => {
 
 	saveUser({ ...getUser(), name: displayName, email: authUser?.email || "" });
 	localStorage.setItem("userName", displayName);
+
+	// Setup completion is authoritative on the server (User.setupCompleted).
+	// Always re-derive the local cache from it on login so a wiped/missing
+	// local flag can never force a returning user back through onboarding -
+	// the one-time setup screen only shows when the server says it's unseen.
+	if (authUser?.setupCompleted && authUser?.selectedExam && authUser?.preferredLanguage) {
+		localStorage.setItem("selectedExam", authUser.selectedExam);
+		localStorage.setItem("preferredLanguage", authUser.preferredLanguage);
+		localStorage.setItem("onboardingCompleted", "true");
+	} else {
+		localStorage.removeItem("onboardingCompleted");
+	}
 };
 
 const AuthContext = createContext(null);
@@ -90,6 +102,17 @@ function AuthProvider({ children }) {
 		persistAuth(null);
 	};
 
+	// Merge a partial user patch (e.g. after completing setup) into the
+	// in-memory + persisted auth state without requiring a fresh login.
+	const updateUser = (patch) => {
+		setAuthState((current) => {
+			if (!current) return current;
+			const nextState = { ...current, user: { ...current.user, ...patch } };
+			persistAuth(nextState, current.rememberMe);
+			return nextState;
+		});
+	};
+
 	return (
 		<AuthContext.Provider
 			value={{
@@ -97,7 +120,8 @@ function AuthProvider({ children }) {
 				token: authState?.token || null,
 				isAuthenticated: Boolean(authState?.token),
 				login,
-				logout
+				logout,
+				updateUser
 			}}
 		>
 			{children}

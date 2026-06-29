@@ -156,6 +156,33 @@ User.init(
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: true
+		},
+		// Onboarding exam-track choice - persisted server-side so the one-time
+		// setup screen is tied to the account, not a fragile per-browser flag
+		selectedExam: {
+			type: DataTypes.STRING(60),
+			allowNull: true
+		},
+		// Onboarding language preference, same rationale as selectedExam
+		preferredLanguage: {
+			type: DataTypes.STRING(20),
+			allowNull: true
+		},
+		// True once the user has completed the one-time setup flow. Checked on
+		// every login so the setup screen is shown exactly once per account.
+		setupCompleted: {
+			type: DataTypes.BOOLEAN,
+			allowNull: false,
+			defaultValue: false
+		},
+		// Daily login streak/reward snapshot (mirrors the shape kept in the
+		// frontend's localStorage cache). Persisted here so the streak survives
+		// a cleared browser, a different device, or a logout/login cycle -
+		// localStorage is only ever a same-tab cache of this value now.
+		dailyRewardState: {
+			type: DataTypes.JSONB,
+			allowNull: true,
+			defaultValue: null
 		}
 	},
 	{

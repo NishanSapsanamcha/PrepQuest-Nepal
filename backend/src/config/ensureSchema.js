@@ -33,6 +33,27 @@ const ensureRuntimeSchema = async (sequelize) => {
 		allowNull: false,
 		defaultValue: 0
 	});
+
+	await addColumnIfMissing(queryInterface, "users", "selected_exam", {
+		type: DataTypes.STRING(60),
+		allowNull: true
+	});
+
+	await addColumnIfMissing(queryInterface, "users", "preferred_language", {
+		type: DataTypes.STRING(20),
+		allowNull: true
+	});
+
+	await addColumnIfMissing(queryInterface, "users", "setup_completed", {
+		type: DataTypes.BOOLEAN,
+		allowNull: false,
+		defaultValue: false
+	});
+
+	await addColumnIfMissing(queryInterface, "users", "daily_reward_state", {
+		type: DataTypes.JSONB,
+		allowNull: true
+	});
 };
 
 export { ensureRuntimeSchema };

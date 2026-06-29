@@ -53,6 +53,7 @@ import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTe
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
 import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress } from "../../utils/xpUtils";
 import { CoinIcon } from "../../components/common/Coin";
+import LogoutConfirmModal from "../../components/common/LogoutConfirmModal";
 import { getUserCoinBalance } from "../../services/coinService";
 import "./DashboardPage.css";
 
@@ -119,6 +120,7 @@ function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem("sidebarCollapsed") === "true"
   );
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
@@ -181,7 +183,7 @@ function DashboardPage() {
 
   const handleNavClick = (key) => {
     if (key === "dashboard") { navigate("/dashboard"); return; }
-    if (key === "logout") { handleLogout(); return; }
+    if (key === "logout") { setShowLogoutConfirm(true); return; }
     navigateIfAvailable(key);
   };
 
@@ -190,6 +192,7 @@ function DashboardPage() {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
     navigate("/login", { replace: true });
   };
@@ -427,6 +430,12 @@ function DashboardPage() {
           </section>
         </div>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+      />
     </main>
   );
 }

@@ -334,6 +334,13 @@
   margin: 0 0 1rem;
 }
 
+.setup-page .continue-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
 .setup-page .continue-btn {
   background-color: #0d9488;
   color: #ffffff;

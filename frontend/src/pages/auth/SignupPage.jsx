@@ -57,7 +57,9 @@ function SignupPage() {
     try {
       const response = await registerUser(formData);
       login(response, true);
-      navigate("/dashboard", { replace: true });
+      // Brand-new account: always send to the one-time setup screen. After
+      // it's completed once, subsequent logins skip straight to dashboard.
+      navigate("/setup", { replace: true });
     } catch (submitError) {
       setError(getSignupErrorMessage(submitError));
     } finally {

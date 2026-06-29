@@ -13,6 +13,8 @@ import {
   Target,
   Trophy
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { completeSetup } from "../../services/authService";
 import "./SetupPage.css";
 
 const examNames = {
@@ -91,9 +93,12 @@ const languages = [
 function SetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, updateUser } = useAuth();
   const [selectedExam, setSelectedExam] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const allowPreferenceChange = Boolean(location.state?.allowPreferenceChange);
 
   const isReady = Boolean(selectedExam && selectedLanguage);
@@ -108,19 +113,23 @@ function SetupPage() {
   );
 
   useEffect(() => {
-    const onboardingCompleted = localStorage.getItem("onboardingCompleted");
     const storedExam = localStorage.getItem("selectedExam");
     const storedLanguage = localStorage.getItem("preferredLanguage");
+    // The server record (user.setupCompleted) is authoritative; the
+    // localStorage flags are only read here as a same-tick fallback right
+    // after login, before AuthContext's sync has had a chance to land.
+    const alreadyCompleted =
+      Boolean(user?.setupCompleted) || (localStorage.getItem("onboardingCompleted") === "true" && storedExam && storedLanguage);
 
-    if (onboardingCompleted === "true" && storedExam && storedLanguage && !allowPreferenceChange) {
+    if (alreadyCompleted && !allowPreferenceChange) {
       navigate("/dashboard", { replace: true });
     }
 
     if (allowPreferenceChange) {
-      setSelectedExam(storedExam || "");
-      setSelectedLanguage(storedLanguage || "");
+      setSelectedExam(user?.selectedExam || storedExam || "");
+      setSelectedLanguage(user?.preferredLanguage || storedLanguage || "");
     }
-  }, [allowPreferenceChange, navigate]);
+  }, [allowPreferenceChange, navigate, user]);
 
   useEffect(() => {
     if (!toastMessage) {
@@ -138,15 +147,29 @@ function SetupPage() {
     setToastMessage("This track is coming soon.");
   };
 
-  const handleContinue = () => {
-    if (!isReady) {
+  const handleContinue = async () => {
+    if (!isReady || submitting) {
       return;
     }
 
-    localStorage.setItem("selectedExam", selectedExam);
-    localStorage.setItem("preferredLanguage", selectedLanguage);
-    localStorage.setItem("onboardingCompleted", "true");
-    navigate("/dashboard");
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const response = await completeSetup({ selectedExam, preferredLanguage: selectedLanguage });
+      localStorage.setItem("selectedExam", selectedExam);
+      localStorage.setItem("preferredLanguage", selectedLanguage);
+      localStorage.setItem("onboardingCompleted", "true");
+      updateUser({
+        selectedExam: response?.user?.selectedExam || selectedExam,
+        preferredLanguage: response?.user?.preferredLanguage || selectedLanguage,
+        setupCompleted: true
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      setSubmitError(error?.response?.data?.message || "Unable to save your setup right now. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -281,9 +304,14 @@ function SetupPage() {
 
           <div className="continue-section">
             <p className="continue-title">Ready to continue?</p>
-            <p className="continue-subtitle">Your exam track and language preference will be saved on this device.</p>
-            <button type="button" className="continue-btn" disabled={!isReady} onClick={handleContinue}>
-              Continue to Dashboard
+            <p className="continue-subtitle">Your exam track and language preference will be saved to your account.</p>
+            {submitError ? (
+              <p className="continue-error" role="alert">
+                {submitError}
+              </p>
+            ) : null}
+            <button type="button" className="continue-btn" disabled={!isReady || submitting} onClick={handleContinue}>
+              {submitting ? "Saving..." : "Continue to Dashboard"}
             </button>
           </div>
         </div>
