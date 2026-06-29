@@ -52,6 +52,7 @@ import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, no
 import { calculateTotalXPFromTransactions, getOverallRankProgress } from "../../utils/xpUtils";
 import { gamificationIcons } from "../../assets/gamification";
 import { CoinIcon } from "../../components/common/Coin";
+import LogoutConfirmModal from "../../components/common/LogoutConfirmModal";
 import { getUserCoinBalance } from "../../services/coinService";
 import missionArt from "../../assets/level/key_arrow-transparent.png";
 import "./DashboardPage.css";
@@ -119,11 +120,13 @@ function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem("sidebarCollapsed") === "true"
   );
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const selectedExam = normalizeExamId(localStorage.getItem("selectedExam") || "nayab-subba");
   const preferredLanguage = localStorage.getItem("preferredLanguage") || "english";
   const userName = user?.fullName || user?.name || localStorage.getItem("userName") || "Aspirant";
   const totalXp = calculateTotalXPFromTransactions();
+  const coins = getUserCoinBalance();
   const todayDailyQuizAttempt = getTodayDailyQuizAttempt();
   const dailyQuizCompleted = Boolean(todayDailyQuizAttempt);
   const [, forceRefresh] = useState(0);
@@ -137,7 +140,6 @@ function DashboardPage() {
   const dailyRewardClaimedToday = !canClaimDailyReward(dailyRewardState, getNepalRewardDate());
   const mockStats = getMockDashboardStats();
   const mockCompletedToday = hasCompletedMockToday();
-  const currentStreak = getCurrentStreak();
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
   const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
   const rankProgress = getOverallRankProgress(totalXp);
@@ -182,7 +184,7 @@ function DashboardPage() {
 
   const handleNavClick = (key) => {
     if (key === "dashboard") { navigate("/dashboard"); return; }
-    if (key === "logout") { handleLogout(); return; }
+    if (key === "logout") { setShowLogoutConfirm(true); return; }
     navigateIfAvailable(key);
   };
 
@@ -191,6 +193,7 @@ function DashboardPage() {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
     navigate("/login", { replace: true });
   };
@@ -442,6 +445,12 @@ function DashboardPage() {
           </section>
         </div>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+      />
     </main>
   );
 }
