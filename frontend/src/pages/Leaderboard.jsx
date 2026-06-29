@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowRight, FaFire, FaMedal, FaShieldAlt } from "react-icons/fa";
+import { FaArrowRight, FaBookOpen, FaFire, FaMedal, FaShieldAlt, FaStar } from "react-icons/fa";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import LeaderboardProfilePanel from "../components/leaderboard/LeaderboardProfilePanel";
+import { CoinIcon } from "../components/common/Coin";
 import { useAuth } from "../context/AuthContext";
 import { examTracks } from "../data/examTracks";
-import { mockLeaderboardUsers } from "../data/gamificationMockData";
 import { getLatestTournamentResults } from "../services/tournamentService";
 import { getCurrentStreak } from "../utils/dailyQuizUtils";
 import { getEarnedBadges, syncBadges } from "../utils/badgeUtils";
@@ -16,9 +16,9 @@ import {
   normalizeExamId,
 } from "../utils/practiceUtils";
 import { getProfileOverrides } from "../utils/profileUtils";
-import { getTournamentAttempts } from "../utils/tournamentUtils";
+import { getTournamentAttempts, mirrorTournamentResult } from "../utils/tournamentUtils";
 import { calculateTotalXPFromTransactions, getOverallRankProgress, getXPTransactions } from "../utils/xpUtils";
-import CupImage from "../assets/level/cup.png";
+import CupImage from "../assets/level/tournamentcup-transparent.png";
 import "./Leaderboard.css";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -45,6 +45,15 @@ const rankingTypes = [
   { id: "hallOfFame", label: "Hall of Fame", description: "Lifetime XP, badges, and long-term consistency." },
 ];
 
+// Podium rewards are awarded by finishing position (matches the Friday Battle
+// reward table) so they stay correct even when the source row carries no
+// `reward` field (e.g. live tournament rows from the backend).
+const podiumRewards = {
+  1: { coins: 500, xp: 500, title: "Gold Champion" },
+  2: { coins: 300, xp: 300, title: "Silver Champion" },
+  3: { coins: 150, xp: 200, title: "Bronze Champion" },
+};
+
 const weeklyFilters = ["This Week", "Last Week"];
 const monthlyFilters = ["This Month", "Last Month"];
 const hallOfFameFilters = ["Lifetime XP", "Lifetime Tournament Wins", "Lifetime Badges"];
@@ -69,6 +78,7 @@ function Leaderboard() {
   const [monthlyFilter, setMonthlyFilter] = useState("This Month");
   const [hallOfFameFilter, setHallOfFameFilter] = useState("Lifetime XP");
   const [tournamentData, setTournamentData] = useState(null);
+  const [tournamentLoadError, setTournamentLoadError] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
 
   // ---- Real current-user profile from local progress (your row is always real)
@@ -123,7 +133,7 @@ function Leaderboard() {
       badges: getEarnedBadges(syncBadges()).length,
       earnedBadges: getEarnedBadges(syncBadges()),
       tournamentWins: attempts.filter((a) => a.rank === 1).length,
-      level: deriveLevel(totalXp),
+      level: rankProgress.level,
       rankTitle: rankProgress.currentRank,
       hasPlayedTournament: attempts.length > 0,
       bestAttempt,
@@ -142,35 +152,76 @@ function Leaderboard() {
   const activeRanking = rankingTypes.find((type) => type.id === selectedRankingType);
   const isTournament = selectedRankingType === "tournament";
 
-  // The current user's row is real; competitors are the project's seeded demo
-  // learners (intentional). The seeded "isCurrentUser" placeholder is replaced
-  // by the real account so no fake person is ever shown as "you".
-  const everyone = useMemo(
-    () =>
-      mockLeaderboardUsers.map((user) =>
-        user.isCurrentUser
-          ? me
-          : {
-              ...user,
-              totalXP: user.lifetimeXP,
-              level: deriveLevel(user.lifetimeXP),
-              avatarUrl: "",
-              about: "This learner is building progress on PrepQuest Nepal.",
-            }
-      ),
-    [me]
-  );
+  // Real users only. This prototype stores a single real account locally (the
+  // logged-in user). No seeded/demo competitors are ever shown — every ranking
+  // is derived from real saved progress. If/when a real multi-user store exists
+  // it can be merged into this list; until then it is just the current user.
+  const realUsers = useMemo(() => [me], [me]);
 
+  // Whether the current ranking tab has any real data for a given user. Used to
+  // keep ineligible users off a tab (and to drive honest empty states) instead
+  // of padding the table with fake rows.
+  const isEligibleForTab = (user) => {
+    if (!user) return false;
+    switch (selectedRankingType) {
+      case "weekly":
+        return (weeklyFilter === "Last Week" ? user.lastWeekXP : user.weeklyXP) > 0;
+      case "monthly":
+        return (monthlyFilter === "Last Month" ? user.lastMonthXP : user.monthlyXP) > 0;
+      case "subject": {
+        const stats = user.subjectStats?.[subjectFilter];
+        return (stats?.xp || 0) > 0 || (stats?.questionsSolved || 0) > 0;
+      }
+      case "examTrack":
+        return (user.examXP || user.totalXP || 0) > 0;
+      case "hallOfFame":
+        if (hallOfFameFilter === "Lifetime Tournament Wins") return (user.tournamentWins || 0) > 0;
+        if (hallOfFameFilter === "Lifetime Badges") return (user.badges || 0) > 0;
+        return (user.lifetimeXP || 0) > 0;
+      default:
+        return false; // tournament handled separately
+    }
+  };
+
+  // Load the latest completed tournament's real results on mount (not only when
+  // the Tournament tab is open) so the hero "My Tournament Rank" block and the
+  // tab both reflect the real backend final results immediately after playing.
   useEffect(() => {
-    if (!isTournament) return;
     let cancelled = false;
     getLatestTournamentResults()
-      .then((data) => !cancelled && setTournamentData(data))
-      .catch(() => !cancelled && setTournamentData(null));
+      .then((data) => {
+        if (cancelled) return;
+        // Mirror the real backend result into the badge store so tournament
+        // badges award from real results (backend stays the source of truth).
+        if (mirrorTournamentResult(data)) syncBadges();
+        setTournamentData(data);
+        setTournamentLoadError(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTournamentData(null);
+        setTournamentLoadError(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [isTournament]);
+  }, []);
+
+  // The current user's real row in the latest tournament's final results (the
+  // authoritative "did I play / what was my rank" signal for the live system).
+  const tournamentQuestionCount = tournamentData?.tournament?.questionCount || 20;
+  const myTournamentRow = tournamentData?.leaderboard?.find((row) => row.isCurrentUser) || null;
+  // Public final results exist for everyone, independent of whether the current
+  // user took part (a brand-new account still sees the public board).
+  const publicResultsExist = Boolean(tournamentData?.leaderboard?.length);
+  // Played if the backend final results include us, OR (legacy/offline) a local
+  // attempt exists.
+  const playedTournament = Boolean(myTournamentRow) || me.hasPlayedTournament;
+  const myTournamentRank = myTournamentRow?.rank ?? (me.hasPlayedTournament ? me.bestAttempt?.rank : null);
+  const myTournamentPoints = myTournamentRow?.score ?? me.tournamentPoints ?? 0;
+  const myTournamentAccuracy = myTournamentRow
+    ? Math.round(((myTournamentRow.correctAnswers || 0) / tournamentQuestionCount) * 100)
+    : me.tournamentAccuracy;
 
   const metricFor = (user) => {
     if (!user) return 0;
@@ -187,28 +238,48 @@ function Leaderboard() {
   };
 
   const rows = useMemo(() => {
-    // Live backend tournament results take priority when connected.
-    if (isTournament && tournamentData?.leaderboard?.length) {
-      return tournamentData.leaderboard.map((row) => ({
-        id: row.userId,
-        rank: row.rank,
-        name: row.displayName,
-        initials: getInitials(row.displayName),
-        examTrack: examTracks[normalizeExamId(row.selectedExam)]?.name || "Sakha Adhikrit",
-        tournamentPoints: row.score || 0,
-        accuracy: Math.round(((row.correctAnswers || 0) / 20) * 100),
-        level: deriveLevel(row.score),
-        badges: 0,
-        totalXP: row.score || 0,
-        lifetimeXP: row.score || 0,
-        isCurrentUser: row.isCurrentUser,
-        avatarUrl: "",
-        about: "This learner is building progress on PrepQuest Nepal.",
-      }));
+    // --- Tournament: real final results. Once a Friday battle is completed its
+    // leaderboard is public, so we show the real backend results whenever they
+    // exist (this is the authoritative source for the live tournament). The
+    // current user's row is flagged via row.isCurrentUser. ---
+    if (isTournament) {
+      if (tournamentData?.leaderboard?.length) {
+        return tournamentData.leaderboard.map((row) => ({
+          id: row.userId,
+          rank: row.rank,
+          name: row.displayName,
+          initials: getInitials(row.displayName),
+          examTrack: examTracks[normalizeExamId(row.selectedExam)]?.name || me.examTrack,
+          tournamentPoints: row.score || 0,
+          displayPoints: row.score || 0,
+          accuracy: Math.round(((row.correctAnswers || 0) / tournamentQuestionCount) * 100),
+          level: deriveLevel(row.score),
+          badges: row.isCurrentUser ? me.badges : 0,
+          earnedBadges: row.isCurrentUser ? me.earnedBadges : [],
+          totalXP: row.score || 0,
+          lifetimeXP: row.score || 0,
+          isCurrentUser: row.isCurrentUser,
+          avatarUrl: row.isCurrentUser ? me.avatarUrl : "",
+          topPercent: row.rank ? Math.max(1, Math.round((row.rank / tournamentData.leaderboard.length) * 100)) : 100,
+          about: row.isCurrentUser ? me.about : "This learner is building progress on PrepQuest Nepal.",
+        }));
+      }
+      // No backend list, but a legacy/offline local attempt exists — show it.
+      if (me.hasPlayedTournament) {
+        return [{ ...me, rank: me.bestAttempt?.rank || 1, displayPoints: me.tournamentPoints, accuracy: me.tournamentAccuracy, topPercent: 100 }];
+      }
+      return [];
     }
 
-    const ranked = [...everyone]
-      .sort((a, b) => metricFor(b) - metricFor(a) || a.name.localeCompare(b.name))
+    // --- Other tabs: only real users with real data for this tab. ---
+    const eligible = realUsers.filter(isEligibleForTab);
+    const ranked = [...eligible]
+      .sort(
+        (a, b) =>
+          metricFor(b) - metricFor(a) ||            // primary: ranking score
+          (b.accuracy || 0) - (a.accuracy || 0) ||  // tie-break: accuracy
+          (b.lifetimeXP || 0) - (a.lifetimeXP || 0) // tie-break: lifetime XP
+      )
       .map((user, index) => ({ ...user, rank: index + 1 }));
     const total = ranked.length || 1;
     return ranked.map((user) => ({
@@ -216,7 +287,7 @@ function Leaderboard() {
       displayPoints: metricFor(user),
       topPercent: Math.max(1, Math.round((user.rank / total) * 100)),
     }));
-  }, [isTournament, tournamentData, everyone, selectedRankingType, weeklyFilter, monthlyFilter, subjectFilter, hallOfFameFilter]);
+  }, [isTournament, tournamentData, me, realUsers, selectedRankingType, weeklyFilter, monthlyFilter, subjectFilter, hallOfFameFilter]);
 
   const myRow = rows.find((user) => user.isCurrentUser);
   // Podium reordered so #1 sits in the centre (#2 left, #1 centre, #3 right).
@@ -229,6 +300,31 @@ function Leaderboard() {
   const handleViewProfile = (user) => setSelectedProfile(user);
   const closeProfile = () => setSelectedProfile(null);
   const goToTournament = () => navigate("/tournament");
+
+  // Honest, tab-specific empty states (no fake rows are ever shown instead).
+  const getEmptyState = () => {
+    switch (selectedRankingType) {
+      case "tournament":
+        // Reached only when there are no public results to show. Distinguish a
+        // backend/connection failure from a genuinely empty board.
+        if (tournamentLoadError) {
+          return { title: "Unable to load tournament results right now.", body: "Please check your connection or try again later.", cta: { label: "Retry", action: () => window.location.reload() } };
+        }
+        return { title: "No tournament results yet.", body: "Rankings will appear after learners complete the Friday Loksewa Battle.", cta: { label: "Go to Tournament", action: goToTournament } };
+      case "weekly":
+        return { title: "No weekly ranking yet.", body: "Complete quizzes, practice sessions, or mock tests this week to appear here.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+      case "monthly":
+        return { title: "No monthly ranking yet.", body: "Earn XP this month to appear on the monthly leaderboard.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+      case "subject":
+        return { title: "No subject-wise ranking yet.", body: `Practice ${subjectFilter || "this subject"} to unlock your subject leaderboard position.`, cta: { label: "Practice Subject", action: () => navigate("/practice") } };
+      case "examTrack":
+        return { title: "No ranking yet for this exam track.", body: "Your real progress will appear here as you earn XP.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+      case "hallOfFame":
+        return { title: "No Hall of Fame ranking yet.", body: "Long-term rankings will appear as you build total XP.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+      default:
+        return { title: "No ranking data yet.", body: "Start practicing to build your real stats.", cta: { label: "Start Practice", action: () => navigate("/practice") } };
+    }
+  };
 
   const renderSecondaryFilters = () => {
     if (selectedRankingType === "weekly") {
@@ -291,10 +387,15 @@ function Leaderboard() {
 
   const renderTable = () => {
     if (!rows.length) {
+      const empty = getEmptyState();
       return (
         <div className="leaderboard-empty-state">
-          <p>No ranking data yet. Start practicing to build your real stats.</p>
-          <button className="btn" type="button" onClick={() => navigate("/practice")}>Start Practice</button>
+          <span className="leaderboard-empty-icon"><FaMedal /></span>
+          <strong className="leaderboard-empty-title">{empty.title}</strong>
+          <p>{empty.body}</p>
+          {empty.cta ? (
+            <button className="btn" type="button" onClick={empty.cta.action}>{empty.cta.label}</button>
+          ) : null}
         </div>
       );
     }
@@ -384,23 +485,46 @@ function Leaderboard() {
           </div>
         </header>
 
-        {/* My Tournament Rank banner with trophy */}
+        {/* Tournament rank + exam track + CTA + trophy banner */}
         <section className="dashboard-card leaderboard-rank-banner">
-          <div className="rank-main">
+          <div className="rank-zone rank-main">
             <p className="eyebrow">My Tournament Rank</p>
-            <div className="rank-number">{me.hasPlayedTournament ? `#${me.bestAttempt?.rank || "-"}` : "—"}</div>
-            <div>
-              <strong>{me.hasPlayedTournament ? `${formatNumber(me.tournamentPoints)} points` : "You haven't played yet"}</strong>
-              <span>{me.hasPlayedTournament ? `${me.tournamentAccuracy}% accuracy` : "Take the Friday Loksewa Battle and start your climb!"}</span>
+            <div className="rank-main-row">
+              <span className="rank-circle">{playedTournament && myTournamentRank ? `#${myTournamentRank}` : "—"}</span>
+              <span className="rank-main-text">
+                <strong>
+                  {playedTournament
+                    ? `${formatNumber(myTournamentPoints)} points`
+                    : publicResultsExist
+                    ? "You haven't joined yet"
+                    : "You haven't played yet"}
+                </strong>
+                <span>
+                  {playedTournament
+                    ? `${myTournamentAccuracy}% accuracy`
+                    : publicResultsExist
+                    ? "Final public rankings are shown below. Join the next Friday Loksewa Battle to appear on the board."
+                    : "Take the Friday Loksewa Battle and start your climb!"}
+                </span>
+              </span>
             </div>
           </div>
-          <div className="rank-banner-mid">
-            <p className="eyebrow">Exam Track</p>
-            <strong className="rank-banner-exam">{selectedExam}</strong>
+
+          <div className="rank-zone rank-exam">
+            <span className="rank-exam-icon"><FaBookOpen /></span>
+            <span className="rank-exam-text">
+              <p className="eyebrow">Exam Track</p>
+              <strong className="rank-banner-exam">{selectedExam}</strong>
+            </span>
+          </div>
+
+          <div className="rank-zone rank-cta-zone">
             <p className="rank-banner-tagline">Every question you answer brings you closer to the top!</p>
             <button className="btn rank-cta" type="button" onClick={goToTournament}>View Tournament Details <FaArrowRight /></button>
           </div>
+
           <div className="rank-banner-cup" aria-hidden="true">
+            <span className="cup-glow" />
             <img className="tournament-cup-img" src={CupImage} alt="" />
           </div>
         </section>
@@ -408,22 +532,35 @@ function Leaderboard() {
         {/* Top 3 leaders */}
         {podium.length ? (
           <section className="leaderboard-podium-grid" aria-label="Top learners">
-            {podium.map((user) => (
-              <article className={`podium-card rank-${user.rank}`} key={user.id}>
-                <div className={`podium-rank-circle rank-${user.rank}`}>{user.rank}</div>
-                <div className="leader-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.initials}</div>
-                <div className="podium-name">
-                  <h2>{user.name}</h2>
-                  <p>{user.examTrack}</p>
-                </div>
-                <strong className="podium-score">{formatNumber(user.tournamentPoints || metricFor(user))} points · {user.tournamentAccuracy || user.accuracy || 0}%</strong>
-                <div className="podium-rewards">
-                  <span>🪙 {user.reward ? user.reward.match(/(\d+)\s*coins/i)?.[1] || "—" : "—"}</span>
-                  <span>⭐ {user.reward ? `${user.reward.match(/(\d+)\s*XP/i)?.[1] || "—"} XP` : "—"}</span>
-                  <span>{user.rank === 1 ? "Gold" : user.rank === 2 ? "Silver" : "Bronze"} Champion</span>
-                </div>
-              </article>
-            ))}
+            {podium.map((user) => {
+              const reward = podiumRewards[user.rank] || podiumRewards[3];
+              const score = isTournament ? (user.tournamentPoints || 0) : metricFor(user);
+              const accuracy = isTournament ? user.tournamentAccuracy : user.accuracy;
+              return (
+                <article className={`podium-card rank-${user.rank}`} key={user.id}>
+                  <div className={`podium-rank-circle rank-${user.rank}`}>{user.rank}</div>
+                  <div className="leader-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : user.initials}</div>
+                  <div className="podium-name">
+                    <h2>{user.name}</h2>
+                    <p>{user.examTrack}</p>
+                  </div>
+                  <strong className="podium-score">
+                    {formatNumber(score)} {isTournament ? "points" : "XP"}{accuracy ? ` · ${accuracy}%` : ""}
+                  </strong>
+                  <div className="podium-rewards">
+                    {isTournament ? (
+                      <>
+                        <span className="reward-pill"><CoinIcon size="xs" /> {reward.coins}</span>
+                        <span className="reward-pill"><FaStar className="reward-star" /> {reward.xp} XP</span>
+                        <span className="reward-pill champion">{reward.title}</span>
+                      </>
+                    ) : (
+                      <span className="reward-pill champion">Rank #{user.rank}</span>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </section>
         ) : null}
 
@@ -450,21 +587,27 @@ function Leaderboard() {
           {renderSecondaryFilters()}
         </section>
 
-        {/* Full leaderboard table */}
+        {/* Full leaderboard table — splits into table + inline profile panel
+            (beside the table, in this same section) when a profile is open. */}
         <section className="dashboard-card leaderboard-table-card">
           <div className="card-heading">
             <h2 className="card-title"><FaMedal /> Full Leaderboard</h2>
             <span className="status-chip">{selectedRankingType === "subject" ? subjectFilter : activeRanking.label}{myRow ? ` · You are #${myRow.rank}` : ""}</span>
           </div>
-          {renderTable()}
-          <p className="privacy-note">
-            Your row reflects your real saved progress. Other learners are shown for ranking context and only public,
-            privacy-safe details are displayed.
-          </p>
+          <div className={`leaderboard-table-body${selectedProfile ? " profile-open" : ""}`}>
+            <div className="leaderboard-table-main">
+              {renderTable()}
+              <p className="privacy-note">
+                Your row reflects your real saved progress. Other learners are shown for ranking context and only public,
+                privacy-safe details are displayed.
+              </p>
+            </div>
+            {selectedProfile ? (
+              <LeaderboardProfilePanel user={selectedProfile} onClose={closeProfile} />
+            ) : null}
+          </div>
         </section>
       </section>
-
-      {selectedProfile ? <LeaderboardProfilePanel user={selectedProfile} onClose={closeProfile} /> : null}
     </DashboardLayout>
   );
 }

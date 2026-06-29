@@ -45,16 +45,16 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { rankThresholds } from "../../data/gamificationMockData";
 import { rankJourney } from "../../data/rankBadges";
-import gamificationIcons from "../../assets/gamification";
-import missionImg from "../../assets/level/mission.png";
-import { getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
+import { getCurrentStreak, getTodayDailyQuizAttempt } from "../../utils/dailyQuizUtils";
 import { canClaimDailyReward, DAILY_REWARD_CLAIMED_EVENT, getDailyRewardState, getNepalRewardDate } from "../../utils/dailyRewardUtils";
 import { getMockDashboardStats, hasCompletedMockToday } from "../../utils/mockTestUtils";
 import { buildSubjectCardData, getExamSubjects, getNormalizedSubjectProgress, normalizeExamId } from "../../utils/practiceUtils";
-import { calculateTotalXPFromTransactions, getNextLevelProgress, getOverallRankProgress } from "../../utils/xpUtils";
+import { calculateTotalXPFromTransactions, getOverallRankProgress } from "../../utils/xpUtils";
+import { gamificationIcons } from "../../assets/gamification";
 import { CoinIcon } from "../../components/common/Coin";
 import LogoutConfirmModal from "../../components/common/LogoutConfirmModal";
 import { getUserCoinBalance } from "../../services/coinService";
+import missionArt from "../../assets/level/key_arrow-transparent.png";
 import "./DashboardPage.css";
 
 const examNames = {
@@ -142,7 +142,6 @@ function DashboardPage() {
   const mockCompletedToday = hasCompletedMockToday();
   const missionCompletedCount = (dailyQuizCompleted ? 1 : 0) + (mockCompletedToday ? 1 : 0);
   const missionProgressPercent = Math.round((missionCompletedCount / 3) * 100);
-  const xpProgress = getNextLevelProgress(totalXp);
   const rankProgress = getOverallRankProgress(totalXp);
   const { currentRank, nextRank } = rankProgress;
   const isMaxRank = rankProgress.rankIndex >= rankJourney.length - 1;
@@ -151,6 +150,8 @@ function DashboardPage() {
   // Premium image icons shared with the practice/question UI.
   const coinIcon = gamificationIcons.coins;
   const streakIcon = gamificationIcons.streak;
+  const missionImg = missionArt || gamificationIcons.mission;
+  const coins = getUserCoinBalance();
   const subjectCards = getExamSubjects(selectedExam).map((subject) =>
     buildSubjectCardData(subject, getNormalizedSubjectProgress(), selectedExam)
   );
@@ -274,48 +275,58 @@ function DashboardPage() {
 
           <section className="dashboard-content">
 
-            {/* Top stats — Level/Rank, Coins, Streak only */}
-            <section className="stats-grid stats-grid-3" aria-label="Learning stats">
-              <article className="stat-card level-stat-card">
-                <span className="rank-badge-icon">
+            {/* Top stats — one connected banner: Level · Coins · Streak */}
+            <section className="stats-banner" aria-label="Learning stats">
+              <div className="stat-block">
+                <span className="stat-art level">
                   <img src={rankBadge} alt={currentRank} />
                 </span>
-                <div>
-                  <div className="stat-value">Level {xpProgress.currentLevel.level}</div>
-                  <div className="stat-label">{currentRank}</div>
+                <div className="stat-info">
+                  <div className="stat-value">Level {rankProgress.level}</div>
+                  <div className="stat-label accent-level">{currentRank}</div>
                   <div className="stat-helper">{totalXp.toLocaleString()} XP earned</div>
                 </div>
-              </article>
-              <article className="stat-card coin-stat-card">
-                {coinIcon ? (
-                  <span className="dashboard-stat-icon coin">
+              </div>
+
+              <span className="stat-divider" aria-hidden="true" />
+
+              <div className="stat-block">
+                <span className="stat-art coin">
+                  {coinIcon ? (
                     <img className="dashboard-stat-icon-img" src={coinIcon} alt="Coins" />
-                  </span>
-                ) : (
-                  <CoinIcon size="lg" className="stat-coin" />
-                )}
-                <div>
+                  ) : (
+                    <CoinIcon size="xl" />
+                  )}
+                </span>
+                <div className="stat-info">
                   <div className="stat-value coin-stat-value">{coins.toLocaleString()}</div>
                   <div className="stat-label">Coins</div>
                 </div>
-              </article>
-              <article className="stat-card streak-stat-card">
-                {streakIcon ? (
-                  <span className="dashboard-stat-icon streak">
+              </div>
+
+              <span className="stat-divider" aria-hidden="true" />
+
+              <div className="stat-block">
+                <span className="stat-art streak">
+                  {streakIcon ? (
                     <img className="dashboard-stat-icon-img" src={streakIcon} alt="Streak" />
-                  </span>
-                ) : (
-                  <div className="stat-icon"><Flame /></div>
-                )}
-                <div>
+                  ) : (
+                    <Flame />
+                  )}
+                </span>
+                <div className="stat-info">
                   <div className="stat-value">{dailyRewardState.currentStreak} {dailyRewardState.currentStreak === 1 ? "Day" : "Days"}</div>
-                  <div className="stat-label">Current Streak</div>
+                  <div className="stat-label accent-streak">Current Streak</div>
                   <div className="stat-helper">
-                    {dailyRewardClaimedToday ? "Streak protected for today." : "Claim today's reward to keep your streak."}
-                    {dailyRewardState.bestStreak > 0 ? ` Best: ${dailyRewardState.bestStreak} ${dailyRewardState.bestStreak === 1 ? "Day" : "Days"}` : ""}
+                    {(() => {
+                      const best = dailyRewardState.bestStreak > 0
+                        ? dailyRewardState.bestStreak
+                        : (dailyRewardState.currentStreak > 0 ? dailyRewardState.currentStreak : 0);
+                      return `Best streak: ${best} ${best === 1 ? "Day" : "Days"}`;
+                    })()}
                   </div>
                 </div>
-              </article>
+              </div>
             </section>
 
             {/* Today's Mission — the hero / main action section */}
@@ -323,7 +334,11 @@ function DashboardPage() {
               <div className="mission-left">
                 <p className="mission-title">Today&apos;s Mission</p>
                 <div className="mission-visual" aria-hidden="true">
-                  <img className="mission-image" src={missionImg} alt="" />
+                  {missionImg ? (
+                    <img className="mission-image" src={missionImg} alt="" />
+                  ) : (
+                    <Target className="mission-image-fallback" />
+                  )}
                 </div>
               </div>
               <div className="mission-tasks">

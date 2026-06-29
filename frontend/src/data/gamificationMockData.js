@@ -1,13 +1,21 @@
 
+// Single source of truth for the account ladder. Each tier is one Level whose
+// index (+1) IS the level number and whose XP floor unlocks both the level and
+// the matching rank name/badge. Consumed by getOverallRankProgress (rank + level
+// math) and rankJourney (badge art), so Dashboard, Profile, Leaderboard and the
+// Rank Journey never drift apart.
+//   L1 New Aspirant 0 · L2 Focused Learner 200 · L3 Kharidar 500 · L4 Nayab Subba
+//   900 · L5 Officer 1400 · L6 Loksewa Warrior 2000 · L7 Public Service 3000 ·
+//   L8 PrepQuest Legend 5000
 export const rankThresholds = [
   { rank: "New Aspirant", xp: 0 },
-  { rank: "Focused Learner", xp: 500 },
-  { rank: "Kharidar Candidate", xp: 1500 },
-  { rank: "Nayab Subba Candidate", xp: 3000 },
-  { rank: "Officer Candidate", xp: 5000 },
-  { rank: "Loksewa Warrior", xp: 8000 },
-  { rank: "Public Service Master", xp: 12000 },
-  { rank: "PrepQuest Legend", xp: 20000 },
+  { rank: "Focused Learner", xp: 200 },
+  { rank: "Kharidar Candidate", xp: 500 },
+  { rank: "Nayab Subba Candidate", xp: 900 },
+  { rank: "Officer Candidate", xp: 1400 },
+  { rank: "Loksewa Warrior", xp: 2000 },
+  { rank: "Public Service Master", xp: 3000 },
+  { rank: "PrepQuest Legend", xp: 5000 },
 ];
 
 export const mockTournament = {

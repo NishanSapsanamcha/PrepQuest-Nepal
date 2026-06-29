@@ -9,12 +9,56 @@
 }
 
 .dashboard-page .tournament-header-card {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto minmax(180px, 240px);
+  align-items: center;
   gap: 1.25rem;
   padding: 1.35rem;
+  overflow: hidden;
   border-color: rgba(45, 212, 191, 0.2);
+  background:
+    radial-gradient(ellipse 42% 130% at 92% 50%, rgba(34, 211, 238, 0.12), transparent 70%),
+    #141d31;
+}
+
+.dashboard-page .tournament-header-main {
+  align-self: center;
+}
+
+/* Blended trophy illustration on the right of the hero (transparent PNG —
+   no box/border). Soft teal glow pools behind it so it reads as part of the
+   card, not a pasted image. */
+.dashboard-page .tournament-header-cup {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 168px;
+  justify-self: stretch;
+}
+
+.dashboard-page .tournament-header-cup .cup-glow {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.34) 0%, rgba(34, 211, 238, 0.15) 34%, transparent 68%);
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+.dashboard-page .tournament-header-cup .tournament-cup-img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  max-height: 188px;
+  object-fit: contain;
+  background: transparent;
+  filter: drop-shadow(0 8px 26px rgba(45, 212, 191, 0.42));
 }
 
 .dashboard-page .tournament-header-main {
@@ -810,6 +854,17 @@
 
   .dashboard-page .tournament-header-actions {
     justify-content: flex-start;
+  }
+
+  /* Trophy moves below the content, centered and slightly smaller. */
+  .dashboard-page .tournament-header-cup {
+    justify-self: center;
+    min-height: 0;
+    order: 3;
+  }
+
+  .dashboard-page .tournament-header-cup .tournament-cup-img {
+    max-width: 210px;
   }
 }
 

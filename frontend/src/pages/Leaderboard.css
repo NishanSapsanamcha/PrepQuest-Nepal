@@ -1,3 +1,22 @@
+/* The profile side panel opens INSIDE the Full Leaderboard section, beside the
+   table — so the user sees it right where they clicked (no scroll-to-top, no
+   modal). Default: table is full width. When a profile is open the section body
+   becomes two columns: table left, profile panel right. */
+.dashboard-page .leaderboard-table-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.dashboard-page .leaderboard-table-body.profile-open {
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 26vw, 380px);
+}
+
+.dashboard-page .leaderboard-table-main {
+  min-width: 0;
+}
+
 .dashboard-page .leaderboard-page {
   display: grid;
   gap: 1rem;
@@ -5,6 +24,7 @@
   max-width: none;
   margin: 0;
   padding-top: 0;
+  min-width: 0;
 }
 
 .dashboard-page .leaderboard-header {
@@ -477,12 +497,45 @@
 .dashboard-page .leaderboard-empty-state {
   display: grid;
   justify-items: center;
-  gap: 0.85rem;
-  padding: 2rem;
-  border: 1px dashed rgba(148, 163, 184, 0.22);
+  gap: 0.6rem;
+  padding: 2.4rem 2rem;
+  border: 1px solid rgba(45, 212, 191, 0.28);
   border-radius: var(--radius);
-  background: rgba(15, 23, 39, 0.55);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(45, 212, 191, 0.1), transparent 60%),
+    rgba(13, 27, 50, 0.72);
+  box-shadow: 0 0 28px rgba(45, 212, 191, 0.08);
   text-align: center;
+}
+
+.dashboard-page .leaderboard-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 0.2rem;
+  border-radius: 14px;
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--teal);
+}
+
+.dashboard-page .leaderboard-empty-icon svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.dashboard-page .leaderboard-empty-title {
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.dashboard-page .leaderboard-empty-state .btn {
+  margin-top: 0.4rem;
+  width: auto;
+  padding-inline: 1.4rem;
 }
 
 .dashboard-page .leaderboard-empty-state p,
@@ -559,67 +612,174 @@
 
 /* ============================ Rebuilt sections ============================ */
 
-/* --- My Tournament Rank banner (with trophy) --- */
+/* --- Tournament rank banner: 4 zones in one row (rank | exam | CTA | trophy),
+   inside a rounded card with a soft teal-glow border. --- */
 .dashboard-page .leaderboard-rank-banner {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1.1fr) auto;
-  gap: 1.5rem;
+  grid-template-columns: minmax(250px, 1.15fr) minmax(170px, 0.7fr) minmax(230px, 1fr) minmax(190px, 0.75fr);
+  gap: 1.4rem;
   align-items: center;
-  padding: 1.4rem 1.6rem;
-  border-color: rgba(45, 212, 191, 0.2);
+  padding: 1.2rem 1.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: var(--radius);
   background:
-    radial-gradient(circle at 0% 50%, rgba(45, 212, 191, 0.1), transparent 38%),
+    radial-gradient(ellipse 32% 120% at 92% 50%, rgba(34, 211, 238, 0.14), transparent 70%),
     linear-gradient(135deg, rgba(13, 27, 50, 0.96), rgba(8, 18, 34, 0.96));
 }
 
-.dashboard-page .leaderboard-rank-banner .rank-number {
-  width: 4.6rem;
-  height: 4.6rem;
-  border-radius: 50%;
-  font-size: 2rem;
+.dashboard-page .leaderboard-rank-banner:hover {
+  transform: none;
+  border-color: rgba(45, 212, 191, 0.32);
 }
 
-.dashboard-page .rank-banner-mid {
-  display: grid;
-  gap: 0.3rem;
+.dashboard-page .rank-zone {
+  min-width: 0;
+}
+
+/* Vertical dividers between the first three zones. */
+.dashboard-page .rank-exam,
+.dashboard-page .rank-cta-zone {
+  padding-left: 1.4rem;
   border-left: 1px solid rgba(58, 76, 112, 0.4);
-  padding-left: 1.5rem;
+}
+
+/* Zone 1 — My Tournament Rank */
+.dashboard-page .rank-main .eyebrow {
+  margin-bottom: 0.7rem;
+}
+
+.dashboard-page .rank-main-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.dashboard-page .rank-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 3.9rem;
+  height: 3.9rem;
+  border-radius: 50%;
+  border: 1px solid rgba(45, 212, 191, 0.45);
+  background: rgba(45, 212, 191, 0.08);
+  color: var(--teal);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.dashboard-page .rank-main-text {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.dashboard-page .rank-main-text strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.dashboard-page .rank-main-text > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Zone 2 — Exam Track (book icon + label) */
+.dashboard-page .rank-exam {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.dashboard-page .rank-exam-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(24, 34, 56, 0.78);
+  color: var(--teal);
+}
+
+.dashboard-page .rank-exam-icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.dashboard-page .rank-exam-text {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
 .dashboard-page .rank-banner-exam {
   color: var(--text);
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   font-weight: 800;
 }
 
+/* Zone 3 — tagline + CTA */
+.dashboard-page .rank-cta-zone {
+  display: grid;
+  gap: 0.7rem;
+}
+
 .dashboard-page .rank-banner-tagline {
-  margin: 0.1rem 0 0.6rem;
+  margin: 0;
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.45;
 }
 
-.dashboard-page .rank-banner-mid .rank-cta {
+.dashboard-page .rank-cta-zone .rank-cta {
   justify-self: start;
   gap: 0.5rem;
 }
 
+/* Trophy fills zone 4 at the right of the compact banner. */
 .dashboard-page .rank-banner-cup {
+  position: relative;
   display: grid;
   place-items: center;
+  min-height: 150px;
+  justify-self: stretch;
 }
 
-/* cup.png — near-black background vanishes via screen blend; mask fades the
-   rounded-rect edge so no box shows on the card. */
+/* Soft radial spotlight pooling behind the cup so it reads as ambient banner
+   lighting rather than a pasted image box. */
+.dashboard-page .cup-glow {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.36) 0%, rgba(34, 211, 238, 0.15) 34%, transparent 68%);
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+/* tournamentcup-transparent.png — already a transparent illustration (its white
+   background was keyed out at source), so no box/mask/blend is needed. The teal
+   drop-shadow blends its glow into the banner; full trophy stays visible. */
 .dashboard-page .tournament-cup-img {
-  width: 210px;
-  height: 150px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+  max-height: 172px;
   object-fit: contain;
   background: transparent;
-  mix-blend-mode: screen;
-  filter: drop-shadow(0 0 26px rgba(45, 212, 191, 0.32));
-  -webkit-mask-image: radial-gradient(ellipse 80% 82% at 50% 50%, #000 52%, transparent 92%);
-  mask-image: radial-gradient(ellipse 80% 82% at 50% 50%, #000 52%, transparent 92%);
+  filter: drop-shadow(0 8px 26px rgba(45, 212, 191, 0.42));
 }
 
 /* --- Top 3 podium (vertical cards, #1 centred/highlighted) --- */
@@ -695,14 +855,40 @@
   margin-top: 0.15rem;
 }
 
-.dashboard-page .podium-rewards span {
-  padding: 0.3rem 0.6rem;
+.dashboard-page .podium-rewards .reward-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   background: rgba(8, 18, 34, 0.6);
   color: var(--soft);
   font-size: 0.72rem;
   font-weight: 800;
+  line-height: 1;
+}
+
+.dashboard-page .podium-rewards .reward-pill .coin-icon {
+  display: inline-flex;
+}
+
+.dashboard-page .podium-rewards .reward-star {
+  width: 0.78rem;
+  height: 0.78rem;
+  color: #38bdf8;
+}
+
+.dashboard-page .podium-rewards .reward-pill.champion {
+  border-color: rgba(45, 212, 191, 0.28);
+  background: rgba(45, 212, 191, 0.08);
+  color: #a7f3d0;
+}
+
+.dashboard-page .podium-card.rank-1 .reward-pill.champion {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.12);
+  color: #fcd34d;
 }
 
 .dashboard-page .podium-card.rank-1 {
@@ -799,11 +985,12 @@
 }
 
 @media (max-width: 1200px) {
+  /* 2x2: rank | exam on top, CTA | trophy below. */
   .dashboard-page .leaderboard-rank-banner {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
-  .dashboard-page .rank-banner-mid {
+  .dashboard-page .rank-cta-zone {
     border-left: none;
     padding-left: 0;
   }
@@ -826,7 +1013,26 @@
   }
 }
 
+@media (max-width: 1100px) {
+  /* Stack the panel below the table (still inside the Full Leaderboard section,
+     never at the top of the page). */
+  .dashboard-page .leaderboard-table-body.profile-open {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
+  /* Fully stack the banner zones; drop the vertical dividers. */
+  .dashboard-page .leaderboard-rank-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .rank-exam,
+  .dashboard-page .rank-cta-zone {
+    border-left: none;
+    padding-left: 0;
+  }
+
   .dashboard-page .leaderboard-summary-grid,
   .dashboard-page .ranking-tabs,
   .dashboard-page .secondary-filter-grid {

@@ -41,6 +41,7 @@ export const gamificationIcons = {
   coins: pick(root, "coin-star"),
   streak: pick(root, "streak-flame"),
   badges: pick(root, "badge-earned"),
+  mission: pick(root, "mission"),
 };
 
 // Subject card badges, keyed by subject.id. `subjects/<id>.png` files are

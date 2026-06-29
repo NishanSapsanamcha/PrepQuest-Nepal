@@ -109,6 +109,7 @@ export function getOverallRankProgress(totalXp = 0) {
 
   return {
     rankIndex: currentIndex,
+    level: currentIndex + 1, // account Level == rank tier (same XP ladder)
     currentRank: current.rank,
     nextRank: next ? next.rank : "Highest rank reached",
     currentRankXp: current.xp,
@@ -116,6 +117,13 @@ export function getOverallRankProgress(totalXp = 0) {
     xpToNextRank: next ? Math.max(0, next.xp - totalXp) : 0,
     percent,
   };
+}
+
+// Account-wide Level number derived from the same rank ladder. Use this anywhere
+// a "Level N" is shown for the logged-in user / a leaderboard learner so it never
+// disagrees with their rank name. (Per-subject levels stay separate.)
+export function getAccountLevelFromXP(totalXp = 0) {
+  return getOverallRankProgress(totalXp).level;
 }
 
 export function getXPTransactions() {
