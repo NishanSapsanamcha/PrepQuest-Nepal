@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { FaCheckCircle, FaGraduationCap, FaTimes, FaTrophy } from "react-icons/fa";
 import BadgeIcon from "../badges/BadgeIcon";
 import genericBadge from "../../assets/level/bages.png";
+import { getPreferredLanguage, t, translateExamName, formatRankHash, formatTopPercent } from "../../data/translations";
 import "./LeaderboardProfilePanel.css";
 
 /**
@@ -23,6 +24,7 @@ function LeaderboardProfilePanel({ user, onClose }) {
 
   if (!user) return null;
 
+  const lang = getPreferredLanguage();
   const earned = Array.isArray(user.earnedBadges) ? user.earnedBadges : [];
   const badgeCount = Number(user.badges) || 0;
   const totalXp = Number(user.totalXP ?? user.lifetimeXP ?? 0);
@@ -46,18 +48,18 @@ function LeaderboardProfilePanel({ user, onClose }) {
         </div>
         <div className="lb-profile-identity">
           <h3>{user.name}<FaCheckCircle className="lb-verified" aria-label="Privacy-safe profile" /></h3>
-          <p><FaGraduationCap aria-hidden="true" /> {user.examTrack}</p>
+          <p><FaGraduationCap aria-hidden="true" /> {translateExamName(user.examTrack, lang)}</p>
         </div>
       </div>
 
       <div className="lb-profile-stats">
-        <div><span>Level</span><strong>Lv {user.level || 1}</strong></div>
-        <div><span>Total XP</span><strong>{totalXp.toLocaleString()}</strong></div>
-        <div><span>Badges</span><strong>{badgeCount}</strong></div>
+        <div><span>{t("level", lang)}</span><strong>{t("lvAbbr", lang)} {user.level || 1}</strong></div>
+        <div><span>{t("totalXP", lang)}</span><strong>{totalXp.toLocaleString()}</strong></div>
+        <div><span>{t("badges", lang)}</span><strong>{badgeCount}</strong></div>
       </div>
 
       <div className="lb-profile-section">
-        <p className="lb-profile-label">Earned Badges</p>
+        <p className="lb-profile-label">{t("earnedBadges", lang)}</p>
         {earned.length ? (
           <div className="lb-badge-row">
             {earned.slice(0, 5).map((badge) => (
@@ -73,28 +75,28 @@ function LeaderboardProfilePanel({ user, onClose }) {
             {badgeCount > 5 ? <span className="lb-badge-more">+{badgeCount - 5}</span> : null}
           </div>
         ) : (
-          <p className="lb-empty">No badges earned yet</p>
+          <p className="lb-empty">{t("noBadgesYet", lang)}</p>
         )}
       </div>
 
       <div className="lb-profile-section">
-        <p className="lb-profile-label">Current Rank</p>
+        <p className="lb-profile-label">{t("currentRank", lang)}</p>
         <div className="lb-profile-rank">
           <span className={`lb-profile-rank-shield rank-${user.rank <= 3 ? user.rank : "default"}`}>
             <FaTrophy aria-hidden="true" />
             <em>{user.rank}</em>
           </span>
           <div className="lb-profile-rank-meta">
-            <strong>Rank #{user.rank}</strong>
-            <span>{user.topPercent ? `Top ${user.topPercent}% of PrepQuest Nepal` : "Climbing the ranks"}</span>
-            <span className="lb-profile-points"><FaTrophy aria-hidden="true" /> {points.toLocaleString()} points</span>
+            <strong>{formatRankHash(user.rank, lang)}</strong>
+            <span>{user.topPercent ? formatTopPercent(user.topPercent, lang) : t("climbingRanks", lang)}</span>
+            <span className="lb-profile-points"><FaTrophy aria-hidden="true" /> {points.toLocaleString()} {t("pointsLower", lang)}</span>
           </div>
         </div>
       </div>
 
       <div className="lb-profile-about">
-        <p className="lb-profile-label">About {String(user.name || "").split(/\s+/)[0]}</p>
-        <p>{user.about || "This learner is building progress on PrepQuest Nepal."}</p>
+        <p className="lb-profile-label">{t("aboutWord", lang)} {String(user.name || "").split(/\s+/)[0]}</p>
+        <p>{user.about || t("defaultLearnerAbout", lang)}</p>
       </div>
     </aside>
   );

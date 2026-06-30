@@ -39,7 +39,6 @@ export function normalizeExamId(exam) {
 
 export function normalizeLanguageMode(language) {
   const value = String(language || "english").toLowerCase();
-  if (value.includes("both")) return "both";
   if (value.includes("nepali")) return "nepali";
   return "english";
 }
@@ -261,7 +260,7 @@ export function getSubjectDisplayProgress(subjectId) {
 }
 
 export function getText(question, language) {
-  const mode = normalizeLanguageMode(language);
+  const mode = isEnglishSubjectQuestion(question) ? "english" : normalizeLanguageMode(language);
   const normalizedOptions = Array.isArray(question.options)
     ? question.options
     : (question.options_en || []).map((en, index) => ({
@@ -288,23 +287,12 @@ export function getText(question, language) {
   };
 
   if (mode === "nepali") return nepali;
-  if (mode === "both") {
-    return {
-      question: `${english.question}\n${nepali.question}`,
-      options: normalizedOptions.map((option) => ({
-        key: option.key,
-        label: `${option.key}. ${option.en}\n   ${option.np || option.en}`,
-      })),
-      correctAnswer: `${english.correctAnswer} / ${nepali.correctAnswer}`,
-      explanation: `${english.explanation}\n${nepali.explanation}`,
-    };
-  }
   return english;
 }
 
 export function getOptionLabel(question, optionKey, language) {
   if (!optionKey || optionKey === "SKIPPED") return "Skipped";
-  const mode = normalizeLanguageMode(language);
+  const mode = isEnglishSubjectQuestion(question) ? "english" : normalizeLanguageMode(language);
   const normalizedOptions = Array.isArray(question.options)
     ? question.options
     : (question.options_en || []).map((en, index) => ({
@@ -315,8 +303,13 @@ export function getOptionLabel(question, optionKey, language) {
   const option = normalizedOptions.find((item) => item.key === optionKey);
   if (!option) return optionKey;
   if (mode === "nepali") return option.np || option.en;
-  if (mode === "both") return `${option.en} / ${option.np || option.en}`;
   return option.en;
+}
+
+export function isEnglishSubjectQuestion(question = {}) {
+  const subjectId = String(question.subjectId || "").toLowerCase();
+  const subject = String(question.subject || question.subjectName || "").toLowerCase();
+  return subjectId === "english" || subjectId === "english-grammar" || subject.includes("english grammar") || subject === "english";
 }
 
 export function buildSubjectProgress(subjectId) {

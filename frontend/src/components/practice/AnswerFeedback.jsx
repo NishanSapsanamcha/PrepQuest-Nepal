@@ -1,4 +1,5 @@
 import { FaCheckCircle, FaLightbulb, FaTimesCircle } from "react-icons/fa";
+import { t, formatReviewTopic } from "../../data/translations";
 import { getOptionLabel, getText, normalizeLanguageMode } from "../../utils/practiceUtils";
 
 function AnswerFeedback({ question, isCorrect, selectedOptionKey, languageMode, showReward = true }) {
@@ -12,37 +13,37 @@ function AnswerFeedback({ question, isCorrect, selectedOptionKey, languageMode, 
       <div className="feedback-heading">
         <span className="feedback-icon">{isCorrect ? <FaCheckCircle /> : <FaTimesCircle />}</span>
         <div>
-          <h3>{isCorrect ? (showReward ? "Correct! +10 XP" : "Correct") : "Not quite"}</h3>
-          <p>{isCorrect ? "Nice work - your answer was correct." : "Good attempt. Review the correction and continue."}</p>
+          <h3>{isCorrect ? (showReward ? `${t("correct", mode)}! +10 XP` : t("correct", mode)) : t("wrong", mode)}</h3>
+          <p>{isCorrect ? t("niceWorkCorrect", mode) : t("goodAttempt", mode)}</p>
         </div>
       </div>
 
       <div className="feedback-answer-grid">
         {!isCorrect && (
           <div>
-            <span>Your answer</span>
+            <span>{t("yourAnswer", mode)}</span>
             <strong>{selectedAnswer}</strong>
           </div>
         )}
         <div>
-          <span>Correct answer</span>
+          <span>{t("correctAnswer", mode)}</span>
           <strong>{correctAnswer}</strong>
         </div>
       </div>
 
       <div className="feedback-explanation">
-        <strong>Explanation</strong>
+        <strong>{t("explanation", mode)}</strong>
         <span>{text.explanation}</span>
       </div>
 
       {isCorrect && showReward ? (
         <div className="feedback-reward-row">
-          <span>XP gained: <strong>+10</strong></span>
-          <span>Progress saved</span>
+          <span>{t("xpGained", mode)} <strong>+10</strong></span>
+          <span>{t("progressSaved", mode)}</span>
         </div>
       ) : !isCorrect ? (
         <div className="feedback-tip">
-          <FaLightbulb /> {question.topic ? `Review ${question.topic} before your next practice.` : "Review this topic before your next practice."}
+          <FaLightbulb /> {question.topic ? formatReviewTopic(question.topic, mode) : t("reviewThisTopic", mode)}
         </div>
       ) : null}
     </section>

@@ -28,6 +28,7 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import PathImage from "../../assets/level/path.png";
 import { examTracks } from "../../data/examTracks";
 import { subjectLevels } from "../../data/subjectLevels";
+import { formatLevel, languageLabel as getLanguageLabel, t, translateSubjectName, trText, formatAccuracyFromSolved, formatQuestionsSolved } from "../../data/translations";
 import {
   buildSubjectCardData,
   getExamSubjects,
@@ -45,12 +46,6 @@ import {
   getXPTransactions,
 } from "../../utils/xpUtils";
 import "./ProgressionPage.css";
-
-const languageLabels = {
-  nepali: "Nepali",
-  english: "English",
-  both: "Both",
-};
 
 // Circumference of the accuracy donut (r = 52 in a 120 viewBox).
 const ACCURACY_CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -103,7 +98,8 @@ function getPreferenceLabels() {
   return {
     selectedExamId,
     examLabel: savedExam ? examTracks[selectedExamId]?.name || savedExam : "Not Selected",
-    languageLabel: savedLanguage ? languageLabels[languageValue] || savedLanguage : "Not Selected",
+    languageLabel: savedLanguage ? getLanguageLabel(languageValue) : "Not Selected",
+    preferredLanguage: languageValue || "english",
   };
 }
 
@@ -259,7 +255,7 @@ function buildNextGoals({ subjectRows, activeWrongAnswers, savedQuestions, mostM
 function ProgressionPage() {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("all");
-  const { selectedExamId, examLabel, languageLabel } = getPreferenceLabels();
+  const { selectedExamId, examLabel, languageLabel, preferredLanguage } = getPreferenceLabels();
   const subjectProgress = getNormalizedSubjectProgress();
   const savedQuestions = getSavedReviewQuestions();
   const wrongAnswers = getWrongAnswerReview();
@@ -363,43 +359,43 @@ function ProgressionPage() {
       key: "strongest",
       className: "strongest",
       icon: FaStar,
-      label: "Strongest Subject",
+      label: t("strongestSubject", preferredLanguage),
       subject: strongestSubject,
-      emptyTitle: "No subject analysis yet",
+      emptyTitle: t("noSubjectAnalysis", preferredLanguage),
       metric: strongestSubject
-        ? `${strongestSubject.accuracy}% accuracy from ${strongestSubject.solved} solved`
-        : "Complete a practice session to reveal this.",
+        ? formatAccuracyFromSolved(strongestSubject.accuracy, strongestSubject.solved, preferredLanguage)
+        : t("completeToReveal", preferredLanguage),
     },
     {
       key: "attention",
       className: "attention",
       icon: FaExclamationTriangle,
-      label: "Needs Most Attention",
+      label: t("needsMostAttention", preferredLanguage),
       subject: weakestSubject,
-      emptyTitle: "No weak subject detected yet",
+      emptyTitle: t("noWeakSubject", preferredLanguage),
       metric: weakestSubject
-        ? `${weakestSubject.accuracy}% accuracy from ${weakestSubject.solved} solved`
-        : "Wrong answers and low accuracy will appear here.",
+        ? formatAccuracyFromSolved(weakestSubject.accuracy, weakestSubject.solved, preferredLanguage)
+        : t("wrongLowAccuracyAppear", preferredLanguage),
     },
     {
       key: "most-practiced",
       className: "practiced",
       icon: FaClipboardList,
-      label: "Most Practiced",
+      label: t("mostPracticed", preferredLanguage),
       subject: mostPracticedSubject,
-      emptyTitle: "Not Started Yet",
+      emptyTitle: t("notStartedYet", preferredLanguage),
       metric: mostPracticedSubject
-        ? `${mostPracticedSubject.solved} questions solved`
-        : "No solved questions recorded yet.",
+        ? formatQuestionsSolved(mostPracticedSubject.solved, preferredLanguage)
+        : t("noSolvedRecorded", preferredLanguage),
     },
     {
       key: "least-practiced",
       className: "least-practiced",
       icon: FaRoute,
-      label: "Least Practiced",
+      label: t("leastPracticed", preferredLanguage),
       subject: leastPracticedSubject,
-      emptyTitle: "Not Started Yet",
-      metric: leastPracticedSubject?.solved ? `${leastPracticedSubject.solved} questions solved` : "Not Started Yet",
+      emptyTitle: t("notStartedYet", preferredLanguage),
+      metric: leastPracticedSubject?.solved ? `${leastPracticedSubject.solved} ${t("questionsSolved", preferredLanguage)}` : t("notStartedYet", preferredLanguage),
     },
   ];
 
@@ -407,17 +403,17 @@ function ProgressionPage() {
     <DashboardLayout activeKey="progression">
       <header className="dashboard-header progression-header">
         <div className="header-left">
-          <p className="eyebrow">Learning Analytics</p>
-          <h1>Progression</h1>
-          <p>Track real learning growth, subject mastery, XP activity, and review progress.</p>
+          <p className="eyebrow">{t("learningAnalytics", preferredLanguage)}</p>
+          <h1>{t("progression", preferredLanguage)}</h1>
+          <p>{t("progressionSubtitle", preferredLanguage)}</p>
         </div>
         <div className="header-right">
           <div className="header-chips">
-            <span className="chip"><FaGraduationCap /> Exam: <strong>{examLabel}</strong></span>
-            <span className="chip"><FaLanguage /> Language: <strong>{languageLabel}</strong></span>
+            <span className="chip"><FaGraduationCap /> {t("exam", preferredLanguage)}: <strong>{examLabel}</strong></span>
+            <span className="chip"><FaLanguage /> {t("language", preferredLanguage)}: <strong>{languageLabel}</strong></span>
           </div>
           <button className="outline-pill" type="button" onClick={() => navigate("/practice")}>
-            <FaBookOpen /> Go to Practice
+            <FaBookOpen /> {t("goToPractice", preferredLanguage)}
           </button>
         </div>
       </header>
@@ -429,15 +425,15 @@ function ProgressionPage() {
               <div className="snapshot-heading-left">
                 <span className="snapshot-heading-icon"><FaChartBar /></span>
                 <div>
-                  <p className="eyebrow">Learning Snapshot</p>
-                  <h2>Overall Progress</h2>
+                  <p className="eyebrow">{t("learningSnapshot", preferredLanguage)}</p>
+                  <h2>{t("overallProgress", preferredLanguage)}</h2>
                 </div>
               </div>
-              <span className="snapshot-pulse"><FaChartLine /> Real Data</span>
+              <span className="snapshot-pulse"><FaChartLine /> {t("realData", preferredLanguage)}</span>
             </div>
             <div className="snapshot-primary">
               <div className="snapshot-xp">
-                <span>Total XP</span>
+                <span>{t("totalXP", preferredLanguage)}</span>
                 <strong>{totalXp.toLocaleString()} XP</strong>
                 <p>{getSnapshotMessage(totalAttempted, overallAccuracy)}</p>
               </div>
@@ -455,32 +451,32 @@ function ProgressionPage() {
                 </svg>
                 <div className="accuracy-ring-center">
                   <strong>{overallAccuracy ?? 0}%</strong>
-                  <span>Accuracy</span>
+                  <span>{t("accuracy", preferredLanguage)}</span>
                 </div>
               </div>
             </div>
             <div className="snapshot-metrics">
-              <div><FaClipboardList /><span>Attempted</span><strong>{totalAttempted.toLocaleString()}</strong></div>
-              <div><FaCheckCircle /><span>Correct</span><strong>{totalCorrect.toLocaleString()}</strong></div>
-              <div><FaExclamationTriangle /><span>Wrong</span><strong>{totalWrong.toLocaleString()}</strong></div>
-              <div><FaLayerGroup /><span>Subjects</span><strong>{subjectsPracticed} / {subjectRows.length}</strong></div>
-              <div><FaStar /><span>Best Mastery</span><strong>{strongestSubject ? strongestSubject.name : "Not Started Yet"}</strong></div>
+              <div><FaClipboardList /><span>{t("attempted", preferredLanguage)}</span><strong>{totalAttempted.toLocaleString()}</strong></div>
+              <div><FaCheckCircle /><span>{t("correct", preferredLanguage)}</span><strong>{totalCorrect.toLocaleString()}</strong></div>
+              <div><FaExclamationTriangle /><span>{t("wrong", preferredLanguage)}</span><strong>{totalWrong.toLocaleString()}</strong></div>
+              <div><FaLayerGroup /><span>{t("subjects", preferredLanguage)}</span><strong>{subjectsPracticed} / {subjectRows.length}</strong></div>
+              <div><FaStar /><span>{t("bestMastery", preferredLanguage)}</span><strong>{strongestSubject ? translateSubjectName(strongestSubject.name, preferredLanguage) : t("notStartedYet", preferredLanguage)}</strong></div>
             </div>
           </article>
 
           <article className="progression-panel next-action-card">
             <div className="next-action-top">
               <div className="next-action-icon"><NextActionIcon /></div>
-              <p className="eyebrow">Next Best Action</p>
-              <h2>{nextBestAction.title}</h2>
+              <p className="eyebrow">{t("nextBestAction", preferredLanguage)}</p>
+              <h2>{trText(nextBestAction.title, preferredLanguage)}</h2>
               <p className="next-action-reason">{nextBestAction.reason}</p>
             </div>
             <div className="next-action-bottom">
               <div className="next-action-divider" />
               <button className="btn review-action-btn" type="button" onClick={() => navigate(nextBestAction.path)}>
-                <FaArrowRight /> {nextBestAction.actionLabel}
+                <FaArrowRight /> {trText(nextBestAction.actionLabel, preferredLanguage)}
               </button>
-              <p className="next-action-footer"><FaShieldAlt /> Consistency builds mastery. Keep going!</p>
+              <p className="next-action-footer"><FaShieldAlt /> {t("consistencyBuildsMastery", preferredLanguage)}</p>
             </div>
           </article>
         </section>
@@ -488,14 +484,14 @@ function ProgressionPage() {
         <section className="analytics-section subject-mastery-section">
           <div className="analytics-section-header matrix-heading">
             <div>
-              <p className="eyebrow">Subject Mastery</p>
-              <h2>Mastery by Subject</h2>
-              <p>Compare real subject XP, accuracy, solved questions, and level progress.</p>
+              <p className="eyebrow">{t("subjectMastery", preferredLanguage)}</p>
+              <h2>{t("masteryBySubject", preferredLanguage)}</h2>
+              <p>{t("compareSubjectXp", preferredLanguage)}</p>
             </div>
             <div className="filter-toolbar" aria-label="Subject filters">
               <div className="filter-toolbar-copy">
-                <strong>Filter Subjects</strong>
-                <span>View subjects by practice status.</span>
+                <strong>{t("filterSubjects", preferredLanguage)}</strong>
+                <span>{t("viewByPracticeStatus", preferredLanguage)}</span>
               </div>
               <div className="filter-pills">
                 {subjectFilters.map((filter) => {
@@ -508,7 +504,7 @@ function ProgressionPage() {
                       onClick={() => setActiveFilter(filter.key)}
                     >
                       {isActive && <FaCheck />}
-                      {filter.label} <span>{filterCounts[filter.key]}</span>
+                      {filter.key === "all" ? t("all", preferredLanguage) : trText(filter.label, preferredLanguage)} <span>{filterCounts[filter.key]}</span>
                     </button>
                   );
                 })}
@@ -519,27 +515,27 @@ function ProgressionPage() {
           {filteredSubjects.length ? (
             <div className="subject-comparison-table" role="table" aria-label="Subject progression comparison">
               <div className="subject-row subject-row-head" role="row">
-                <span>Subject</span><span>Level</span><span>XP</span><span>Accuracy</span><span>Solved</span><span>Status</span><span>Next Level</span><span>Action</span>
+                <span>{t("subject", preferredLanguage)}</span><span>{t("level", preferredLanguage)}</span><span>XP</span><span>{t("accuracy", preferredLanguage)}</span><span>{t("solved", preferredLanguage)}</span><span>{t("status", preferredLanguage)}</span><span>{t("nextLevel", preferredLanguage)}</span><span>{t("action", preferredLanguage)}</span>
               </div>
               {filteredSubjects.map((subject) => (
                 <div className={`subject-row ${subject.status === "Needs Practice" ? "weak-row" : ""} ${subject.solved === 0 ? "muted-row" : ""}`} role="row" key={subject.id}>
-                  <span className="subject-name-cell" data-label="Subject">{subject.name}</span>
-                  <span data-label="Level">Level {subject.level.level}: {subject.level.name}</span>
+                  <span className="subject-name-cell" data-label={t("subject", preferredLanguage)}>{translateSubjectName(subject.name, preferredLanguage)}</span>
+                  <span data-label={t("level", preferredLanguage)}>{formatLevel(subject.level.level, subject.level.name, preferredLanguage)}</span>
                   <span data-label="XP">
                     <strong>{subject.xp} / {subject.levelProgress.nextLevelXp} XP</strong>
                     <span className="mini-progress" aria-label={`${subject.levelProgress.percent}% to next level`}>
                       <span style={{ width: `${subject.levelProgress.percent}%` }} />
                     </span>
                   </span>
-                  <span data-label="Accuracy">{formatPercent(subject.accuracy)}</span>
-                  <span data-label="Solved">{subject.solved}</span>
-                  <span data-label="Status"><span className={`status-pill status-${subject.status.toLowerCase().replace(/\s+/g, "-")}`}>{subject.status}</span></span>
-                  <span data-label="Next Level">
-                    <small>{subject.levelProgress.nextLevel ? `${subject.levelProgress.remainingXp} XP left for Level ${subject.levelProgress.nextLevel.level}` : "Max level reached"}</small>
+                  <span data-label={t("accuracy", preferredLanguage)}>{formatPercent(subject.accuracy)}</span>
+                  <span data-label={t("solved", preferredLanguage)}>{subject.solved}</span>
+                  <span data-label={t("status", preferredLanguage)}><span className={`status-pill status-${subject.status.toLowerCase().replace(/\s+/g, "-")}`}>{trText(subject.status, preferredLanguage)}</span></span>
+                  <span data-label={t("nextLevel", preferredLanguage)}>
+                    <small>{subject.levelProgress.nextLevel ? `${subject.levelProgress.remainingXp} XP left for ${t("level", preferredLanguage)} ${subject.levelProgress.nextLevel.level}` : t("maxLevelReached", preferredLanguage)}</small>
                   </span>
                   <span data-label="Action">
                     <button className="practice-now-btn table-action" type="button" onClick={() => practiceSubject(subject)}>
-                      Practice Now
+                      {t("practiceNow", preferredLanguage)}
                     </button>
                   </span>
                 </div>
@@ -548,8 +544,8 @@ function ProgressionPage() {
           ) : (
             <div className="progression-empty-state compact">
               <FaLayerGroup />
-              <strong>No subjects match this filter</strong>
-              <p>Complete a practice session to compare subject mastery.</p>
+              <strong>{t("noSubjectsMatchFilter", preferredLanguage)}</strong>
+              <p>{t("completeToCompareMastery", preferredLanguage)}</p>
             </div>
           )}
           </div>
@@ -558,9 +554,9 @@ function ProgressionPage() {
         <section className="analytics-section insight-summary-section">
           <div className="analytics-section-header">
             <div>
-              <p className="eyebrow">Insight Summary</p>
-              <h2>What Your Progress Shows</h2>
-              <p>These insights are calculated from your real practice history.</p>
+              <p className="eyebrow">{t("insightSummary", preferredLanguage)}</p>
+              <h2>{t("whatProgressShows", preferredLanguage)}</h2>
+              <p>{t("insightsRealHistory", preferredLanguage)}</p>
             </div>
           </div>
           <div className="insight-grid">
@@ -572,7 +568,7 @@ function ProgressionPage() {
                   <span className="insight-icon"><InsightIcon /></span>
                   <p>{card.label}</p>
                 </div>
-                <strong>{card.subject ? card.subject.name : card.emptyTitle}</strong>
+                <strong>{card.subject ? translateSubjectName(card.subject.name, preferredLanguage) : card.emptyTitle}</strong>
                 <span>{card.metric}</span>
                 <button
                   className="practice-now-btn insight-action"
@@ -580,7 +576,7 @@ function ProgressionPage() {
                   disabled={!card.subject}
                   onClick={() => practiceSubject(card.subject)}
                 >
-                  Practice Now
+                  {t("practiceNow", preferredLanguage)}
                 </button>
               </article>
             );
@@ -591,24 +587,24 @@ function ProgressionPage() {
         <section className="analytics-section growth-tracking-section">
           <div className="analytics-section-header">
             <div>
-              <p className="eyebrow">Growth Tracking</p>
-              <h2>XP Growth &amp; Learning Roadmap</h2>
-              <p>See where your XP came from and what subject levels unlock next.</p>
+              <p className="eyebrow">{t("growthTracking", preferredLanguage)}</p>
+              <h2>{t("xpGrowthRoadmap", preferredLanguage)}</h2>
+              <p>{t("xpGrowthRoadmapDesc", preferredLanguage)}</p>
             </div>
           </div>
           <div className="progression-split-grid growth-grid">
           <article className="section-inner-panel xp-activity-panel">
             <div className="progression-section-heading">
               <div>
-                <p className="eyebrow">XP Activity</p>
-                <h2>Recent Growth</h2>
+                <p className="eyebrow">{t("xpActivity", preferredLanguage)}</p>
+                <h2>{t("recentGrowth", preferredLanguage)}</h2>
               </div>
               <span className="summary-chip"><FaBolt /> {totalXp.toLocaleString()} XP</span>
             </div>
             {groupedXpTransactions.length ? (
               <>
                 <div className="latest-source">
-                  <span>Latest XP Source</span>
+                  <span>{t("latestXpSource", preferredLanguage)}</span>
                   <strong>{latestXpSource.subjectName}</strong>
                   <p>{latestXpSource.count} {latestXpSource.reason}{latestXpSource.count === 1 ? "" : "s"} · {latestXpSource.date}</p>
                 </div>
@@ -627,8 +623,8 @@ function ProgressionPage() {
             ) : (
               <div className="progression-empty-state">
                 <FaRegClock />
-                <strong>No XP activity yet</strong>
-                <p>No XP activity yet. Correct answers in practice will appear here.</p>
+                <strong>{t("noXpActivityYet", preferredLanguage)}</strong>
+                <p>{t("noXpActivityDesc", preferredLanguage)}</p>
               </div>
             )}
           </article>
@@ -636,9 +632,9 @@ function ProgressionPage() {
           <article className="section-inner-panel roadmap-panel">
             <div className="progression-section-heading">
               <div>
-                <p className="eyebrow">Learning Roadmap</p>
-                <h2>Subject Level Unlocks</h2>
-                <p>Current highest subject level: Level {highestLevel.level} {highestLevel.name}</p>
+                <p className="eyebrow">{t("learningRoadmap", preferredLanguage)}</p>
+                <h2>{t("subjectLevelUnlocks", preferredLanguage)}</h2>
+                <p>{t("currentHighestSubjectLevel", preferredLanguage)}: {formatLevel(highestLevel.level, highestLevel.name, preferredLanguage)}</p>
               </div>
             </div>
             <div className="roadmap-list">
@@ -649,9 +645,9 @@ function ProgressionPage() {
                   <div className={`roadmap-item ${reachedBySubject ? "unlocked" : "locked"} ${isCurrent ? "current" : ""}`} key={level.level}>
                     <span className="roadmap-marker">{reachedBySubject ? <FaUnlock /> : <FaLock />}</span>
                     <div>
-                      <strong>Level {level.level} {level.name}</strong>
+                      <strong>{formatLevel(level.level, level.name, preferredLanguage)}</strong>
                       <p>{level.requiredXp} XP · {level.unlock}</p>
-                      <small>{isCurrent ? "Current highest level" : reachedBySubject ? "Unlocked" : "Locked"}</small>
+                      <small>{isCurrent ? t("currentHighestSubjectLevel", preferredLanguage) : reachedBySubject ? t("unlocked", preferredLanguage) : t("locked", preferredLanguage)}</small>
                     </div>
                   </div>
                 );
@@ -664,38 +660,38 @@ function ProgressionPage() {
         <section className="analytics-section review-goals-section">
           <div className="analytics-section-header">
             <div>
-              <p className="eyebrow">Review &amp; Next Steps</p>
-              <h2>Mistake Review and Learning Goals</h2>
-              <p>Use review data and weak-area history to decide what to do next.</p>
+              <p className="eyebrow">{t("reviewNextSteps", preferredLanguage)}</p>
+              <h2>{t("mistakeReviewGoals", preferredLanguage)}</h2>
+              <p>{t("useReviewData", preferredLanguage)}</p>
             </div>
           </div>
           <div className="progression-split-grid review-grid">
           <article className="section-inner-panel review-panel">
             <div className="progression-section-heading">
               <div>
-                <p className="eyebrow">Review Progress</p>
-                <h2>Saved &amp; Mistakes</h2>
+                <p className="eyebrow">{t("reviewProgress", preferredLanguage)}</p>
+                <h2>{t("savedAndMistakes", preferredLanguage)}</h2>
               </div>
               <button className="btn btn-secondary" type="button" onClick={() => navigate("/practice/review")}>
-                Open Review Center
+                {t("openReviewCenter", preferredLanguage)}
               </button>
             </div>
             <div className="review-progress-grid">
-              <div><FaBookmark /><span>Saved Questions</span><strong>{savedQuestions.length}</strong></div>
-              <div><FaExclamationTriangle /><span>Wrong Answers</span><strong>{activeWrongAnswers.length}</strong></div>
-              <div><FaCheckCircle /><span>Mastered Mistakes</span><strong>{masteredMistakes.length}</strong></div>
-              <div><FaLightbulb /><span>Most Missed Topic</span><strong>{topWeakTopic?.topic || mostMissedTopic?.topic || "No review data yet"}</strong></div>
+              <div><FaBookmark /><span>{t("savedQuestions", preferredLanguage)}</span><strong>{savedQuestions.length}</strong></div>
+              <div><FaExclamationTriangle /><span>{t("wrongAnswers", preferredLanguage)}</span><strong>{activeWrongAnswers.length}</strong></div>
+              <div><FaCheckCircle /><span>{t("masteredMistakes", preferredLanguage)}</span><strong>{masteredMistakes.length}</strong></div>
+              <div><FaLightbulb /><span>{t("mostMissedTopic", preferredLanguage)}</span><strong>{topWeakTopic?.topic || mostMissedTopic?.topic || t("noReviewData", preferredLanguage)}</strong></div>
             </div>
             {!savedQuestions.length && !activeWrongAnswers.length && (
-              <p className="section-empty-note">No saved or wrong questions yet. Save difficult questions during practice.</p>
+              <p className="section-empty-note">{t("noSavedOrWrong", preferredLanguage)}</p>
             )}
           </article>
 
           <article className="section-inner-panel goals-panel">
             <div className="progression-section-heading">
               <div>
-                <p className="eyebrow">Next Steps</p>
-                <h2>Next 3 Learning Goals</h2>
+                <p className="eyebrow">{t("nextSteps", preferredLanguage)}</p>
+                <h2>{t("next3Goals", preferredLanguage)}</h2>
               </div>
             </div>
             <ol className="goal-list">
@@ -708,8 +704,8 @@ function ProgressionPage() {
         <section className="future-analytics-card">
           <FaWaveSquare />
           <div>
-            <strong>Future Analytics</strong>
-            <p>Mock test, tournament, and badge analytics will appear here after those systems are connected.</p>
+            <strong>{t("futureAnalytics", preferredLanguage)}</strong>
+            <p>{t("futureAnalyticsDesc", preferredLanguage)}</p>
           </div>
         </section>
       </section>

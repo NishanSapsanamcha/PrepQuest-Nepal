@@ -16,6 +16,7 @@ import {
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { CoinIcon } from "../../components/common/Coin";
 import { examTracks } from "../../data/examTracks";
+import { languageLabel as getLanguageLabel, t, translateExamName, translateSubjectName, formatDays, formatCompletedIn } from "../../data/translations";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import {
   buildDailyQuizSession,
@@ -26,12 +27,6 @@ import {
   selectDailyQuizQuestions,
 } from "../../utils/dailyQuizUtils";
 import "./DailyQuizPage.css";
-
-const languageLabels = {
-  english: "English",
-  nepali: "Nepali",
-  both: "Both",
-};
 
 function DailyQuizPage() {
   const navigate = useNavigate();
@@ -72,13 +67,13 @@ function DailyQuizPage() {
     <DashboardLayout activeKey="daily-quiz">
       <header className="dashboard-header daily-quiz-header">
         <div className="header-left">
-          <p className="eyebrow">Daily Challenge</p>
-          <h1>Daily Quiz</h1>
-          <p>Complete today's 10-question challenge and keep your Loksewa streak alive.</p>
+          <p className="eyebrow">{t("todayMission", context.preferredLanguage)}</p>
+          <h1>{t("dailyQuiz", context.preferredLanguage)}</h1>
+          <p>{t("dailyQuizDescription", context.preferredLanguage)}</p>
         </div>
         <div className="header-right">
           <span className={`status-chip ${todayAttempt ? "complete" : ""}`}>
-            <FaCalendarCheck /> {todayAttempt ? "Completed" : "Not Completed"}
+            <FaCalendarCheck /> {todayAttempt ? t("completed", context.preferredLanguage) : t("notCompleted", context.preferredLanguage)}
           </span>
         </div>
       </header>
@@ -87,111 +82,111 @@ function DailyQuizPage() {
         <section className="daily-context-grid" aria-label="Daily quiz context">
           <article className="stat-card">
             <div className="stat-icon"><FaGraduationCap /></div>
-            <div><div className="stat-value">{examTracks[context.selectedExam]?.name || context.selectedExamLabel}</div><div className="stat-helper">Selected exam track</div></div>
+            <div><div className="stat-value">{translateExamName(examTracks[context.selectedExam]?.name || context.selectedExamLabel, context.preferredLanguage)}</div><div className="stat-helper">{t("selectedExamTrack", context.preferredLanguage)}</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaLanguage /></div>
-            <div><div className="stat-value">{languageLabels[context.preferredLanguage] || "English"}</div><div className="stat-helper">Preferred language</div></div>
+            <div><div className="stat-value">{getLanguageLabel(context.preferredLanguage)}</div><div className="stat-helper">{t("preferredLanguage", context.preferredLanguage)}</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaFire /></div>
-            <div><div className="stat-value">{context.user.streak || 0} Days</div><div className="stat-helper">Current streak</div></div>
+            <div><div className="stat-value">{formatDays(context.user.streak || 0, context.preferredLanguage)}</div><div className="stat-helper">{t("currentStreak", context.preferredLanguage)}</div></div>
           </article>
           <article className="stat-card">
             <div className="stat-icon"><FaCheckCircle /></div>
-            <div><div className="stat-value">{todayAttempt ? "Completed" : "Open"}</div><div className="stat-helper">Today's status</div></div>
+            <div><div className="stat-value">{todayAttempt ? t("completed", context.preferredLanguage) : t("open", context.preferredLanguage)}</div><div className="stat-helper">{t("todaysStatus", context.preferredLanguage)}</div></div>
           </article>
         </section>
 
         <div className="daily-top-grid">
           <section className="dashboard-card daily-intro-card">
             <div className="card-heading">
-              <h2 className="card-title"><FaBookOpen /> Today's Loksewa Daily Quiz</h2>
-              <span className="status-chip">10 Questions</span>
+              <h2 className="card-title"><FaBookOpen /> {t("todaysLoksewaDailyQuiz", context.preferredLanguage)}</h2>
+              <span className="status-chip">{t("tenQuestions", context.preferredLanguage)}</span>
             </div>
 
             {todayAttempt ? (
               <div className="daily-complete-state">
-                <h3>Daily Quiz Completed</h3>
-                <p>You already completed today's quiz and earned today's reward. Come back tomorrow for a new challenge.</p>
+                <h3>{t("dailyQuizCompleted", context.preferredLanguage)}</h3>
+                <p>{t("dailyQuizCompletedDesc", context.preferredLanguage)}</p>
                 <div className="result-mini-grid">
-                  <span>Score <strong>{todayAttempt.score} / {todayAttempt.totalQuestions}</strong></span>
-                  <span>Accuracy <strong>{todayAttempt.accuracy}%</strong></span>
+                  <span>{t("scoreWord", context.preferredLanguage)} <strong>{todayAttempt.score} / {todayAttempt.totalQuestions}</strong></span>
+                  <span>{t("accuracy", context.preferredLanguage)} <strong>{todayAttempt.accuracy}%</strong></span>
                   <span>XP <strong>+{todayAttempt.xpEarned}</strong></span>
                   <span><CoinIcon size="sm" /> <strong>+{todayAttempt.coinsEarned}</strong></span>
-                  <span>Weakest <strong>{todayAttempt.weakestSubject || "None"}</strong></span>
+                  <span>{t("weakest", context.preferredLanguage)} <strong>{todayAttempt.weakestSubject ? translateSubjectName(todayAttempt.weakestSubject, context.preferredLanguage) : t("none", context.preferredLanguage)}</strong></span>
                 </div>
                 <div className="daily-action-row">
-                  <button className="btn" type="button" onClick={handleReviewToday}>Review Today's Result</button>
-                  <button className="btn btn-secondary" type="button" onClick={handlePracticeWeakSubject}>Practice Weak Subject</button>
-                  <button className="btn btn-secondary" type="button" onClick={handleDashboard}>Go to Dashboard</button>
+                  <button className="btn" type="button" onClick={handleReviewToday}>{t("reviewTodaysResult", context.preferredLanguage)}</button>
+                  <button className="btn btn-secondary" type="button" onClick={handlePracticeWeakSubject}>{t("practiceWeakSubjectAction", context.preferredLanguage)}</button>
+                  <button className="btn btn-secondary" type="button" onClick={handleDashboard}>{t("goToDashboard", context.preferredLanguage)}</button>
                 </div>
               </div>
             ) : availableQuestions.length < 10 ? (
               <div className="daily-empty-state">
-                <h3>Not enough validated questions are available for today's quiz yet.</h3>
-                <p>Add more reviewed questions to the question bank before starting Daily Quiz.</p>
-                <span>{availableQuestions.length} / 10 validated questions available</span>
+                <h3>{t("notEnoughValidatedQuestions", context.preferredLanguage)}</h3>
+                <p>{t("addMoreQuestions", context.preferredLanguage)}</p>
+                <span>{availableQuestions.length} / 10 {t("validatedQuestionsAvailable", context.preferredLanguage)}</span>
               </div>
             ) : (
               <>
                 <ul className="daily-feature-list">
-                  <li><FaListUl /> 10 mixed questions based on your selected exam track</li>
-                  <li><FaBookOpen /> Covers GK, Constitution, IQ, English, Nepali, Current Affairs, and available subjects</li>
-                  <li><FaClock /> Estimated time: 8-10 minutes</li>
-                  <li><FaTrophy /> Complete today to keep your streak active</li>
+                  <li><FaListUl /> {t("dailyQuizFeatureMixed", context.preferredLanguage)}</li>
+                  <li><FaBookOpen /> {t("dailyQuizFeatureCovers", context.preferredLanguage)}</li>
+                  <li><FaClock /> {t("estimatedTime", context.preferredLanguage)}: {t("estimatedTimeValue", context.preferredLanguage)}</li>
+                  <li><FaTrophy /> {t("dailyQuizFeatureStreak", context.preferredLanguage)}</li>
                 </ul>
                 <button className="btn daily-start-btn" type="button" disabled={!canStart} onClick={handleStart}>
-                  Start Today's Quiz <FaArrowRight />
+                  {t("startTodaysQuiz", context.preferredLanguage)} <FaArrowRight />
                 </button>
               </>
             )}
           </section>
 
           <section className="dashboard-card daily-status-card">
-            <h2 className="card-title"><FaCalendarCheck /> Daily Status</h2>
+            <h2 className="card-title"><FaCalendarCheck /> {t("dailyStatus", context.preferredLanguage)}</h2>
             <div className="daily-status-meter">
-              <strong>{todayAttempt ? "Done for today" : "Ready"}</strong>
-              <span>{todayAttempt ? `Completed in ${formatElapsedTime(todayAttempt.timeTakenSeconds)}` : "One reward can be earned today"}</span>
+              <strong>{todayAttempt ? t("completed", context.preferredLanguage) : t("ready", context.preferredLanguage)}</strong>
+              <span>{todayAttempt ? formatCompletedIn(formatElapsedTime(todayAttempt.timeTakenSeconds), context.preferredLanguage) : t("oneRewardToday", context.preferredLanguage)}</span>
             </div>
-            <div className="daily-status-row"><span>Question bank</span><strong>{availableQuestions.length >= 10 ? "Ready" : `${availableQuestions.length}/10`}</strong></div>
-            <div className="daily-status-row"><span>Exam track</span><strong>{context.selectedExamLabel}</strong></div>
-            <div className="daily-status-row"><span>Language</span><strong>{languageLabels[context.preferredLanguage] || "English"}</strong></div>
+            <div className="daily-status-row"><span>{t("questionBank", context.preferredLanguage)}</span><strong>{availableQuestions.length >= 10 ? t("ready", context.preferredLanguage) : `${availableQuestions.length}/10`}</strong></div>
+            <div className="daily-status-row"><span>{t("examTrack", context.preferredLanguage)}</span><strong>{translateExamName(context.selectedExamLabel, context.preferredLanguage)}</strong></div>
+            <div className="daily-status-row"><span>{t("language", context.preferredLanguage)}</span><strong>{getLanguageLabel(context.preferredLanguage)}</strong></div>
           </section>
         </div>
 
         <div className="daily-middle-grid">
           <article className="dashboard-card reward-card">
-            <h2 className="card-title"><FaTrophy /> Reward Preview</h2>
+            <h2 className="card-title"><FaTrophy /> {t("rewardPreview", context.preferredLanguage)}</h2>
             <div className="reward-pills"><span>+50 XP</span><span><CoinIcon size="sm" /> +20 for 80%+</span><span>+30 XP perfect score</span></div>
           </article>
           <article className="dashboard-card">
-            <h2 className="card-title"><FaFire /> Streak Reminder</h2>
-            <p className="card-copy">Complete today to keep your daily habit active. Daily Quiz completion is stored as today's activity.</p>
+            <h2 className="card-title"><FaFire /> {t("streakReminder", context.preferredLanguage)}</h2>
+            <p className="card-copy">{t("streakReminderDesc", context.preferredLanguage)}</p>
           </article>
           {attempts[1] && (
             <article className="dashboard-card">
-              <h2 className="card-title"><FaHistory /> Previous Result</h2>
+              <h2 className="card-title"><FaHistory /> {t("previousResult", context.preferredLanguage)}</h2>
               <div className="daily-status-row"><span>{attempts[1].date}</span><strong>{attempts[1].score}/{attempts[1].totalQuestions}</strong></div>
-              <div className="daily-status-row"><span>Accuracy</span><strong>{attempts[1].accuracy}%</strong></div>
+              <div className="daily-status-row"><span>{t("accuracy", context.preferredLanguage)}</span><strong>{attempts[1].accuracy}%</strong></div>
             </article>
           )}
         </div>
 
         <section className="daily-bottom-grid">
           <article className="dashboard-card">
-            <h2 className="card-title"><FaListUl /> Daily Quiz Rules</h2>
+            <h2 className="card-title"><FaListUl /> {t("dailyQuizRules", context.preferredLanguage)}</h2>
             <ul className="daily-rules-list">
-              <li>10 mixed questions</li>
-              <li>One reward per day</li>
-              <li>Instant feedback after each answer</li>
-              <li>Wrong answers are saved for review</li>
-              <li>Complete the quiz to keep your daily habit active</li>
+              <li>{t("rule10Mixed", context.preferredLanguage)}</li>
+              <li>{t("ruleOneReward", context.preferredLanguage)}</li>
+              <li>{t("ruleInstantFeedback", context.preferredLanguage)}</li>
+              <li>{t("ruleWrongSaved", context.preferredLanguage)}</li>
+              <li>{t("ruleCompleteHabit", context.preferredLanguage)}</li>
             </ul>
           </article>
 
           <article className="dashboard-card">
-            <h2 className="card-title"><FaHistory /> Recent Daily Quiz History</h2>
+            <h2 className="card-title"><FaHistory /> {t("recentDailyQuizHistory", context.preferredLanguage)}</h2>
             {recentAttempts.length ? (
               <div className="daily-history-list">
                 {recentAttempts.map((attempt) => (
@@ -202,7 +197,7 @@ function DailyQuizPage() {
                 ))}
               </div>
             ) : (
-              <p className="card-copy">No Daily Quiz attempts yet.</p>
+              <p className="card-copy">{t("noDailyQuizAttempts", context.preferredLanguage)}</p>
             )}
           </article>
         </section>

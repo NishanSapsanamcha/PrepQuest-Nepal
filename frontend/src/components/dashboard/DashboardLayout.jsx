@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { FaMedal, FaTrophy } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import { t } from "../../data/translations";
 import LogoutConfirmModal from "../common/LogoutConfirmModal";
 import "../../pages/dashboard/DashboardPage.css";
 
@@ -33,15 +34,15 @@ const routeTargets = {
 const connectedRoutes = new Set(["/dashboard", "/progression", "/practice", "/daily-quiz", "/mock-tests", "/tournament", "/leaderboard", "/badges", "/profile"]);
 
 const sidebarItems = [
-  { key: "dashboard", label: "Dashboard", Icon: FiHome },
-  { key: "progression", label: "Progression", Icon: FiBarChart2 },
-  { key: "practice", label: "Practice", Icon: FiBookOpen },
-  { key: "daily-quiz", label: "Daily Quiz", Icon: FiHelpCircle },
-  { key: "mock-tests", label: "Mock Tests", Icon: FiTarget },
-  { key: "tournament", label: "Tournament", Icon: FaTrophy },
-  { key: "leaderboard", label: "Leaderboard", Icon: FiAward },
-  { key: "badges", label: "Badges", Icon: FaMedal },
-  { key: "profile", label: "Profile", Icon: FiUser },
+  { key: "dashboard", labelKey: "dashboard", Icon: FiHome },
+  { key: "progression", labelKey: "progression", Icon: FiBarChart2 },
+  { key: "practice", labelKey: "practice", Icon: FiBookOpen },
+  { key: "daily-quiz", labelKey: "dailyQuiz", Icon: FiHelpCircle },
+  { key: "mock-tests", labelKey: "mockTest", Icon: FiTarget },
+  { key: "tournament", labelKey: "tournament", Icon: FaTrophy },
+  { key: "leaderboard", labelKey: "leaderboard", Icon: FiAward },
+  { key: "badges", labelKey: "badges", Icon: FaMedal },
+  { key: "profile", labelKey: "profile", Icon: FiUser },
 ];
 
 function DashboardLayout({ activeKey, children }) {
@@ -114,30 +115,33 @@ function DashboardLayout({ activeKey, children }) {
           </button>
 
           <nav className="sidebar-nav">
-            {sidebarItems.map(({ key, label, Icon }) => (
+            {sidebarItems.map(({ key, label, labelKey, Icon }) => {
+              const navLabel = label || t(labelKey);
+              return (
               <button
                 type="button"
                 className={`nav-item${key === currentActiveKey ? " active" : ""}`}
                 key={key}
                 data-nav={key}
-                title={label}
-                aria-label={label}
+                title={navLabel}
+                aria-label={navLabel}
                 onClick={() => handleNavClick(key)}
               >
                 <Icon />
-                <span>{label}</span>
+                <span>{navLabel}</span>
               </button>
-            ))}
+            );
+            })}
             <button
               type="button"
               className="nav-item logout"
               data-nav="logout"
-              title="Logout"
-              aria-label="Logout"
+              title={t("logout")}
+              aria-label={t("logout")}
               onClick={() => handleNavClick("logout")}
             >
               <FiLogOut />
-              <span>Logout</span>
+              <span>{t("logout")}</span>
             </button>
           </nav>
         </aside>

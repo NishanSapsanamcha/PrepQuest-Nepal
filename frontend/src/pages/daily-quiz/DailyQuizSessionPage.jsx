@@ -5,6 +5,7 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import AnswerFeedback from "../../components/practice/AnswerFeedback";
 import QuestionCard from "../../components/practice/QuestionCard";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
+import { t, translateSubjectName, translateDifficulty } from "../../data/translations";
 import {
   completeDailyQuiz,
   formatElapsedTime,
@@ -126,9 +127,9 @@ function DailyQuizSessionPage() {
     <DashboardLayout activeKey="daily-quiz">
       <header className="dashboard-header session-header">
         <div className="header-left">
-          <p className="eyebrow subject-pill">Daily Quiz</p>
-          <h1>Daily Quiz</h1>
-          <p>Question {currentIndex + 1} of {session.questions.length}</p>
+          <p className="eyebrow subject-pill">{t("dailyQuiz", session.preferredLanguage)}</p>
+          <h1>{t("dailyQuiz", session.preferredLanguage)}</h1>
+          <p>{t("question", session.preferredLanguage)} {currentIndex + 1} {t("of", session.preferredLanguage)} {session.questions.length}</p>
         </div>
         <div className="header-right">
           <button
@@ -142,7 +143,7 @@ function DailyQuizSessionPage() {
           </button>
           <span className="soft-timer"><FaRegClock /> {formatElapsedTime(elapsedSeconds)}</span>
           <button className="outline-pill exit-practice-btn" type="button" onClick={() => { playClick(); navigate("/daily-quiz"); }}>
-            <FaDoorOpen /> Exit Quiz
+            <FaDoorOpen /> {t("exit", session.preferredLanguage)}
           </button>
         </div>
       </header>
@@ -152,14 +153,14 @@ function DailyQuizSessionPage() {
           <div className="board-question-side">
             <div className="board-top-strip">
               <div className="preview-progress-row">
-                <span>Question {currentIndex + 1} of {session.questions.length}</span>
-                <span>{progressPercent}% complete</span>
+                <span>{t("question", session.preferredLanguage)} {currentIndex + 1} {t("of", session.preferredLanguage)} {session.questions.length}</span>
+                <span>{progressPercent}% {t("complete", session.preferredLanguage)}</span>
               </div>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
               </div>
               <div className="progress-strip-footer">
-                <span className="xp-chip">Rewards calculated after completion</span>
+                <span className="xp-chip">{t("rewardsAfterCompletion", session.preferredLanguage)}</span>
                 <span className="practice-mode-chip">{formatElapsedTime(elapsedSeconds)}</span>
               </div>
             </div>
@@ -178,21 +179,21 @@ function DailyQuizSessionPage() {
             </div>
 
             <div className={`question-actions${feedback ? " answered" : ""}`}>
-              <span className="xp-preview">{feedback ? "Answer saved for final scoring" : "Select one option to submit"}</span>
+              <span className="xp-preview">{feedback ? t("answerSavedFinal", session.preferredLanguage) : t("selectOneOption", session.preferredLanguage)}</span>
               {!feedback ? (
                 <>
                   <button className="btn btn-secondary" type="button" onClick={handleSaveReview}>
-                    <FaBookmark /> Save for Review
+                    <FaBookmark /> {t("saveForReview", session.preferredLanguage)}
                   </button>
-                  <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>Submit Answer</button>
+                  <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>{t("submitAnswer", session.preferredLanguage)}</button>
                 </>
               ) : (
                 <>
                   <button className="btn btn-secondary" type="button" disabled={isCurrentQuestionSaved} onClick={handleSaveReview}>
-                    <FaBookmark /> {isCurrentQuestionSaved ? "Saved" : "Save for Review"}
+                    <FaBookmark /> {isCurrentQuestionSaved ? t("savedState", session.preferredLanguage) : t("saveForReview", session.preferredLanguage)}
                   </button>
                   <button className="btn" type="button" onClick={handleNext}>
-                    {currentIndex === session.questions.length - 1 ? "Finish Quiz" : "Next Question"}
+                    {currentIndex === session.questions.length - 1 ? t("practiceComplete", session.preferredLanguage) : t("nextQuestion", session.preferredLanguage)}
                   </button>
                 </>
               )}
@@ -201,26 +202,26 @@ function DailyQuizSessionPage() {
 
           <aside className="board-coach-panel" aria-label="Daily Quiz feedback panel">
             <section className="coach-section mini-session-stats">
-              <div className="coach-section-heading"><span>Session</span><strong>{currentIndex + 1}/{session.questions.length}</strong></div>
+              <div className="coach-section-heading"><span>{t("sessionWord", session.preferredLanguage)}</span><strong>{currentIndex + 1}/{session.questions.length}</strong></div>
               <div className="summary-grid">
-                <div><span>Correct</span><strong>{correctCount}</strong></div>
-                <div><span>Wrong</span><strong>{wrongCount}</strong></div>
-                <div><span>Accuracy</span><strong>{accuracySoFar}%</strong></div>
-                <div><span>Saved</span><strong>{savedQuestionIds.length}</strong></div>
+                <div><span>{t("correct", session.preferredLanguage)}</span><strong>{correctCount}</strong></div>
+                <div><span>{t("wrong", session.preferredLanguage)}</span><strong>{wrongCount}</strong></div>
+                <div><span>{t("accuracy", session.preferredLanguage)}</span><strong>{accuracySoFar}%</strong></div>
+                <div><span>{t("savedLabel", session.preferredLanguage)}</span><strong>{savedQuestionIds.length}</strong></div>
               </div>
             </section>
 
             <section className="coach-section subject-mini-progress">
               <div className="subject-progress-hero">
-                <span>Current Question</span>
-                <strong>{question.subject}</strong>
+                <span>{t("currentQuestion", session.preferredLanguage)}</span>
+                <strong>{translateSubjectName(question.subject, session.preferredLanguage)}</strong>
               </div>
               <div className="daily-chip-row">
-                <span className="question-pill difficulty">{question.difficulty}</span>
-                <span className="question-pill">{question.topic}</span>
+                <span className="question-pill difficulty">{translateDifficulty(question.difficulty, session.preferredLanguage)}</span>
+                <span className="question-pill">{translateSubjectName(question.topic, session.preferredLanguage)}</span>
               </div>
               <p className="subject-progress-copy">
-                {Object.keys(answeredSubjects).length ? "Weak-subject recommendation will be calculated from missed answers." : "Submit answers to generate your result insights."}
+                {Object.keys(answeredSubjects).length ? t("weakSubjectRecommendation", session.preferredLanguage) : t("submitToGenerateInsights", session.preferredLanguage)}
               </p>
             </section>
 
@@ -235,10 +236,10 @@ function DailyQuizSessionPage() {
                 />
               ) : (
                 <div className="coach-placeholder">
-                  <span>Feedback</span>
-                  <strong>Answer when ready</strong>
-                  <p>The timer is only for awareness. It will not auto-submit or penalize slow answers.</p>
-                  <small>No XP is awarded per question</small>
+                  <span>{t("feedbackWord", session.preferredLanguage)}</span>
+                  <strong>{t("answerWhenReady", session.preferredLanguage)}</strong>
+                  <p>{t("timerAwarenessNote", session.preferredLanguage)}</p>
+                  <small>{t("noXpPerQuestion", session.preferredLanguage)}</small>
                 </div>
               )}
             </section>

@@ -7,6 +7,7 @@ import QuestionCard from "../../components/practice/QuestionCard";
 import usePrepQuestSound from "../../hooks/usePrepQuestSound";
 import { gamificationIcons, getLevelBadge } from "../../assets/gamification";
 import { getSubjectById } from "../../data/subjects";
+import { formatLevel, t, translateSubjectName, formatXpLeftForLevel, formatInARow } from "../../data/translations";
 import { buildSubjectProgress, completePracticeSession, getSubjectQuestions, normalizeLanguageMode } from "../../utils/practiceUtils";
 import {
   getSavedReviewQuestions,
@@ -45,8 +46,8 @@ function PracticeSessionPage() {
       <DashboardLayout activeKey="practice">
         <section className="dashboard-content">
           <div className="dashboard-card">
-            <h1>No validated practice questions found</h1>
-            <p className="card-copy">This subject question bank is not ready yet.</p>
+            <h1>{t("noValidatedQuestions", languageMode)}</h1>
+            <p className="card-copy">{t("subjectBankNotReady", languageMode)}</p>
           </div>
         </section>
       </DashboardLayout>
@@ -173,12 +174,12 @@ function PracticeSessionPage() {
     <DashboardLayout activeKey="practice">
       <header className="dashboard-header session-header session-header-quiz">
         <div className="session-head-left">
-          <h1>{question.topic || subject.name}</h1>
-          <p className="session-level-sub">Level {level.level}: {level.name}</p>
+          <h1>{question.topic || translateSubjectName(subject.name, languageMode)}</h1>
+          <p className="session-level-sub">{formatLevel(level.level, level.name, languageMode)}</p>
         </div>
 
         <div className="session-head-center">
-          <span className="session-progress-text">Question {currentIndex + 1} of {questions.length}</span>
+          <span className="session-progress-text">{t("question", languageMode)} {currentIndex + 1} {t("of", languageMode)} {questions.length}</span>
           <div className="step-nodes" aria-hidden="true">
             {questions.map((item, index) => (
               <span
@@ -196,7 +197,7 @@ function PracticeSessionPage() {
             {gamificationIcons.xp ? <img className="chip-xp-img" src={gamificationIcons.xp} alt="" /> : <FaStar />}
             +10 XP
           </span>
-          <span className="session-chip streak-chip"><FaFire /> {sessionStreak} Streak</span>
+          <span className="session-chip streak-chip"><FaFire /> {sessionStreak} {t("streak", languageMode)}</span>
           <button
             className="sound-toggle"
             type="button"
@@ -214,7 +215,7 @@ function PracticeSessionPage() {
               navigate(`/practice/${subjectId}`);
             }}
           >
-            <FaDoorOpen /> Exit Practice
+            <FaDoorOpen /> {t("exit", languageMode)}
           </button>
         </div>
       </header>
@@ -243,22 +244,22 @@ function PracticeSessionPage() {
                 so Save for Review / Next Question never get pushed off-screen. */}
             <div className={`question-actions${feedback ? " answered" : ""}`}>
               <span className="xp-preview">
-                {!feedback && <><FaStar /> Correct answer reward: +10 XP</>}
-                {feedback?.isCorrect && <><FaStar /> +10 XP earned</>}
-                {feedback && !feedback.isCorrect && "Review the explanation below"}
+                {!feedback && <><FaStar /> {t("correctAnswer", languageMode)} {t("rewardColon", languageMode)} +10 XP</>}
+                {feedback?.isCorrect && <><FaStar /> +10 XP {t("xpEarned", languageMode)}</>}
+                {feedback && !feedback.isCorrect && t("reviewExplanationBelow", languageMode)}
               </span>
               <div className="question-action-btns">
                 {!feedback ? (
                   <>
-                    <button className="btn btn-secondary" type="button" onClick={handleSkip}>Skip</button>
-                    <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>Submit Answer</button>
+                    <button className="btn btn-secondary" type="button" onClick={handleSkip}>{t("skip", languageMode)}</button>
+                    <button className="btn" type="button" disabled={!selectedOptionKey} onClick={handleSubmit}>{t("submitAnswer", languageMode)}</button>
                   </>
                 ) : (
                   <>
                     <button className="btn btn-secondary" type="button" disabled={isCurrentQuestionSaved} onClick={handleSaveReview}>
-                      <FaBookmark /> {isCurrentQuestionSaved ? "Saved" : "Save for Review"}
+                      <FaBookmark /> {isCurrentQuestionSaved ? t("savedState", languageMode) : t("saveForReview", languageMode)}
                     </button>
-                    <button className="btn" type="button" onClick={handleNext}>{currentIndex === questions.length - 1 ? "Finish Practice" : "Next Question"}</button>
+                    <button className="btn" type="button" onClick={handleNext}>{currentIndex === questions.length - 1 ? t("practiceComplete", languageMode) : t("nextQuestion", languageMode)}</button>
                   </>
                 )}
               </div>
@@ -277,7 +278,7 @@ function PracticeSessionPage() {
           <aside className="board-coach-panel" aria-label="Practice session panel">
             <section className="session-panel" data-debug="Session Panel">
               <div className="panel-section">
-                <span className="panel-kicker progress-kicker">Your Progress</span>
+                <span className="panel-kicker progress-kicker">{t("yourProgress", languageMode)}</span>
                 <div className="progress-panel-top">
                   {levelBadgeImg ? (
                     <img className="panel-level-art" src={levelBadgeImg} alt={`Level ${level.level}`} />
@@ -285,15 +286,15 @@ function PracticeSessionPage() {
                     <div className="panel-level-badge">{level.level}</div>
                   )}
                   <div className="progress-panel-meta">
-                    <strong>Level {level.level}: {level.name}</strong>
+                    <strong>{formatLevel(level.level, level.name, languageMode)}</strong>
                     <div className="panel-xp-track">
                       <div className="panel-xp-fill" style={{ width: `${subjectLevelProgress.percent}%` }} />
                       <span className="panel-xp-text">{progress.xp} / {subjectLevelProgress.nextLevelXp} XP</span>
                     </div>
                     <span className="panel-sub">
                       {subjectLevelProgress.nextLevel
-                        ? `${subjectLevelProgress.remainingXp} XP to reach Level ${subjectLevelProgress.nextLevel.level}`
-                        : "Highest subject level reached."}
+                        ? formatXpLeftForLevel(subjectLevelProgress.remainingXp, subjectLevelProgress.nextLevel.level, languageMode)
+                        : t("highestLevelReached", languageMode)}
                     </span>
                   </div>
                 </div>
@@ -303,24 +304,24 @@ function PracticeSessionPage() {
 
               <div className="panel-section">
                 <div className="panel-head">
-                  <span className="panel-kicker">Session</span>
+                  <span className="panel-kicker">{t("sessionWord", languageMode)}</span>
                   <strong>{currentIndex + 1}/{questions.length}</strong>
                 </div>
                 <div className="session-score-row">
-                  <span>Score</span>
+                  <span>{t("scoreWord", languageMode)}</span>
                   <strong>+{sessionEarnedXp} XP</strong>
                 </div>
                 <div className="session-stat-grid">
                   <div>
-                    <span className="session-stat-label"><FaCheckCircle className="ok" /> Correct</span>
+                    <span className="session-stat-label"><FaCheckCircle className="ok" /> {t("correct", languageMode)}</span>
                     <strong>{correctCount}</strong>
                   </div>
                   <div>
-                    <span className="session-stat-label"><FaTimesCircle className="bad" /> Wrong</span>
+                    <span className="session-stat-label"><FaTimesCircle className="bad" /> {t("wrong", languageMode)}</span>
                     <strong>{wrongCount}</strong>
                   </div>
                   <div>
-                    <span className="session-stat-label">Accuracy</span>
+                    <span className="session-stat-label">{t("accuracy", languageMode)}</span>
                     <strong>{accuracySoFar}%</strong>
                   </div>
                 </div>
@@ -329,10 +330,10 @@ function PracticeSessionPage() {
               <div className="panel-divider" />
 
               <div className="panel-section">
-                <span className="panel-kicker streak-kicker">Streak</span>
+                <span className="panel-kicker streak-kicker">{t("streak", languageMode)}</span>
                 <div className="streak-panel-body">
                   <FaFire />
-                  <span>{sessionStreak} {sessionStreak === 1 ? "question" : "questions"} in a row</span>
+                  <span>{formatInARow(sessionStreak, languageMode)}</span>
                   <span className="streak-hex">{sessionStreak}</span>
                 </div>
               </div>

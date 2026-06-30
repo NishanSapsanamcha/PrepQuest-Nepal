@@ -6,6 +6,19 @@ import BadgeIcon from "../components/badges/BadgeIcon";
 import AchievementBadge from "../components/common/AchievementBadge";
 import EditProfileModal from "../components/profile/EditProfileModal";
 import { rankJourney } from "../data/rankBadges";
+import {
+  languageLabel as getLanguageLabel,
+  t,
+  translateRankName,
+  translateSubjectName,
+  translateExamName,
+  formatDays,
+  formatCorrectAnswers,
+  formatBestStreak,
+  formatPracticeToday,
+  trText,
+  translateBadgeCategory,
+} from "../data/translations";
 import { getInitials, getProfileOverrides, saveProfileOverrides } from "../utils/profileUtils";
 import { CoinIcon, CoinValue, RewardText } from "../components/common/Coin";
 import {
@@ -25,12 +38,6 @@ import { mirrorTournamentResult } from "../utils/tournamentUtils";
 import { getLatestTournamentResults } from "../services/tournamentService";
 import { calculateTotalXPFromTransactions, getOverallRankProgress, getXPTransactions } from "../utils/xpUtils";
 import "./Profile.css";
-
-const languageLabels = {
-  english: "English",
-  nepali: "Nepali",
-  both: "Both",
-};
 
 // Static "how to earn" guide (no daily-login coins yet — built later).
 const COIN_EARN_GUIDE = [
@@ -71,9 +78,9 @@ function Profile() {
   const avatarImage = profileOverrides.avatarImage;
   const storedUser = getUser();
   const selectedExamId = normalizeExamId(localStorage.getItem("selectedExam") || storedUser.selectedExam);
-  const examLabel = examTracks[selectedExamId]?.name || "Sakha Adhikrit";
   const preferredLanguage = (localStorage.getItem("preferredLanguage") || storedUser.preferredLanguage || "english").toLowerCase();
-  const languageLabel = languageLabels[preferredLanguage] || "English";
+  const examLabel = translateExamName(examTracks[selectedExamId]?.name || "Sakha Adhikrit", preferredLanguage);
+  const languageLabel = getLanguageLabel(preferredLanguage);
 
   const totalXp = calculateTotalXPFromTransactions();
   const rankProgress = getOverallRankProgress(totalXp);
@@ -93,14 +100,15 @@ function Profile() {
   const overallAccuracy = totalQuestionsAttempted ? Math.round((totalCorrect / totalQuestionsAttempted) * 100) : 0;
   const subjectsPracticed = practicedSubjects.length;
   const strongestSubject = practicedSubjects.length
-    ? [...practicedSubjects].sort((a, b) => (b.accuracy ?? 0) - (a.accuracy ?? 0))[0].name
-    : "Not enough data yet";
-  const weakestSubject = practicedSubjects.length
+    ? translateSubjectName([...practicedSubjects].sort((a, b) => (b.accuracy ?? 0) - (a.accuracy ?? 0))[0].name, preferredLanguage)
+    : t("notEnoughDataYet", preferredLanguage);
+  const weakestSubjectRaw = practicedSubjects.length
     ? [...practicedSubjects].sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101))[0].name
-    : "Not enough data yet";
+    : null;
+  const weakestSubject = weakestSubjectRaw ? translateSubjectName(weakestSubjectRaw, preferredLanguage) : t("notEnoughDataYet", preferredLanguage);
   const mostPracticedSubject = practicedSubjects.length
-    ? [...practicedSubjects].sort((a, b) => b.progress.questionsSolved - a.progress.questionsSolved)[0].name
-    : "Not started yet";
+    ? translateSubjectName([...practicedSubjects].sort((a, b) => b.progress.questionsSolved - a.progress.questionsSolved)[0].name, preferredLanguage)
+    : t("notStartedYet", preferredLanguage);
 
   // Earned badges are computed from real activity and shown with their gem art.
   const allBadges = syncBadges();
@@ -192,27 +200,29 @@ function Profile() {
             </div>
           </div>
           <button className="outline-pill profile-edit-btn" type="button" onClick={() => setIsEditOpen(true)}>
-            <FaPen /> Edit Profile
+            <FaPen /> {t("editProfile", preferredLanguage)}
           </button>
         </header>
 
         <section className="dashboard-card rank-journey-card">
           <div className="rank-journey-top">
             <div>
-              <p className="eyebrow">Overall Rank Journey</p>
-              <h2>Current Rank: <span className="rank-journey-current">{rankProgress.currentRank}</span></h2>
+              <p className="eyebrow">{t("overallRankJourney", preferredLanguage)}</p>
+              <h2>{t("currentRank", preferredLanguage)}: <span className="rank-journey-current">{translateRankName(rankProgress.currentRank, preferredLanguage)}</span></h2>
               {isMaxRank ? (
-                <p>{totalXp.toLocaleString()} XP · Top rank reached — you're a PrepQuest Legend.</p>
+                <p>{totalXp.toLocaleString()} XP · {t("topRankReachedLegend", preferredLanguage)}</p>
               ) : (
                 <p>
                   <strong className="rank-journey-xp">{totalXp.toLocaleString()} / {rankProgress.nextRankXp.toLocaleString()} XP</strong>
-                  {" "}toward {rankProgress.nextRank}.
+                  {preferredLanguage === "nepali"
+                    ? ` ${translateRankName(rankProgress.nextRank, preferredLanguage)} तर्फ।`
+                    : ` toward ${rankProgress.nextRank}.`}
                 </p>
               )}
             </div>
             <div className="rank-xp-box">
-              <span>{isMaxRank ? "Status" : "XP Needed"}</span>
-              <strong>{isMaxRank ? "Maxed" : `${rankProgress.xpToNextRank.toLocaleString()} XP`}</strong>
+              <span>{isMaxRank ? t("statusWord", preferredLanguage) : t("xpNeeded", preferredLanguage)}</span>
+              <strong>{isMaxRank ? t("maxed", preferredLanguage) : `${rankProgress.xpToNextRank.toLocaleString()} XP`}</strong>
             </div>
           </div>
 
@@ -238,15 +248,19 @@ function Profile() {
                   <span className="rank-node-dot" />
                 </span>
                 <span className="rank-badge-label">
-                  {rank.labelLines.map((line) => (
-                    <span className="rank-label-line" key={line}>{line}</span>
-                  ))}
+                  {preferredLanguage === "nepali" ? (
+                    <span className="rank-label-line">{translateRankName(rank.label, preferredLanguage)}</span>
+                  ) : (
+                    rank.labelLines.map((line) => (
+                      <span className="rank-label-line" key={line}>{line}</span>
+                    ))
+                  )}
                 </span>
                 <div className="rank-badge-meta">
                   {rank.state === "current" ? (
-                    <span className="rank-state-chip is-current-chip">CURRENT</span>
+                    <span className="rank-state-chip is-current-chip">{t("current", preferredLanguage)}</span>
                   ) : rank.state === "next" ? (
-                    <span className="rank-state-chip is-next-chip">NEXT TARGET</span>
+                    <span className="rank-state-chip is-next-chip">{t("nextTarget", preferredLanguage)}</span>
                   ) : rank.state === "achieved" ? (
                     <span className="rank-state-chip is-done-chip">✓</span>
                   ) : (
@@ -259,12 +273,12 @@ function Profile() {
         </section>
 
         <section className="stats-grid">
-          <article className="stat-card coin-stat-card"><CoinIcon size="xl" className="stat-coin" /><div><div className="stat-value coin-stat-value">{coins.toLocaleString()}</div><div className="stat-label">Coin Balance</div><div className="stat-helper">Earned from quizzes and tournaments</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{currentStreak} Days</div><div className="stat-label">Current Streak</div><div className="stat-helper">Daily habit status</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><MdTrackChanges /></div><div><div className="stat-value">{overallAccuracy}%</div><div className="stat-label">Overall Accuracy</div><div className="stat-helper">{totalCorrect} correct answers</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaBookOpen /></div><div><div className="stat-value">{totalQuestionsAttempted}</div><div className="stat-label">Questions Attempted</div><div className="stat-helper">Across all practice sessions</div></div></article>
-          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earnedBadges.length}</div><div className="stat-label">Badges Earned</div><div className="stat-helper">Achievement showcase</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaUser /></div><div><div className="stat-value">{subjectsPracticed}</div><div className="stat-label">Subjects Practiced</div><div className="stat-helper">Study breadth</div></div></article>
+          <article className="stat-card coin-stat-card"><CoinIcon size="xl" className="stat-coin" /><div><div className="stat-value coin-stat-value">{coins.toLocaleString()}</div><div className="stat-label">{t("coinBalance", preferredLanguage)}</div><div className="stat-helper">{t("earnedFromQuizzes", preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{formatDays(currentStreak, preferredLanguage)}</div><div className="stat-label">{t("currentStreak", preferredLanguage)}</div><div className="stat-helper">{t("dailyHabitStatus", preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><MdTrackChanges /></div><div><div className="stat-value">{overallAccuracy}%</div><div className="stat-label">{t("accuracy", preferredLanguage)}</div><div className="stat-helper">{formatCorrectAnswers(totalCorrect, preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaBookOpen /></div><div><div className="stat-value">{totalQuestionsAttempted}</div><div className="stat-label">{t("questionsSolved", preferredLanguage)}</div><div className="stat-helper">{t("acrossAllPractice", preferredLanguage)}</div></div></article>
+          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earnedBadges.length}</div><div className="stat-label">{t("earnedBadges", preferredLanguage)}</div><div className="stat-helper">{t("achievementShowcase", preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaUser /></div><div><div className="stat-value">{subjectsPracticed}</div><div className="stat-label">{t("subjectsPracticed", preferredLanguage)}</div><div className="stat-helper">{t("studyBreadth", preferredLanguage)}</div></div></article>
         </section>
 
         <section className={`dashboard-card coin-wallet-card${isCoinWalletOpen ? " is-open" : ""}`}>
@@ -279,12 +293,11 @@ function Profile() {
               <CoinIcon size="xl" className="coin-wallet-icon" />
               <div>
                 <div className="coin-wallet-amount">{coins.toLocaleString()}</div>
-                <div className="coin-wallet-label">Available balance</div>
+                <div className="coin-wallet-label">{t("availableBalance", preferredLanguage)}</div>
               </div>
             </div>
             <p className="coin-wallet-note">
-              Coins are earned from real completed activities. Spend them later on optional extras like
-              additional mock tests after your 3 free daily mocks.
+              {t("coinWalletNote", preferredLanguage)}
             </p>
             <span className="coin-wallet-chevron" aria-hidden="true">
               {isCoinWalletOpen ? <FaChevronUp /> : <FaChevronDown />}
@@ -294,15 +307,15 @@ function Profile() {
           {isCoinWalletOpen && (
             <div className="coin-wallet-grid" id="coin-wallet-details">
               <div className="coin-wallet-panel">
-                <h3 className="coin-wallet-heading">How to Earn Coins</h3>
+                <h3 className="coin-wallet-heading">{t("howToEarnCoins", preferredLanguage)}</h3>
                 <ul className="coin-earn-list">
                   {COIN_EARN_GUIDE.map((item) => (
                     <li key={item.label}>
-                      <span className="coin-earn-reason">{item.label}</span>
+                      <span className="coin-earn-reason">{trText(item.label, preferredLanguage)}</span>
                       <span className="coin-earn-amount">
                         <CoinIcon size="xs" />
-                        {typeof item.amount === "number" ? `+${item.amount}` : item.amount}
-                        {item.suffix ? <em className="coin-earn-suffix"> {item.suffix}</em> : null}
+                        {typeof item.amount === "number" ? `+${item.amount}` : trText(item.amount, preferredLanguage)}
+                        {item.suffix ? <em className="coin-earn-suffix"> {trText(item.suffix, preferredLanguage)}</em> : null}
                       </span>
                     </li>
                   ))}
@@ -310,7 +323,7 @@ function Profile() {
               </div>
 
               <div className="coin-wallet-panel">
-                <h3 className="coin-wallet-heading">Recent Coin Activity</h3>
+                <h3 className="coin-wallet-heading">{t("recentCoinActivity", preferredLanguage)}</h3>
                 {recentCoinTransactions.length ? (
                   <ul className="coin-activity-list">
                     {recentCoinTransactions.map((transaction) => {
@@ -333,7 +346,7 @@ function Profile() {
                 ) : (
                   <div className="coin-activity-empty">
                     <CoinValue amount={0} size="md" />
-                    <p>No coin activity yet. Complete a daily quick challenge or practice session to start earning coins.</p>
+                    <p>{t("noCoinActivity", preferredLanguage)}</p>
                   </div>
                 )}
               </div>
@@ -345,8 +358,8 @@ function Profile() {
           <div className="profile-left-column">
             <section className="dashboard-card">
               <div className="card-heading">
-                <h2 className="card-title"><FaMedal /> Badge Showcase</h2>
-                <button className="action-btn compact" type="button" onClick={() => navigate("/badges")}>View All Badges</button>
+                <h2 className="card-title"><FaMedal /> {t("badgeShowcase", preferredLanguage)}</h2>
+                <button className="action-btn compact" type="button" onClick={() => navigate("/badges")}>{t("viewAllBadges", preferredLanguage)}</button>
               </div>
               <div className="profile-badge-grid">
                 {showcaseBadges.map((badge) => {
@@ -356,8 +369,8 @@ function Profile() {
                     <div className="profile-badge-row" key={badge.id}>
                       <BadgeIcon shape={badge.shape} iconKind={badge.iconKind} rarity={badge.rarity} size="sm" locked={!isEarned} earned={isEarned} isSecret={badge.isSecret} />
                       <div>
-                        <strong>{isMasked ? "???" : badge.name}</strong>
-                        <span>{isMasked ? "Keep playing to discover this badge." : <>{badge.category} - <RewardText text={badge.reward} /></>}</span>
+                        <strong>{isMasked ? "???" : trText(badge.name, preferredLanguage)}</strong>
+                        <span>{isMasked ? (preferredLanguage === "nepali" ? "यो ब्याज पत्ता लगाउन खेल्दै रहनुहोस्।" : "Keep playing to discover this badge.") : <>{translateBadgeCategory(badge.category, preferredLanguage)} - <RewardText text={badge.reward} /></>}</span>
                       </div>
                       <span className="rank-badge">{isEarned ? "✓" : `${badge.progress}/${badge.target}`}</span>
                     </div>
@@ -367,12 +380,12 @@ function Profile() {
             </section>
 
             <section className="dashboard-card">
-              <h2 className="card-title"><FaCalendarAlt /> Recent Activity</h2>
+              <h2 className="card-title"><FaCalendarAlt /> {t("recentActivity", preferredLanguage)}</h2>
               <div className="profile-list">
                 {recentActivity.map((item) => (
                   <div className="profile-activity-row" key={item.id}>
                     <span className="stat-icon small"><FaCalendarAlt /></span>
-                    <div><strong>{item.title}</strong><span>{item.detail}</span></div>
+                    <div><strong>{trText(item.title, preferredLanguage)}</strong><span>{item.detail}</span></div>
                     <time>{item.date}</time>
                   </div>
                 ))}
@@ -382,43 +395,43 @@ function Profile() {
 
           <aside className="profile-right-column">
             <section className="dashboard-card">
-              <h2 className="card-title"><MdTrackChanges /> Study Identity</h2>
+              <h2 className="card-title"><MdTrackChanges /> {t("studyIdentity", preferredLanguage)}</h2>
               <div className="detail-list">
-                <div><span>Strongest Subject</span><strong>{strongestSubject}</strong></div>
-                <div><span>Weakest Subject</span><strong>{weakestSubject}</strong></div>
-                <div><span>Most Practiced</span><strong>{mostPracticedSubject}</strong></div>
+                <div><span>{t("strongestSubject", preferredLanguage)}</span><strong>{strongestSubject}</strong></div>
+                <div><span>{t("weakestSubject", preferredLanguage)}</span><strong>{weakestSubject}</strong></div>
+                <div><span>{t("mostPracticed", preferredLanguage)}</span><strong>{mostPracticedSubject}</strong></div>
                 <div>
-                  <span>Recommended Next</span>
-                  <strong>{practicedSubjects.length ? `Practice ${weakestSubject} today` : "Start practicing to get a recommendation"}</strong>
+                  <span>{t("recommendedNext", preferredLanguage)}</span>
+                  <strong>{practicedSubjects.length ? formatPracticeToday(weakestSubjectRaw, preferredLanguage) : t("startPracticingRecommendation", preferredLanguage)}</strong>
                 </div>
               </div>
             </section>
 
             <section className="dashboard-card">
-              <h2 className="card-title"><FaTrophy /> Tournament History</h2>
+              <h2 className="card-title"><FaTrophy /> {t("tournamentHistory", preferredLanguage)}</h2>
               <div className="profile-list">
                 {tournamentHistory.length ? (
                   tournamentHistory.map((item) => (
                     <div className="tournament-history-row" key={item.id}>
-                      <div><strong>{item.title}</strong><span>{item.date} - Rank {item.rank}/{item.participants}</span></div>
-                      <strong>{item.points} pts</strong>
+                      <div><strong>{item.title}</strong><span>{item.date} - {t("rank", preferredLanguage)} {item.rank}/{item.participants}</span></div>
+                      <strong>{item.points} {t("pts", preferredLanguage)}</strong>
                       <span><RewardText text={item.reward} /></span>
                     </div>
                   ))
                 ) : (
-                  <p className="muted-copy">No tournament history yet. Play the Friday Loksewa Battle to build your record.</p>
+                  <p className="muted-copy">{t("noTournamentHistory", preferredLanguage)}</p>
                 )}
               </div>
             </section>
 
             <section className="dashboard-card">
-              <h2 className="card-title"><FaShieldAlt /> Preferences Summary</h2>
+              <h2 className="card-title"><FaShieldAlt /> {t("preferencesSummary", preferredLanguage)}</h2>
               <div className="detail-list">
-                <div><span>Selected Exam Track</span><strong>{examLabel}</strong></div>
-                <div><span>Language Mode</span><strong>{languageLabel}</strong></div>
-                <div><span>Public Leaderboard</span><strong>On</strong></div>
-                <div><span>Notifications</span><strong>Future feature</strong></div>
-                <div><span>Sound Effects</span><strong>{soundMuted ? <><FaVolumeMute /> Muted</> : <><FaVolumeUp /> On</>}</strong></div>
+                <div><span>{t("selectedExamTrackTitle", preferredLanguage)}</span><strong>{examLabel}</strong></div>
+                <div><span>{t("language", preferredLanguage)}</span><strong>{languageLabel}</strong></div>
+                <div><span>{t("publicLeaderboard", preferredLanguage)}</span><strong>{t("on", preferredLanguage)}</strong></div>
+                <div><span>{t("notifications", preferredLanguage)}</span><strong>{t("futureFeature", preferredLanguage)}</strong></div>
+                <div><span>{t("soundEffects", preferredLanguage)}</span><strong>{soundMuted ? <><FaVolumeMute /> {t("muted", preferredLanguage)}</> : <><FaVolumeUp /> {t("on", preferredLanguage)}</>}</strong></div>
               </div>
             </section>
           </aside>

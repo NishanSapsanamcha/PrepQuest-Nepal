@@ -1,4 +1,5 @@
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { t, translateDifficulty, translateSubjectName } from "../../data/translations";
 import { getText } from "../../utils/practiceUtils";
 
 function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectOption, languageMode, isAnswered, levelLabel, practiceType, showXpBurst = false }) {
@@ -14,10 +15,10 @@ function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectO
   return (
     <section className="dashboard-card question-card">
       <div className="question-meta-row">
-        {question.difficulty && <span className="question-pill difficulty">{question.difficulty}</span>}
-        {question.topic && <span className="question-pill">{question.topic}</span>}
-        {levelLabel && <span className="question-pill level">{levelLabel}</span>}
-        {practiceType && <span className="question-pill">{practiceType}</span>}
+        {question.difficulty && <span className="question-pill difficulty">{translateDifficulty(question.difficulty, languageMode)}</span>}
+        {question.topic && <span className="question-pill">{translateSubjectName(question.topic, languageMode)}</span>}
+        {levelLabel && <span className="question-pill level">{translateSubjectName(levelLabel, languageMode)}</span>}
+        {practiceType && <span className="question-pill">{translateSubjectName(practiceType, languageMode)}</span>}
       </div>
 
       <p className="question-text">{text.question}</p>
@@ -41,13 +42,13 @@ function QuestionCard({ question, selectedOptionKey, correctOptionKey, onSelectO
               <span className="option-copy">{option.label}</span>
               {isCorrect && (
                 <span className="option-status correct-answer">
-                  <FaCheckCircle /> Correct
+                  <FaCheckCircle /> {t("correct", languageMode)}
                 </span>
               )}
               {isCorrect && showXpBurst && <span className="floating-xp" aria-hidden="true">+10 XP</span>}
               {isWrong && (
                 <span className="option-status your-answer">
-                  <FaTimesCircle /> Your answer
+                  <FaTimesCircle /> {languageMode === "nepali" ? "तपाईंको उत्तर" : "Your answer"}
                 </span>
               )}
             </button>

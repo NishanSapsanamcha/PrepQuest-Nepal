@@ -5,6 +5,7 @@ import BadgeIcon from "../components/badges/BadgeIcon";
 import { RewardText } from "../components/common/Coin";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useBadgeCelebration } from "../context/BadgeCelebrationContext";
+import { getPreferredLanguage, t, translateBadgeFilter, translateBadgeCategory, translateRarity, translateBadgeText, formatEarnedOn } from "../data/translations";
 import { getNextBadge, syncBadges } from "../utils/badgeUtils";
 import "./Badges.css";
 
@@ -13,6 +14,7 @@ const filters = ["All", "Earned", "Locked", "Starter", "Practice", "Daily Quiz",
 const RARE_TIERS = ["Rare", "Epic", "Legendary", "Mythic"];
 
 function Badges() {
+  const preferredLanguage = getPreferredLanguage();
   // Evaluate badges against real user activity (also persists newly earned).
   const badges = useMemo(() => syncBadges(), []);
   const { celebrate, previewBadge } = useBadgeCelebration();
@@ -42,8 +44,8 @@ function Badges() {
 
   // Hidden achievements stay masked in the UI until they are earned.
   const masked = (badge) => badge.isSecret && badge.status !== "earned";
-  const displayName = (badge) => (masked(badge) ? "???" : badge.name);
-  const displayDesc = (badge) => (masked(badge) ? "Keep playing to discover this badge." : badge.description);
+  const displayName = (badge) => (masked(badge) ? "???" : translateBadgeText(badge.name, preferredLanguage));
+  const displayDesc = (badge) => (masked(badge) ? t("keepPlayingDiscover", preferredLanguage) : translateBadgeText(badge.description, preferredLanguage));
 
   const selectedMasked = masked(selectedBadge);
 
@@ -52,25 +54,25 @@ function Badges() {
       <section className="dashboard-content badges-page">
         <header className="dashboard-header badges-header">
           <div className="header-left">
-            <p className="eyebrow">Achievement System</p>
-            <h1>Badges</h1>
-            <p>Unlock achievements through quizzes, practice, mock tests, streaks, tournaments, and accuracy.</p>
+            <p className="eyebrow">{t("achievementSystem", preferredLanguage)}</p>
+            <h1>{t("badges", preferredLanguage)}</h1>
+            <p>{t("badgesUnlockDesc", preferredLanguage)}</p>
           </div>
         </header>
 
         <section className="stats-grid">
-          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earned.length}</div><div className="stat-label">Earned Badges</div><div className="stat-helper">Your achievement showcase</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaShieldAlt /></div><div><div className="stat-value">{locked.length}</div><div className="stat-label">Locked Badges</div><div className="stat-helper">Visible unlock goals</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{masked(nextBadge) ? "???" : nextBadge.name}</div><div className="stat-label">Next Badge</div><div className="stat-helper">Closest to unlocking</div></div></article>
-          <article className="stat-card"><div className="stat-icon"><FaCrown /></div><div><div className="stat-value">{badges.filter((badge) => RARE_TIERS.includes(badge.rarity)).length}</div><div className="stat-label">Rare Badges Available</div><div className="stat-helper">Premium achievement paths</div></div></article>
+          <article className="stat-card badge-stat-card"><AchievementBadge size="sm" className="stat-badge-icon" /><div><div className="stat-value">{earned.length}</div><div className="stat-label">{t("earnedBadges", preferredLanguage)}</div><div className="stat-helper">{t("yourAchievementShowcase", preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaShieldAlt /></div><div><div className="stat-value">{locked.length}</div><div className="stat-label">{t("lockedBadges", preferredLanguage)}</div><div className="stat-helper">{t("visibleUnlockGoals", preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaFire /></div><div><div className="stat-value">{masked(nextBadge) ? "???" : displayName(nextBadge)}</div><div className="stat-label">{t("nextBadge", preferredLanguage)}</div><div className="stat-helper">{t("closestToUnlocking", preferredLanguage)}</div></div></article>
+          <article className="stat-card"><div className="stat-icon"><FaCrown /></div><div><div className="stat-value">{badges.filter((badge) => RARE_TIERS.includes(badge.rarity)).length}</div><div className="stat-label">{t("rareBadgesAvailable", preferredLanguage)}</div><div className="stat-helper">{t("premiumAchievementPaths", preferredLanguage)}</div></div></article>
         </section>
 
         <section className="dashboard-card next-badge-card">
           <BadgeIcon shape={nextBadge.shape} iconKind={nextBadge.iconKind} rarity={nextBadge.rarity} size="lg" isSecret={nextBadge.isSecret} locked={masked(nextBadge)} />
           <div>
-            <p className="eyebrow">Next Badge Progress</p>
+            <p className="eyebrow">{t("nextBadgeProgress", preferredLanguage)}</p>
             <h2>{displayName(nextBadge)}</h2>
-            <p>{masked(nextBadge) ? "A hidden achievement is within reach." : nextBadge.description}</p>
+            <p>{masked(nextBadge) ? t("hiddenAchievementReach", preferredLanguage) : translateBadgeText(nextBadge.description, preferredLanguage)}</p>
             <div className="badge-progress-row"><span>{masked(nextBadge) ? "??? / ???" : `${nextBadge.progress} / ${nextBadge.target}`}</span><strong>{masked(nextBadge) ? "???" : <RewardText text={nextBadge.reward} />}</strong></div>
             <div className="progress-bar"><div className="progress-fill" style={{ width: `${nextBadge.percent}%` }} /></div>
           </div>
@@ -80,7 +82,7 @@ function Badges() {
           <div className="tab-row">
             {filters.map((filter) => (
               <button className={`tab-pill${activeFilter === filter ? " active" : ""}`} type="button" key={filter} onClick={() => setActiveFilter(filter)}>
-                {filter}
+                {translateBadgeFilter(filter, preferredLanguage)}
               </button>
             ))}
           </div>
@@ -89,8 +91,8 @@ function Badges() {
         <section className="badges-layout">
           {visibleBadges.length === 0 ? (
             <div className="dashboard-card badge-empty">
-              <p>No badges match this filter yet.</p>
-              <span>Keep practicing to unlock more achievements.</span>
+              <p>{t("noBadgesMatchFilter", preferredLanguage)}</p>
+              <span>{t("keepPracticingUnlock", preferredLanguage)}</span>
             </div>
           ) : (
           <div className="badge-grid">
@@ -100,7 +102,7 @@ function Badges() {
               return (
                 <button className={`dashboard-card badge-card rarity-${badge.rarity.toLowerCase()} ${badge.status}${selectedBadgeId === badge.id ? " selected" : ""}`} type="button" key={badge.id} onClick={() => setSelectedBadgeId(badge.id)}>
                   <div className="badge-card-top">
-                    <span className={`status-chip ${isEarned ? "is-earned" : "is-locked"}`}>{isEarned ? "✓ Earned" : "Locked"}</span>
+                    <span className={`status-chip ${isEarned ? "is-earned" : "is-locked"}`}>{isEarned ? `✓ ${t("earnedWord", preferredLanguage)}` : t("lockedWord", preferredLanguage)}</span>
                   </div>
                   <div className={`badge-emblem rarity-${badge.rarity.toLowerCase()} ${isEarned ? "is-earned" : "is-locked"}`}>
                     <BadgeIcon
@@ -116,8 +118,8 @@ function Badges() {
                   <h3 className="badge-name">{displayName(badge)}</h3>
                   <p className="badge-desc">{displayDesc(badge)}</p>
                   <div className="badge-chips">
-                    <span className="cat-chip">{isMasked ? "Hidden" : badge.category}</span>
-                    <span className={`rarity-pill rarity-${badge.rarity.toLowerCase()}`}>{badge.rarity}</span>
+                    <span className="cat-chip">{isMasked ? t("hidden", preferredLanguage) : translateBadgeCategory(badge.category, preferredLanguage)}</span>
+                    <span className={`rarity-pill rarity-${badge.rarity.toLowerCase()}`}>{translateRarity(badge.rarity, preferredLanguage)}</span>
                   </div>
                   <div className="badge-card-bottom">
                     <div className="progress-bar"><div className="progress-fill" style={{ width: `${isMasked ? 0 : badge.percent}%` }} /></div>
@@ -125,7 +127,7 @@ function Badges() {
                       <span>{isMasked ? "??? / ???" : `${badge.progress}/${badge.target}`}</span>
                       <strong className="reward-tag">{isMasked ? "???" : <RewardText text={badge.reward} />}</strong>
                     </div>
-                    {isEarned && badge.earnedAt && <span className="earned-date">Earned {badge.earnedAt}</span>}
+                    {isEarned && badge.earnedAt && <span className="earned-date">{formatEarnedOn(badge.earnedAt, preferredLanguage)}</span>}
                   </div>
                 </button>
               );
@@ -145,17 +147,17 @@ function Badges() {
                 isSecret={selectedBadge.isSecret}
               />
             </div>
-            <span className={`status-chip ${selectedBadge.status === "earned" ? "is-earned" : "is-locked"}`}>{selectedBadge.status === "earned" ? "✓ Earned" : "Locked"}</span>
+            <span className={`status-chip ${selectedBadge.status === "earned" ? "is-earned" : "is-locked"}`}>{selectedBadge.status === "earned" ? `✓ ${t("earnedWord", preferredLanguage)}` : t("lockedWord", preferredLanguage)}</span>
             <h2>{displayName(selectedBadge)}</h2>
             <p>{displayDesc(selectedBadge)}</p>
             <div className="detail-list">
-              <div><span>Requirement</span><strong>{selectedMasked ? "???" : `${selectedBadge.progress} / ${selectedBadge.target}`}</strong></div>
-              <div><span>Reward</span><strong>{selectedMasked ? "???" : <RewardText text={selectedBadge.reward} />}</strong></div>
-              <div><span>Rarity</span><strong className={`rarity-pill rarity-${selectedBadge.rarity.toLowerCase()}`}>{selectedBadge.rarity}</strong></div>
-              <div><span>Status</span><strong>{selectedBadge.status === "earned" ? `Earned ${selectedBadge.earnedAt || ""}`.trim() : "Locked"}</strong></div>
+              <div><span>{t("requirement", preferredLanguage)}</span><strong>{selectedMasked ? "???" : `${selectedBadge.progress} / ${selectedBadge.target}`}</strong></div>
+              <div><span>{t("rewardWord", preferredLanguage)}</span><strong>{selectedMasked ? "???" : <RewardText text={selectedBadge.reward} />}</strong></div>
+              <div><span>{t("rarityWord", preferredLanguage)}</span><strong className={`rarity-pill rarity-${selectedBadge.rarity.toLowerCase()}`}>{translateRarity(selectedBadge.rarity, preferredLanguage)}</strong></div>
+              <div><span>{t("statusWord", preferredLanguage)}</span><strong>{selectedBadge.status === "earned" ? formatEarnedOn(selectedBadge.earnedAt, preferredLanguage) : t("lockedWord", preferredLanguage)}</strong></div>
             </div>
             <button className="action-btn compact preview-unlock-btn" type="button" onClick={() => previewBadge(selectedBadge)}>
-              Preview unlock animation
+              {t("previewUnlock", preferredLanguage)}
             </button>
           </aside>
         </section>

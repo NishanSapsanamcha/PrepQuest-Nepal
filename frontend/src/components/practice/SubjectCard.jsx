@@ -1,4 +1,4 @@
-import {
+﻿import {
   Brain,
   Building2,
   ClipboardList,
@@ -12,6 +12,7 @@ import {
 import { FaArrowRight } from "react-icons/fa";
 import PremiumBadge from "./PremiumBadge";
 import { SUBJECT_ICON_ASSETS } from "../../data/practiceIconAssets";
+import { formatLevel, getPreferredLanguage, t, translateSubjectName, trText } from "../../data/translations";
 
 const iconMap = {
   "general-knowledge": Globe2,
@@ -44,6 +45,7 @@ const accentMap = {
 };
 
 function SubjectCard({ subject, onPractice }) {
+  const preferredLanguage = getPreferredLanguage();
   const Icon = iconMap[subject.id] || Building2;
   const accent = accentMap[subject.id] || "#18e0c2";
   const iconAsset = SUBJECT_ICON_ASSETS[subject.id]; // premium art if added later
@@ -51,11 +53,11 @@ function SubjectCard({ subject, onPractice }) {
   const levelProgress = subject.levelProgress;
   const currentLevel = subject.currentLevel;
   const hasStarted = subject.hasStarted;
-  const nextLevelLabel = levelProgress.nextLevel ? `Lvl ${levelProgress.nextLevel.level}` : "Max";
+  const nextLevelLabel = levelProgress.nextLevel ? `${t("level", preferredLanguage)} ${levelProgress.nextLevel.level}` : t("maxLevel", preferredLanguage);
   const displayProgressPercent = levelProgress.nextRequiredXp
     ? Math.min(100, Math.round((progress.xp / levelProgress.nextRequiredXp) * 100))
     : 100;
-  const accuracyStat = hasStarted && subject.accuracy !== null ? `${subject.accuracy}%` : "—";
+  const accuracyStat = hasStarted && subject.accuracy !== null ? `${subject.accuracy}%` : "â€”";
   const solvedStat = progress.questionsSolved || 0;
   const mistakesStat = progress.wrongAnswers || 0;
 
@@ -64,7 +66,7 @@ function SubjectCard({ subject, onPractice }) {
       <div className="subject-card-header">
         <PremiumBadge
           src={iconAsset}
-          alt={subject.name}
+          alt={translateSubjectName(subject.name, preferredLanguage)}
           imgClassName="practice-subject-icon-img"
           className="subject-card-icon hex-badge"
           style={
@@ -80,9 +82,9 @@ function SubjectCard({ subject, onPractice }) {
           <Icon />
         </PremiumBadge>
         <div className="subject-card-titles">
-          <div className="subject-card-name">{subject.name}</div>
+          <div className="subject-card-name">{translateSubjectName(subject.name, preferredLanguage)}</div>
           <span className="subject-level-chip" style={{ color: accent, background: `${accent}1a`, borderColor: `${accent}40` }}>
-            Level {currentLevel.level} · {hasStarted ? currentLevel.name : "Not Started"}
+            {formatLevel(currentLevel.level, hasStarted ? currentLevel.name : "Not Started", preferredLanguage)}
           </span>
         </div>
       </div>
@@ -90,7 +92,7 @@ function SubjectCard({ subject, onPractice }) {
       <div className="subject-card-progress">
         <div className="subject-card-progress-label">
           <span>{progress.xp} / {levelProgress.nextRequiredXp} XP</span>
-          <span>{displayProgressPercent}% to {nextLevelLabel}</span>
+          <span>{preferredLanguage === "nepali" ? `${displayProgressPercent}% ${nextLevelLabel} ${t("toLabel", preferredLanguage)}` : `${displayProgressPercent}% ${t("toLabel", preferredLanguage)} ${nextLevelLabel}`}</span>
         </div>
         <div className="progress-bar">
           <div className="progress-fill" style={{ width: `${displayProgressPercent}%` }} />
@@ -99,15 +101,15 @@ function SubjectCard({ subject, onPractice }) {
 
       <div className="subject-card-statgrid">
         <div className="subject-stat">
-          <span>Accuracy</span>
+          <span>{t("accuracy", preferredLanguage)}</span>
           <strong className="accuracy">{accuracyStat}</strong>
         </div>
         <div className="subject-stat">
-          <span>Solved</span>
+          <span>{t("solved", preferredLanguage)}</span>
           <strong>{solvedStat}</strong>
         </div>
         <div className="subject-stat">
-          <span>Mistakes</span>
+          <span>{t("mistakes", preferredLanguage)}</span>
           <strong className="mistakes">{mistakesStat}</strong>
         </div>
       </div>
@@ -115,9 +117,9 @@ function SubjectCard({ subject, onPractice }) {
       <div className="subject-card-footer">
         <button className="subject-practice-btn" type="button" disabled={!subject.canPractice} onClick={onPractice}>
           {subject.canPractice ? (
-            <>Practice Now <FaArrowRight /></>
+            <>{t("practiceNow", preferredLanguage)} <FaArrowRight /></>
           ) : (
-            "Question Bank Not Ready"
+            trText("Question Bank Not Ready", preferredLanguage)
           )}
         </button>
       </div>
@@ -126,3 +128,4 @@ function SubjectCard({ subject, onPractice }) {
 }
 
 export default SubjectCard;
+
